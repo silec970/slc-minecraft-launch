@@ -98,6 +98,7 @@ public sealed class VersionServiceTests
             loaderKind,
             null,
             21,
+            "java-runtime-delta",
             false);
     }
 
@@ -117,6 +118,14 @@ public sealed class VersionServiceTests
             CancellationToken cancellationToken = default)
         {
             return Task.FromResult<IReadOnlyList<GameVersionDescriptor>>(versions);
+        }
+
+        public Task<ResourceCompletionOutcome> CompleteResourcesAsync(
+            ResourceCompletionRequest request,
+            IProgress<OperationProgress>? progress = null,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(new ResourceCompletionOutcome(true, "Download.Completed"));
         }
 
         public Task<SmokeLaunchOutcome> LaunchSmokeAsync(

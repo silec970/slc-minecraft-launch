@@ -31,6 +31,8 @@
 - 游戏日志来自 `GameLogEventDelegate` 和 `GameExitEventDelegate`；
   崩溃归因来自 `DefaultLogAnalyzer` 和 `IAnalysisReport`。
 - 加载器安装优先使用 Forge、Fabric、LiteLoader、OptiFine 原生安装模型。
+- NeoForge 2.1.2 没有原生安装器，只允许通过其官方 installer CLI
+  `--installClient` 适配；不得复用 Forge 安装模型。
 - 所有直接使用 ProjBobcat 契约的位置必须带
   `// PROJBOBCAT:` 注释。
 
@@ -64,6 +66,15 @@
 - 输出存入 `RootPath/runtimes/<runtime>/<major>/<arch>`。
 - 下载必须校验 SHA256，安全解压并以原子目录替换发布。
 - 所有来源失败时报告完整错误并调用手动安装。
+- Mojang 运行时按其清单 SHA1 校验，并为缓存生成 SHA256 完整性清单；
+  Adoptium 下载必须匹配公开 SHA256。
+
+## 下载源与进度
+
+- `appsettings.json` 中的 `DownloadSources` 只保存 URI 根列表，不包含版本清单内容。
+- 游戏资源集合依次传入 ProjBobcat 的 Asset、Library、Version 和 Logging resolver。
+- 多线程、续传、源回退和 SHA1 校验由 `DefaultResourceCompleter` 执行。
+- Progress 事件必须桥接为 `IProgress<OperationProgress>`，并传递 CancellationToken。
 
 ## 冒烟测试
 

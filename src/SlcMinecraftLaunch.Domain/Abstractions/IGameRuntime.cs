@@ -11,6 +11,11 @@ public interface IGameRuntime : IAsyncDisposable
     Task<IReadOnlyList<GameVersionDescriptor>> GetVersionsAsync(
         CancellationToken cancellationToken = default);
 
+    Task<ResourceCompletionOutcome> CompleteResourcesAsync(
+        ResourceCompletionRequest request,
+        IProgress<OperationProgress>? progress = null,
+        CancellationToken cancellationToken = default);
+
     Task<SmokeLaunchOutcome> LaunchSmokeAsync(
         SmokeLaunchRequest request,
         IProgress<OperationProgress>? progress = null,

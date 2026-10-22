@@ -38,12 +38,19 @@ public sealed class SmokeTestService(
 
         try
         {
-            Report(SmokeTestStage.MaterializingVersion, "Progress.Materializing", 0.02);
-            await versionMaterializer.EnsureVersionAsync(
-                request.RootPath,
-                request.TargetVersion,
-                progressSink,
-                cancellationToken).ConfigureAwait(false);
+            var runtime = await runtimeProvider.GetAsync(cancellationToken).ConfigureAwait(false);
+            var snapshot = await runtime.GetSnapshotAsync(cancellationToken).ConfigureAwait(false);
+            if (!snapshot.VersionIds.Contains(request.TargetVersion, StringComparer.OrdinalIgnoreCase))
+            {
+                Report(SmokeTestStage.MaterializingVersion, "Progress.Materializing", 0.02);
+                await versionMaterializer.EnsureVersionAsync(
+                    request.RootPath,
+                    request.TargetVersion,
+                    progressSink,
+                    cancellationToken).ConfigureAwait(false);
+
+                snapshot = await runtime.GetSnapshotAsync(cancellationToken).ConfigureAwait(false);
+            }
 
             Report(SmokeTestStage.DetectingJava, "Progress.DetectingJava", 0.12);
             var candidates = await javaDiscovery.DiscoverAsync(cancellationToken).ConfigureAwait(false);
@@ -83,10 +90,8 @@ public sealed class SmokeTestService(
                 0.18,
                 selection.Selected.ExecutablePath);
 
-            var runtime = await runtimeProvider.GetAsync(cancellationToken).ConfigureAwait(false);
             Report(SmokeTestStage.ResolvingVersion, "Progress.ResolvingVersion", 0.22);
 
-            var snapshot = await runtime.GetSnapshotAsync(cancellationToken).ConfigureAwait(false);
             if (!snapshot.VersionIds.Contains(request.TargetVersion, StringComparer.OrdinalIgnoreCase))
             {
                 return Failure(

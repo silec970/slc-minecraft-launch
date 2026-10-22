@@ -7,5 +7,6 @@ public sealed record GameVersionDescriptor(
     LoaderKind LoaderKind,
     string? LoaderVersion,
     int? JavaMajorVersion,
+    string? JavaComponent,
     bool IsBroken);
 

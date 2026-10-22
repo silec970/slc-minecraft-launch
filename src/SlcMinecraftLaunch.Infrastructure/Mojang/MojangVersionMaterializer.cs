@@ -19,7 +19,7 @@ public sealed class MojangVersionMaterializer(
         var versionJsonPath = Path.Combine(versionDirectory, $"{targetVersion}.json");
         var clientJarPath = Path.Combine(versionDirectory, $"{targetVersion}.jar");
 
-        if (File.Exists(versionJsonPath) && File.Exists(clientJarPath))
+        if (File.Exists(versionJsonPath))
         {
             progress?.Report(new OperationProgress(
                 SmokeTestStage.MaterializingVersion,
@@ -31,38 +31,35 @@ public sealed class MojangVersionMaterializer(
         Directory.CreateDirectory(versionDirectory);
         var client = httpClientFactory.CreateClient();
 
-        if (!File.Exists(versionJsonPath))
-        {
-            progress?.Report(new OperationProgress(
-                SmokeTestStage.MaterializingVersion,
-                "Progress.FetchingVersionManifest",
-                0.01));
+        progress?.Report(new OperationProgress(
+            SmokeTestStage.MaterializingVersion,
+            "Progress.FetchingVersionManifest",
+            0.01));
 
-            using var manifestResponse = await client.GetAsync(
-                versionManifestUrl,
-                HttpCompletionOption.ResponseHeadersRead,
-                cancellationToken).ConfigureAwait(false);
-            manifestResponse.EnsureSuccessStatusCode();
+        using var manifestResponse = await client.GetAsync(
+            versionManifestUrl,
+            HttpCompletionOption.ResponseHeadersRead,
+            cancellationToken).ConfigureAwait(false);
+        manifestResponse.EnsureSuccessStatusCode();
 
-            await using var manifestStream = await manifestResponse.Content
-                .ReadAsStreamAsync(cancellationToken)
-                .ConfigureAwait(false);
-            using var manifest = await JsonDocument.ParseAsync(
-                manifestStream,
-                cancellationToken: cancellationToken).ConfigureAwait(false);
+        await using var manifestStream = await manifestResponse.Content
+            .ReadAsStreamAsync(cancellationToken)
+            .ConfigureAwait(false);
+        using var manifest = await JsonDocument.ParseAsync(
+            manifestStream,
+            cancellationToken: cancellationToken).ConfigureAwait(false);
 
-            var versionMetadataUrl = FindVersionMetadataUrl(manifest.RootElement, targetVersion);
-            await DownloadFileAsync(
-                client,
-                versionMetadataUrl,
-                versionJsonPath,
-                SmokeTestStage.MaterializingVersion,
-                "Progress.DownloadingVersionJson",
-                0.03,
-                0.08,
-                progress,
-                cancellationToken).ConfigureAwait(false);
-        }
+        var versionMetadataUrl = FindVersionMetadataUrl(manifest.RootElement, targetVersion);
+        await DownloadFileAsync(
+            client,
+            versionMetadataUrl,
+            versionJsonPath,
+            SmokeTestStage.MaterializingVersion,
+            "Progress.DownloadingVersionJson",
+            0.03,
+            0.08,
+            progress,
+            cancellationToken).ConfigureAwait(false);
 
         if (!File.Exists(clientJarPath))
         {

@@ -9,6 +9,8 @@ using SlcMinecraftLaunch.Application;
 using SlcMinecraftLaunch.Domain.Abstractions;
 using SlcMinecraftLaunch.Domain.Models;
 using SlcMinecraftLaunch.Infrastructure.Configuration;
+using SlcMinecraftLaunch.Infrastructure.Java;
+using SlcMinecraftLaunch.Infrastructure.Loaders;
 using SlcMinecraftLaunch.Infrastructure.Mojang;
 using SlcMinecraftLaunch.Infrastructure.Persistence;
 using SlcMinecraftLaunch.Infrastructure.ProjBobcat;
@@ -45,19 +47,71 @@ public partial class App : System.Windows.Application
             var manifestUrl = configuration["Mojang:VersionManifestUrl"]
                               ?? throw new InvalidOperationException(
                                   "Mojang:VersionManifestUrl is not configured.");
+            var javaSourceOptions = new JavaSourceOptions(
+                configuration["JavaSources:MojangRuntimeManifestUrl"]
+                ?? throw new InvalidOperationException("JavaSources:MojangRuntimeManifestUrl is not configured."),
+                configuration["JavaSources:AdoptiumAssetsUrlTemplate"]
+                ?? throw new InvalidOperationException("JavaSources:AdoptiumAssetsUrlTemplate is not configured."));
+            var loaderSourceOptions = new LoaderSourceOptions(
+                configuration["Loaders:FabricVersionsUrlTemplate"]
+                ?? throw new InvalidOperationException("Loaders:FabricVersionsUrlTemplate is not configured."),
+                configuration["Loaders:FabricArtifactUrlTemplate"]
+                ?? throw new InvalidOperationException("Loaders:FabricArtifactUrlTemplate is not configured."),
+                configuration["Loaders:ForgeMetadataUrl"]
+                ?? throw new InvalidOperationException("Loaders:ForgeMetadataUrl is not configured."),
+                configuration["Loaders:ForgeDownloadUrlTemplate"]
+                ?? throw new InvalidOperationException("Loaders:ForgeDownloadUrlTemplate is not configured."),
+                configuration["Loaders:NeoForgeMetadataUrl"]
+                ?? throw new InvalidOperationException("Loaders:NeoForgeMetadataUrl is not configured."),
+                configuration["Loaders:NeoForgeDownloadUrlTemplate"]
+                ?? throw new InvalidOperationException("Loaders:NeoForgeDownloadUrlTemplate is not configured."),
+                configuration["Loaders:OptiFineListUrlTemplate"]
+                ?? throw new InvalidOperationException("Loaders:OptiFineListUrlTemplate is not configured."),
+                configuration["Loaders:OptiFineDownloadUrlTemplate"]
+                ?? throw new InvalidOperationException("Loaders:OptiFineDownloadUrlTemplate is not configured."));
+            var downloadSourceOptions = new DownloadSourceOptions(
+                GetConfiguredList(configuration, "DownloadSources:VersionMetadata"),
+                GetConfiguredList(configuration, "DownloadSources:AssetIndex"),
+                GetConfiguredList(configuration, "DownloadSources:AssetObjects"),
+                GetConfiguredList(configuration, "DownloadSources:Libraries"),
+                GetConfiguredList(configuration, "DownloadSources:ForgeFiles"),
+                GetConfiguredList(configuration, "DownloadSources:ForgeMaven"),
+                GetConfiguredList(configuration, "DownloadSources:FabricMaven"),
+                GetConfiguredList(configuration, "DownloadSources:QuiltMaven"));
 
             var services = new ServiceCollection();
             services.AddHttpClient();
             services.AddSingleton(paths);
+            services.AddSingleton(javaSourceOptions);
+            services.AddSingleton(loaderSourceOptions);
+            services.AddSingleton(downloadSourceOptions);
             services.AddSingleton<IJavaDiscovery, ProjBobcatJavaDiscovery>();
-            services.AddSingleton<IGameRuntimeProvider, ProjBobcatRuntimeProvider>();
+            services.AddSingleton<ProjBobcatRuntimeProvider>();
+            services.AddSingleton<IGameRuntimeProvider>(
+                serviceProvider => serviceProvider.GetRequiredService<ProjBobcatRuntimeProvider>());
             services.AddSingleton<IVersionPreferencesStore>(
                 _ => new JsonVersionPreferencesStore(paths.DataRoot));
             services.AddSingleton<IGameVersionMaterializer>(serviceProvider =>
                 new MojangVersionMaterializer(
                     serviceProvider.GetRequiredService<IHttpClientFactory>(),
                     manifestUrl));
+            services.AddSingleton<IJavaRuntimeProvisioner>(serviceProvider =>
+                new JavaRuntimeProvisioner(
+                    paths,
+                    serviceProvider.GetRequiredService<IHttpClientFactory>(),
+                    javaSourceOptions.MojangRuntimeManifestUrl,
+                    javaSourceOptions.AdoptiumAssetsUrlTemplate));
             services.AddSingleton<JavaSelectionPolicy>();
+            services.AddSingleton<IJavaRuntimeService, JavaRuntimeService>();
+            services.AddSingleton<ILoaderCatalogService, ProjBobcatLoaderCatalogService>();
+            services.AddSingleton<ILoaderInstallBackend>(serviceProvider =>
+                new ProjBobcatLoaderInstallBackend(
+                    paths,
+                    serviceProvider.GetRequiredService<IHttpClientFactory>(),
+                    serviceProvider.GetRequiredService<ProjBobcatRuntimeProvider>(),
+                    loaderSourceOptions));
+            services.AddSingleton<ILoaderInstallationService, LoaderInstallationService>();
+            services.AddSingleton<IDownloadService, DownloadService>();
             services.AddSingleton<ISmokeTestService, SmokeTestService>();
             services.AddSingleton<IVersionService, VersionService>();
             services.AddSingleton<LaunchApplicationService>();
@@ -72,6 +126,56 @@ public partial class App : System.Windows.Application
                 var catalog = await versionService.GetCatalogAsync();
                 await WriteVersionCatalogAsync(paths.DataRoot, catalog).ConfigureAwait(true);
                 Shutdown(0);
+                return;
+            }
+
+            if (commandLine.ProvisionJava)
+            {
+                ShutdownMode = ShutdownMode.OnExplicitShutdown;
+                if (commandLine.JavaMajor is not { } javaMajor)
+                {
+                    await WriteJavaProvisionResultAsync(
+                        paths.DataRoot,
+                        new JavaRuntimeProvisionOutcome(
+                            false,
+                            null,
+                            "Java.InvalidMajor")).ConfigureAwait(true);
+                    Shutdown(1);
+                    return;
+                }
+
+                var component = configuration[$"JavaSources:MojangComponents:{javaMajor}"];
+                var provisioner = _services.GetRequiredService<IJavaRuntimeProvisioner>();
+                var provisionResult = await provisioner.EnsureAsync(javaMajor, component);
+                await WriteJavaProvisionResultAsync(paths.DataRoot, provisionResult).ConfigureAwait(true);
+                Shutdown(provisionResult.Succeeded ? 0 : 1);
+                return;
+            }
+
+            if (commandLine.InstallLoader)
+            {
+                ShutdownMode = ShutdownMode.OnExplicitShutdown;
+                if (!Enum.TryParse<LoaderKind>(commandLine.Loader, true, out var loaderKind))
+                {
+                    await WriteLoaderResultAsync(
+                        paths.DataRoot,
+                        new LoaderInstallOutcome(false, "Loader.InvalidKind", ErrorDetail: commandLine.Loader))
+                        .ConfigureAwait(true);
+                    Shutdown(1);
+                    return;
+                }
+
+                var loaderService = _services.GetRequiredService<ILoaderInstallationService>();
+                var loaderResult = await loaderService.InstallAsync(
+                    new LoaderInstallRequest(
+                        commandLine.Version
+                        ?? configuration["SmokeTest:TargetVersion"]
+                        ?? "1.21.4",
+                        loaderKind,
+                        commandLine.LoaderVersion,
+                        commandLine.JavaPath));
+                await WriteLoaderResultAsync(paths.DataRoot, loaderResult).ConfigureAwait(true);
+                Shutdown(loaderResult.Succeeded ? 0 : 1);
                 return;
             }
 
@@ -171,5 +275,53 @@ public partial class App : System.Windows.Application
         }
 
         File.Move(temporaryPath, outputPath, true);
+    }
+
+    private static async Task WriteLoaderResultAsync(string dataRoot, LoaderInstallOutcome result)
+    {
+        Directory.CreateDirectory(dataRoot);
+        var outputPath = Path.Combine(dataRoot, "loader-install-result.json");
+        var temporaryPath = $"{outputPath}.{Guid.NewGuid():N}.tmp";
+
+        await using (var output = File.Create(temporaryPath))
+        {
+            await JsonSerializer.SerializeAsync(
+                output,
+                result,
+                new JsonSerializerOptions { WriteIndented = true });
+        }
+
+        File.Move(temporaryPath, outputPath, true);
+    }
+
+    private static async Task WriteJavaProvisionResultAsync(
+        string dataRoot,
+        JavaRuntimeProvisionOutcome result)
+    {
+        Directory.CreateDirectory(dataRoot);
+        var outputPath = Path.Combine(dataRoot, "java-provision-result.json");
+        var temporaryPath = $"{outputPath}.{Guid.NewGuid():N}.tmp";
+
+        await using (var output = File.Create(temporaryPath))
+        {
+            await JsonSerializer.SerializeAsync(
+                output,
+                result,
+                new JsonSerializerOptions { WriteIndented = true });
+        }
+
+        File.Move(temporaryPath, outputPath, true);
+    }
+
+    private static IReadOnlyList<string> GetConfiguredList(
+        IConfiguration configuration,
+        string sectionPath)
+    {
+        return configuration.GetSection(sectionPath)
+            .GetChildren()
+            .Select(child => child.Value)
+            .OfType<string>()
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .ToArray();
     }
 }

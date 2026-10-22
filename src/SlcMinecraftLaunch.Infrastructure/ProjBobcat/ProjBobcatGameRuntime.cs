@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Net;
 using System.Runtime.InteropServices;
 using ProjBobcat.Class.Model;
+using ProjBobcat.Class.Model.Downloading;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model.YggdrasilAuth;
 using ProjBobcat.DefaultComponent;
@@ -36,26 +37,32 @@ public sealed class ProjBobcatGameRuntime : IGameRuntime
     private readonly IVersionLocator _versionLocator;
     private readonly ILauncherAccountParser _accountParser;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly DownloadSourceOptions _downloadSourceOptions;
 
     private ProjBobcatGameRuntime(
         IGameCore gameCore,
         IVersionLocator versionLocator,
         ILauncherAccountParser accountParser,
         IHttpClientFactory httpClientFactory,
+        DownloadSourceOptions downloadSourceOptions,
         string rootPath)
     {
         _gameCore = gameCore;
         _versionLocator = versionLocator;
         _accountParser = accountParser;
         _httpClientFactory = httpClientFactory;
+        _downloadSourceOptions = downloadSourceOptions;
         RootPath = rootPath;
     }
 
     public string RootPath { get; }
 
+    internal IVersionLocator VersionLocator => _versionLocator;
+
     public static async Task<ProjBobcatGameRuntime> CreateAsync(
         PortableLauncherPaths paths,
         IHttpClientFactory httpClientFactory,
+        DownloadSourceOptions downloadSourceOptions,
         CancellationToken cancellationToken = default)
     {
         var clientToken = await new ClientTokenStore(paths.DataRoot)
@@ -90,6 +97,7 @@ public sealed class ProjBobcatGameRuntime : IGameRuntime
             versionLocator,
             accountParser,
             httpClientFactory,
+            downloadSourceOptions,
             paths.GameRoot);
     }
 
@@ -129,6 +137,7 @@ public sealed class ProjBobcatGameRuntime : IGameRuntime
                     LoaderKind.Other,
                     null,
                     null,
+                    null,
                     true)
             })
             .OrderBy(version => version.Id, StringComparer.OrdinalIgnoreCase)
@@ -137,18 +146,17 @@ public sealed class ProjBobcatGameRuntime : IGameRuntime
         return Task.FromResult<IReadOnlyList<GameVersionDescriptor>>(versions);
     }
 
-    public async Task<SmokeLaunchOutcome> LaunchSmokeAsync(
-        SmokeLaunchRequest request,
+    public async Task<ResourceCompletionOutcome> CompleteResourcesAsync(
+        ResourceCompletionRequest request,
         IProgress<OperationProgress>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        var gameInfo = _versionLocator.GetGame(request.Version);
+        var gameInfo = _versionLocator.GetGame(request.VersionId);
         if (gameInfo is not VersionInfo concreteVersion)
         {
-            return new SmokeLaunchOutcome(
+            return new ResourceCompletionOutcome(
                 false,
-                "Smoke.VersionNotResolved",
-                null,
+                "Download.VersionNotResolved",
                 "The ProjBobcat locator returned a broken version.");
         }
 
@@ -168,10 +176,9 @@ public sealed class ProjBobcatGameRuntime : IGameRuntime
 
         if (resolvedVersion is null)
         {
-            return new SmokeLaunchOutcome(
+            return new ResourceCompletionOutcome(
                 false,
-                "Smoke.VersionNotResolved",
-                null,
+                "Download.VersionNotResolved",
                 "The ProjBobcat locator could not resolve the version.");
         }
 
@@ -196,10 +203,23 @@ public sealed class ProjBobcatGameRuntime : IGameRuntime
                 {
                     // PROJBOBCAT: AssetInfoResolver downloads and validates
                     // asset indexes and asset objects through its public API.
-                    HttpClientFactory = _httpClientFactory
+                    HttpClientFactory = _httpClientFactory,
+                    AssetIndexUriRoots = ToUriRoots(_downloadSourceOptions.AssetIndexRoots),
+                    AssetUriRoots = ToUriRoots(_downloadSourceOptions.AssetObjectRoots)
                 },
-                new LibraryInfoResolver(),
-                new VersionInfoResolver(),
+                new LibraryInfoResolver
+                {
+                    LibraryUriRoots = ToUriRoots(_downloadSourceOptions.LibraryRoots),
+                    ForgeUriRoots = ToUriRoots(_downloadSourceOptions.ForgeFileRoots),
+                    ForgeMavenUriRoots = ToUriRoots(_downloadSourceOptions.ForgeMavenRoots),
+                    ForgeMavenOldUriRoots = ToUriRoots(_downloadSourceOptions.ForgeMavenRoots),
+                    FabricMavenUriRoots = ToUriRoots(_downloadSourceOptions.FabricMavenRoots),
+                    QuiltMavenUriRoots = ToUriRoots(_downloadSourceOptions.QuiltMavenRoots)
+                },
+                new VersionInfoResolver
+                {
+                    VersionUriRoots = ToUriRoots(_downloadSourceOptions.VersionMetadataRoots)
+                },
                 new GameLoggingInfoResolver()
             ]
         };
@@ -238,11 +258,43 @@ public sealed class ProjBobcatGameRuntime : IGameRuntime
             completionResult.Value?.FailedFiles.Count > 0)
         {
             var failedFiles = completionResult.Value?.FailedFiles.Count ?? 0;
+            return new ResourceCompletionOutcome(
+                false,
+                "Download.ResourceCompletionFailed",
+                $"{completionResult.Message} Failed files: {failedFiles}.",
+                failedFiles);
+        }
+
+        progress?.Report(new OperationProgress(
+            SmokeTestStage.Completed,
+            "Download.Completed",
+            1));
+        return new ResourceCompletionOutcome(true, "Download.Completed");
+    }
+
+    public async Task<SmokeLaunchOutcome> LaunchSmokeAsync(
+        SmokeLaunchRequest request,
+        IProgress<OperationProgress>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        var javaInfo = new JavaRuntimeInfo(
+            request.JavaPath,
+            OSPlatform.Windows,
+            RuntimeInformation.ProcessArchitecture,
+            false,
+            false);
+
+        var completion = await CompleteResourcesAsync(
+            new ResourceCompletionRequest(request.Version, request.JavaPath),
+            progress,
+            cancellationToken).ConfigureAwait(false);
+        if (!completion.Succeeded)
+        {
             return new SmokeLaunchOutcome(
                 false,
-                "Smoke.ResourceCompletionFailed",
+                completion.MessageKey,
                 null,
-                $"{completionResult.Message} Failed files: {failedFiles}.");
+                completion.ErrorDetail);
         }
 
         progress?.Report(new OperationProgress(
@@ -426,6 +478,14 @@ public sealed class ProjBobcatGameRuntime : IGameRuntime
         await process.WaitForExitAsync().ConfigureAwait(false);
     }
 
+    private static IReadOnlyList<DownloadUriInfo> ToUriRoots(IReadOnlyList<string> roots)
+    {
+        return roots
+            .Where(root => !string.IsNullOrWhiteSpace(root))
+            .Select((root, index) => new DownloadUriInfo(root, index + 1))
+            .ToArray();
+    }
+
     private static GameVersionDescriptor CreateVersionDescriptor(VersionInfo version)
     {
         var rawVersion = version.RawVersion;
@@ -461,6 +521,7 @@ public sealed class ProjBobcatGameRuntime : IGameRuntime
             loaderKind,
             loaderVersion,
             version.JavaVersion?.MajorVersion,
+            version.JavaVersion?.Component,
             false);
     }
 

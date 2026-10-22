@@ -18,6 +18,11 @@ public interface IGameRuntime : IAsyncDisposable
         IProgress<OperationProgress>? progress = null,
         CancellationToken cancellationToken = default);
 
+    Task<ResourceCompletionOutcome> DownloadModAsync(
+        ModDownloadRequest request,
+        IProgress<OperationProgress>? progress = null,
+        CancellationToken cancellationToken = default);
+
     Task<SmokeLaunchOutcome> LaunchSmokeAsync(
         SmokeLaunchRequest request,
         IProgress<OperationProgress>? progress = null,

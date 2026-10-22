@@ -95,6 +95,16 @@
 - 分析报告存入 `launcher-data/crash-insights/`，不得提交用户日志。
 - `--analyze-crash --version <id>` 可用于无界面验证。
 
+## Mod 管理
+
+- 搜索必须使用 ProjBobcat `IModrinthApiService` 和 `ICurseForgeApiService`。
+- CurseForge API key 只来自环境变量 `CURSEFORGE_API_KEY`，不得写入仓库。
+- Mod 文件下载通过自定义 `IResourceInfoResolver` 交给 ResourceCompleter。
+- 本地 JAR 必须解析 Fabric、Quilt 或 Forge/NeoForge 元数据后才能导入。
+- 版本隔离时 Mod 写入 locator 对应的 `versions/<id>/mods`，否则写入根 `mods`。
+- 冲突规则至少覆盖重复 Mod ID、缺失必需依赖和已配置的已知不兼容。
+- `--search-mods`、`--install-mod`、`--scan-mods` 用于无界面模块验证。
+
 ## 安全与提交
 
 - CurseForge API key 只能从环境变量或未跟踪的用户配置读取。

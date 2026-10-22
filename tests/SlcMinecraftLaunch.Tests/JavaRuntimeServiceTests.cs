@@ -93,6 +93,12 @@ public sealed class JavaRuntimeServiceTests
             CancellationToken cancellationToken = default)
             => Task.FromResult(new ResourceCompletionOutcome(true, "Download.Completed"));
 
+        public Task<ResourceCompletionOutcome> DownloadModAsync(
+            ModDownloadRequest request,
+            IProgress<OperationProgress>? progress = null,
+            CancellationToken cancellationToken = default)
+            => Task.FromResult(new ResourceCompletionOutcome(true, "Mods.Downloaded"));
+
         public Task<SmokeLaunchOutcome> LaunchSmokeAsync(
             SmokeLaunchRequest request,
             IProgress<OperationProgress>? progress = null,

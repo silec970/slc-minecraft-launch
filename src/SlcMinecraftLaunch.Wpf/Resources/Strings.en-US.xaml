@@ -19,5 +19,14 @@
   <sys:String x:Key="Crash.Category.Configuration.Suggestion">Check the install path, permissions, and files locked by another process.</sys:String>
   <sys:String x:Key="Crash.Category.Other.Title">Another startup problem was detected</sys:String>
   <sys:String x:Key="Crash.Category.Other.Suggestion">Review the complete crash-report and latest.log stack traces.</sys:String>
+  <sys:String x:Key="Mods.Installed">Mod installed successfully</sys:String>
+  <sys:String x:Key="Mods.Downloading">Downloading mod</sys:String>
+  <sys:String x:Key="Mods.Downloaded">Mod download completed</sys:String>
+  <sys:String x:Key="Mods.InvalidPackage">The selected file is not a valid mod JAR</sys:String>
+  <sys:String x:Key="Mods.NoCompatibleFile">No mod file matches the current game version and loader</sys:String>
+  <sys:String x:Key="Mods.CurseForgeKeyMissing">No CurseForge API key is configured; only Modrinth results are available</sys:String>
+  <sys:String x:Key="Mods.Conflict.Duplicate">Duplicate mod IDs were detected</sys:String>
+  <sys:String x:Key="Mods.Conflict.MissingDependency">A required mod dependency is missing</sys:String>
+  <sys:String x:Key="Mods.Conflict.OptifineSodium">OptiFine and Sodium may be incompatible; enable only one</sys:String>
 </ResourceDictionary>
 

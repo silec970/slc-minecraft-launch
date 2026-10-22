@@ -10,6 +10,7 @@ public enum SmokeTestStage
     ResolvingVersion,
     CompletingResources,
     InstallingLoader,
+    DownloadingMod,
     Authenticating,
     Launching,
     VerifyingProcess,

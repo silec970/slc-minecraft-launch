@@ -1,10 +1,13 @@
 using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Windows;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using ProjBobcat.Interface.Services;
+using ProjBobcat.Services;
 using SlcMinecraftLaunch.Application;
 using SlcMinecraftLaunch.Domain.Abstractions;
 using SlcMinecraftLaunch.Domain.Models;
@@ -13,6 +16,7 @@ using SlcMinecraftLaunch.Infrastructure.Crash;
 using SlcMinecraftLaunch.Infrastructure.Java;
 using SlcMinecraftLaunch.Infrastructure.Loaders;
 using SlcMinecraftLaunch.Infrastructure.Mojang;
+using SlcMinecraftLaunch.Infrastructure.Mods;
 using SlcMinecraftLaunch.Infrastructure.Persistence;
 using SlcMinecraftLaunch.Infrastructure.ProjBobcat;
 using SlcMinecraftLaunch.Wpf.ViewModels;
@@ -79,6 +83,12 @@ public partial class App : System.Windows.Application
                 GetConfiguredList(configuration, "DownloadSources:ForgeMaven"),
                 GetConfiguredList(configuration, "DownloadSources:FabricMaven"),
                 GetConfiguredList(configuration, "DownloadSources:QuiltMaven"));
+            var modApiOptions = new ModApiOptions(
+                configuration["ModApis:ModrinthBaseUrl"]
+                ?? throw new InvalidOperationException("ModApis:ModrinthBaseUrl is not configured."),
+                configuration["ModApis:CurseForgeBaseUrl"]
+                ?? throw new InvalidOperationException("ModApis:CurseForgeBaseUrl is not configured."),
+                Environment.GetEnvironmentVariable("CURSEFORGE_API_KEY"));
 
             var services = new ServiceCollection();
             services.AddHttpClient();
@@ -86,6 +96,7 @@ public partial class App : System.Windows.Application
             services.AddSingleton(javaSourceOptions);
             services.AddSingleton(loaderSourceOptions);
             services.AddSingleton(downloadSourceOptions);
+            services.AddSingleton(modApiOptions);
             services.AddSingleton<IJavaDiscovery, ProjBobcatJavaDiscovery>();
             services.AddSingleton<ProjBobcatRuntimeProvider>();
             services.AddSingleton<IGameRuntimeProvider>(
@@ -120,6 +131,36 @@ public partial class App : System.Windows.Application
                 _ => new JsonCrashReportStore(paths.DataRoot));
             services.AddSingleton<ICrashAnalysisService, CrashAnalysisService>();
             services.AddSingleton<CrashAnalysisCoordinator>();
+            services.AddSingleton<ModApiSettingsProvider>();
+            services.AddSingleton<IModrinthApiService>(serviceProvider =>
+            {
+                var client = serviceProvider.GetRequiredService<IHttpClientFactory>().CreateClient();
+                client.DefaultRequestHeaders.UserAgent.ParseAdd("SlcMinecraftLaunch/0.1");
+                return new ModrinthApiService(
+                    client,
+                    serviceProvider.GetRequiredService<ModApiSettingsProvider>());
+            });
+            services.AddSingleton<ICurseForgeApiService>(serviceProvider =>
+            {
+                var client = serviceProvider.GetRequiredService<IHttpClientFactory>().CreateClient();
+                client.DefaultRequestHeaders.UserAgent.ParseAdd("SlcMinecraftLaunch/0.1");
+                if (!string.IsNullOrWhiteSpace(modApiOptions.CurseForgeApiKey))
+                {
+                    client.DefaultRequestHeaders.Add("x-api-key", modApiOptions.CurseForgeApiKey);
+                }
+
+                return new CurseForgeApiService(
+                    client,
+                    serviceProvider.GetRequiredService<ModApiSettingsProvider>());
+            });
+            services.AddSingleton<IModProviderCatalog>(serviceProvider =>
+                new ProjBobcatModProviderCatalog(
+                    serviceProvider.GetRequiredService<IModrinthApiService>(),
+                    serviceProvider.GetRequiredService<ICurseForgeApiService>(),
+                    !string.IsNullOrWhiteSpace(modApiOptions.CurseForgeApiKey)));
+            services.AddSingleton<ILocalModStore, LocalModStore>();
+            services.AddSingleton<ModConflictAnalyzer>();
+            services.AddSingleton<IModService, ModService>();
             services.AddSingleton<LaunchApplicationService>();
             services.AddSingleton<ShellViewModel>();
 
@@ -195,6 +236,62 @@ public partial class App : System.Windows.Application
                     ?? "1.21.4");
                 await WriteCrashReportAsync(paths.DataRoot, crashReport).ConfigureAwait(true);
                 Shutdown(0);
+                return;
+            }
+
+            if (commandLine.SearchMods || commandLine.InstallMod || commandLine.ScanMods)
+            {
+                ShutdownMode = ShutdownMode.OnExplicitShutdown;
+                var modService = _services.GetRequiredService<IModService>();
+                var versionId = commandLine.Version
+                                ?? configuration["SmokeTest:TargetVersion"]
+                                ?? "1.21.4";
+                var loaderKind = Enum.TryParse<LoaderKind>(commandLine.Loader, true, out var parsedLoader)
+                    ? parsedLoader
+                    : LoaderKind.Vanilla;
+
+                if (commandLine.SearchMods)
+                {
+                    var results = await modService.SearchAsync(new ModSearchQuery(
+                        commandLine.Query ?? string.Empty,
+                        versionId,
+                        loaderKind));
+                    await WriteModCommandResultAsync(
+                        paths.DataRoot,
+                        new { Kind = "search", Results = results }).ConfigureAwait(true);
+                    Shutdown(0);
+                    return;
+                }
+
+                if (commandLine.ScanMods)
+                {
+                    var mods = await modService.ScanAsync(versionId);
+                    var conflicts = await modService.DetectConflictsAsync(versionId);
+                    await WriteModCommandResultAsync(
+                        paths.DataRoot,
+                        new { Kind = "scan", Mods = mods, Conflicts = conflicts }).ConfigureAwait(true);
+                    Shutdown(0);
+                    return;
+                }
+
+                if (!Enum.TryParse<ModProvider>(commandLine.Provider, true, out var provider) ||
+                    string.IsNullOrWhiteSpace(commandLine.ProjectId))
+                {
+                    await WriteModCommandResultAsync(
+                        paths.DataRoot,
+                        new ModInstallOutcome(false, "Mods.InvalidRequest")).ConfigureAwait(true);
+                    Shutdown(1);
+                    return;
+                }
+
+                var installResult = await modService.InstallRemoteAsync(
+                    new ModInstallRequest(
+                        provider,
+                        commandLine.ProjectId,
+                        versionId,
+                        loaderKind));
+                await WriteModCommandResultAsync(paths.DataRoot, installResult).ConfigureAwait(true);
+                Shutdown(installResult.Succeeded ? 0 : 1);
                 return;
             }
 
@@ -359,6 +456,23 @@ public partial class App : System.Windows.Application
             await JsonSerializer.SerializeAsync(
                 output,
                 report,
+                new JsonSerializerOptions { WriteIndented = true });
+        }
+
+        File.Move(temporaryPath, outputPath, true);
+    }
+
+    private static async Task WriteModCommandResultAsync(string dataRoot, object result)
+    {
+        Directory.CreateDirectory(dataRoot);
+        var outputPath = Path.Combine(dataRoot, "mod-command-result.json");
+        var temporaryPath = $"{outputPath}.{Guid.NewGuid():N}.tmp";
+
+        await using (var output = File.Create(temporaryPath))
+        {
+            await JsonSerializer.SerializeAsync(
+                output,
+                result,
                 new JsonSerializerOptions { WriteIndented = true });
         }
 

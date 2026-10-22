@@ -47,5 +47,16 @@ public sealed class CommandLineOptionsTests
         Assert.True(options.AnalyzeCrash);
         Assert.Equal("1.21.4", options.Version);
     }
+
+    [Fact]
+    public void Parse_ReadsModManagementArguments()
+    {
+        var options = CommandLineOptions.Parse(
+            ["--install-mod", "--provider", "modrinth", "--project-id", "sodium", "--loader", "fabric"]);
+
+        Assert.True(options.InstallMod);
+        Assert.Equal("modrinth", options.Provider);
+        Assert.Equal("sodium", options.ProjectId);
+    }
 }
 

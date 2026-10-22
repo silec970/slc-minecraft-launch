@@ -19,5 +19,14 @@
   <sys:String x:Key="Crash.Category.Configuration.Suggestion">检查安装路径、文件权限和游戏文件占用情况。</sys:String>
   <sys:String x:Key="Crash.Category.Other.Title">检测到其他启动问题</sys:String>
   <sys:String x:Key="Crash.Category.Other.Suggestion">查看 crash-report 与 latest.log 的完整堆栈以进一步定位。</sys:String>
+  <sys:String x:Key="Mods.Installed">Mod 安装成功</sys:String>
+  <sys:String x:Key="Mods.Downloading">正在下载 Mod</sys:String>
+  <sys:String x:Key="Mods.Downloaded">Mod 下载完成</sys:String>
+  <sys:String x:Key="Mods.InvalidPackage">所选文件不是有效的 Mod JAR</sys:String>
+  <sys:String x:Key="Mods.NoCompatibleFile">没有找到兼容当前游戏版本和加载器的 Mod 文件</sys:String>
+  <sys:String x:Key="Mods.CurseForgeKeyMissing">未配置 CurseForge API Key，搜索结果仅包含 Modrinth</sys:String>
+  <sys:String x:Key="Mods.Conflict.Duplicate">检测到重复的 Mod ID</sys:String>
+  <sys:String x:Key="Mods.Conflict.MissingDependency">缺少必需的 Mod 依赖</sys:String>
+  <sys:String x:Key="Mods.Conflict.OptifineSodium">OptiFine 与 Sodium 可能不兼容，请只启用其中一个</sys:String>
 </ResourceDictionary>
 

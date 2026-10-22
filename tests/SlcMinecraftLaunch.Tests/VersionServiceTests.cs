@@ -134,6 +134,14 @@ public sealed class VersionServiceTests
             return Task.FromResult(new ResourceCompletionOutcome(true, "Download.Completed"));
         }
 
+        public Task<ResourceCompletionOutcome> DownloadModAsync(
+            ModDownloadRequest request,
+            IProgress<OperationProgress>? progress = null,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(new ResourceCompletionOutcome(true, "Mods.Downloaded"));
+        }
+
         public Task<SmokeLaunchOutcome> LaunchSmokeAsync(
             SmokeLaunchRequest request,
             IProgress<OperationProgress>? progress = null,

@@ -121,6 +121,28 @@ public sealed partial class ModsViewModel(
         }, cancellationToken);
     }
 
+    [RelayCommand(IncludeCancelCommand = true)]
+    private Task InstallConflictAsync(ModConflict? conflict, CancellationToken cancellationToken)
+    {
+        if (SelectedVersion is null || conflict is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        return RunAsync(async token =>
+        {
+            var result = await modService.InstallRecommendedDependencyAsync(
+                SelectedVersion,
+                SelectedLoaderKind,
+                conflict,
+                CreateProgress(),
+                token);
+            StatusKey = result.MessageKey;
+            ErrorDetail = result.ErrorDetail;
+            await RefreshInstalledCoreAsync(SelectedVersion, token);
+        }, cancellationToken);
+    }
+
     public async Task InstallDroppedFilesAsync(
         IReadOnlyList<string> paths,
         CancellationToken cancellationToken = default)

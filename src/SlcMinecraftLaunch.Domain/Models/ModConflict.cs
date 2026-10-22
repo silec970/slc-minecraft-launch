@@ -4,6 +4,9 @@ public enum ModConflictKind
 {
     DuplicateModId,
     MissingDependency,
+    IncompatibleDependencyVersion,
+    DiamondDependencyConflict,
+    LoaderMismatch,
     KnownIncompatibility
 }
 
@@ -12,7 +15,10 @@ public sealed record ModConflict(
     string MessageKey,
     string? FirstModId,
     string? SecondModId,
-    IReadOnlyList<string>? Files);
+    IReadOnlyList<string>? Files,
+    ModProvider? Provider = null,
+    string? ProjectId = null,
+    string? RequiredVersionId = null);
 
 public sealed record KnownModConflict(
     string FirstModId,

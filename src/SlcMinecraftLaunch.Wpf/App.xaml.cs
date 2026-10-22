@@ -158,6 +158,8 @@ public partial class App : System.Windows.Application
                     serviceProvider.GetRequiredService<ICurseForgeApiService>(),
                     !string.IsNullOrWhiteSpace(modApiOptions.CurseForgeApiKey)));
             services.AddSingleton<ILocalModStore, LocalModStore>();
+            services.AddSingleton<IModSourceStore>(
+                _ => new JsonModSourceStore(paths.DataRoot));
             services.AddSingleton<ModConflictAnalyzer>();
             services.AddSingleton<IModService, ModService>();
             services.AddSingleton<IPlayerProfileService, PlayerProfileService>();

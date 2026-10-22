@@ -140,6 +140,11 @@
   <sys:String x:Key="Mods.CurseForgeKeyMissing">No CurseForge API key is configured; only Modrinth results are available</sys:String>
   <sys:String x:Key="Mods.Conflict.Duplicate">Duplicate mod IDs were detected</sys:String>
   <sys:String x:Key="Mods.Conflict.MissingDependency">A required mod dependency is missing</sys:String>
+  <sys:String x:Key="Mods.Conflict.IncompatibleDependencyVersion">The installed dependency version does not satisfy the requirement</sys:String>
+  <sys:String x:Key="Mods.Conflict.DiamondDependency">Multiple mods require non-overlapping versions of the same dependency</sys:String>
+  <sys:String x:Key="Mods.Conflict.LoaderMismatch">The mod does not match the current loader</sys:String>
+  <sys:String x:Key="Mods.CannotResolveDependency">A compatible dependency source cannot be determined safely; install it manually</sys:String>
+  <sys:String x:Key="Mods.InstallDependency">Install recommended dependency</sys:String>
   <sys:String x:Key="Mods.Conflict.OptifineSodium">OptiFine and Sodium may be incompatible; enable only one</sys:String>
 </ResourceDictionary>
 

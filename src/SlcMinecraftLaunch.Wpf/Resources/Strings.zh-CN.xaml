@@ -140,6 +140,11 @@
   <sys:String x:Key="Mods.CurseForgeKeyMissing">未配置 CurseForge API Key，搜索结果仅包含 Modrinth</sys:String>
   <sys:String x:Key="Mods.Conflict.Duplicate">检测到重复的 Mod ID</sys:String>
   <sys:String x:Key="Mods.Conflict.MissingDependency">缺少必需的 Mod 依赖</sys:String>
+  <sys:String x:Key="Mods.Conflict.IncompatibleDependencyVersion">已安装依赖版本不满足要求</sys:String>
+  <sys:String x:Key="Mods.Conflict.DiamondDependency">多个 Mod 对同一依赖的版本范围无交集</sys:String>
+  <sys:String x:Key="Mods.Conflict.LoaderMismatch">Mod 与当前加载器不匹配</sys:String>
+  <sys:String x:Key="Mods.CannotResolveDependency">无法可靠确定兼容依赖来源，请手动安装</sys:String>
+  <sys:String x:Key="Mods.InstallDependency">安装推荐依赖</sys:String>
   <sys:String x:Key="Mods.Conflict.OptifineSodium">OptiFine 与 Sodium 可能不兼容，请只启用其中一个</sys:String>
 </ResourceDictionary>
 

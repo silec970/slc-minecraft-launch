@@ -12,14 +12,15 @@ public sealed class ViewModelContractTests
         PageViewModel[] pages =
         [
             new HomeViewModel(null!, null!, null!, null!),
-            new VersionsViewModel(null!),
+            new VersionsViewModel(null!, null!, null!),
             new DownloadLoaderViewModel(
                 null!,
                 null!,
                 null!,
                 null!,
                 null!,
-                new FakeDownloadTaskService()),
+                new FakeDownloadTaskService(),
+                null!),
             new JavaViewModel(null!),
             new ModsViewModel(null!, null!),
             new CrashViewModel(null!, null!),
@@ -42,14 +43,15 @@ public sealed class ViewModelContractTests
     public void Shell_ContainsOnePagePerWorkflowModule()
     {
         var home = new HomeViewModel(null!, null!, null!, null!);
-        var versions = new VersionsViewModel(null!);
+        var versions = new VersionsViewModel(null!, null!, null!);
         var download = new DownloadLoaderViewModel(
             null!,
             null!,
             null!,
             null!,
             null!,
-            new FakeDownloadTaskService());
+            new FakeDownloadTaskService(),
+            null!);
         var java = new JavaViewModel(null!);
         var mods = new ModsViewModel(null!, null!);
         var crash = new CrashViewModel(null!, null!);

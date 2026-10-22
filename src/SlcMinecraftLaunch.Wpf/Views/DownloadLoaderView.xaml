@@ -65,6 +65,8 @@
                     DisplayMemberPath="DisplayName" />
           <TextBox Text="{Binding JavaPath, UpdateSourceTrigger=PropertyChanged}"
                    ToolTip="{DynamicResource Download.JavaPathHint}" />
+          <TextBox Text="{Binding CustomVersionId, UpdateSourceTrigger=PropertyChanged}"
+                   ToolTip="{DynamicResource Download.CustomVersionIdHint}" />
           <WrapPanel>
             <Button Content="{DynamicResource Download.InstallLoader}"
                     Style="{StaticResource PrimaryButtonStyle}"

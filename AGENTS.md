@@ -189,6 +189,26 @@
   兼容 Java 选择或准备 → ResourceCompleter 补全 libraries/assets。
 - 原版安装服务不得调用冒烟测试入口，也不得自行解析版本继承链或下载资源。
 
+## 实例管理
+
+- 实例配置独立保存为版本目录内的 `instance.json`，不得回写或重新解释版本
+  JSON 的继承链。
+- 空实例只允许写入用户批准的最小占位 JSON：
+  `id`、`type: release`、`libraries: []`、`downloads: {}`。禁止伪造客户端、
+  库或 `inheritsFrom`，并必须标记为不可启动。
+- 实例启动设置包含 Java 建议、内存、JVM/游戏参数、窗口尺寸和全屏；正式启动
+  必须通过 `LaunchSettings` 与 `GameArguments` 应用这些值。
+- 复制实例必须创建新的 locator 版本目录并重写版本 JSON 的 `id`；不得覆盖
+  已存在目标。
+- 导出强制包含 Mod、来源元数据、加载器声明、`instance.json` 和 `config/`；
+  默认包含 options、资源包、光影、数据包、脚本和结构文件。
+- 导出默认排除存档、截图、`servers.dat`、日志、JRE 和启动器本体；存档、
+  截图、`servers.dat` 与日志可由用户显式选择。
+- 完整备份必须包含用户可选的存档、截图、服务器列表和日志。
+- 导入 ZIP 前必须校验安全路径、`instance.json` 与加载器声明，并确认当前
+  locator 已安装匹配的 Minecraft/加载器版本；目标 ID 冲突时必须拒绝覆盖。
+- 导入复制必须清理来源实例数据后再部署归档，失败时删除本次新建目标目录。
+
 ## WPF UI
 
 - 主导航与七个模块使用独立 View/ViewModel：Home、Versions、DownloadLoader、

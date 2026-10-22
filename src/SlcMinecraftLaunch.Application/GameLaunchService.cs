@@ -7,7 +7,8 @@ public sealed class GameLaunchService(
     IGameRuntimeProvider runtimeProvider,
     IJavaRuntimeService javaRuntimeService,
     IPlayerProfileService playerProfileService,
-    IVersionPreferencesStore preferencesStore) : IGameLaunchService
+    IVersionPreferencesStore preferencesStore,
+    IInstanceService instanceService) : IGameLaunchService
 {
     private readonly SemaphoreSlim _launchGate = new(1, 1);
 
@@ -40,6 +41,29 @@ public sealed class GameLaunchService(
                 return new GameLaunchOutcome(false, "Launch.VersionNotFound");
             }
 
+            var instance = await instanceService
+                .GetManifestAsync(version.Id, cancellationToken)
+                .ConfigureAwait(false);
+            if (instance?.IsPlaceholder == true)
+            {
+                return new GameLaunchOutcome(false, "Launch.InstancePlaceholder");
+            }
+
+            if (instance is not null &&
+                (!string.Equals(
+                    instance.MinecraftVersion,
+                    version.BaseVersion,
+                    StringComparison.OrdinalIgnoreCase) ||
+                 instance.LoaderKind != version.LoaderKind ||
+                 !string.Equals(
+                     instance.LoaderVersion,
+                     version.LoaderVersion,
+                     StringComparison.OrdinalIgnoreCase)))
+            {
+                return new GameLaunchOutcome(false, "Launch.InstanceMismatch");
+            }
+
+            var instanceSettings = instance?.LaunchSettings ?? new InstanceLaunchSettings();
             progress?.Report(new OperationProgress(
                 SmokeTestStage.DetectingJava,
                 "Launch.PreparingJava",
@@ -47,6 +71,7 @@ public sealed class GameLaunchService(
             var java = await javaRuntimeService.EnsureAsync(
                 version.Id,
                 version.LoaderKind,
+                explicitJavaPath: instanceSettings.JavaExecutablePath,
                 progress: progress,
                 cancellationToken: cancellationToken).ConfigureAwait(false);
             if (java.Selected is null)
@@ -88,7 +113,8 @@ public sealed class GameLaunchService(
                     version.Id,
                     playerName,
                     java.Selected.ExecutablePath,
-                    isolation),
+                    isolation,
+                    instanceSettings),
                 progress,
                 cancellationToken).ConfigureAwait(false);
         }

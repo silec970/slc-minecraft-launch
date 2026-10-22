@@ -15,6 +15,7 @@ public sealed partial class DownloadLoaderViewModel : PageViewModel
     private readonly IVanillaVersionCatalogService _vanillaVersionCatalog;
     private readonly IVanillaInstallationService _vanillaInstallation;
     private readonly IDownloadTaskService _downloadTaskService;
+    private readonly IInstanceService _instanceService;
     private IReadOnlyList<MinecraftReleaseDescriptor> _allCatalogVersions =
         Array.Empty<MinecraftReleaseDescriptor>();
 
@@ -24,7 +25,8 @@ public sealed partial class DownloadLoaderViewModel : PageViewModel
         IJavaRuntimeService javaRuntimeService,
         IVanillaVersionCatalogService vanillaVersionCatalog,
         IVanillaInstallationService vanillaInstallation,
-        IDownloadTaskService downloadTaskService)
+        IDownloadTaskService downloadTaskService,
+        IInstanceService instanceService)
     {
         ArgumentNullException.ThrowIfNull(downloadTaskService);
         _loaderCatalog = loaderCatalog;
@@ -33,6 +35,7 @@ public sealed partial class DownloadLoaderViewModel : PageViewModel
         _vanillaVersionCatalog = vanillaVersionCatalog;
         _vanillaInstallation = vanillaInstallation;
         _downloadTaskService = downloadTaskService;
+        _instanceService = instanceService;
         _downloadTaskService.TaskChanged += OnTaskChanged;
     }
 
@@ -62,6 +65,9 @@ public sealed partial class DownloadLoaderViewModel : PageViewModel
 
     [ObservableProperty]
     private string? _javaPath;
+
+    [ObservableProperty]
+    private string? _customVersionId;
 
     [ObservableProperty]
     private string? _installedVersionId;
@@ -189,13 +195,18 @@ public sealed partial class DownloadLoaderViewModel : PageViewModel
                     SelectedMinecraftVersion,
                     SelectedLoaderKind,
                     SelectedLoaderVersion?.Version,
-                    JavaPath),
+                    JavaPath,
+                    string.IsNullOrWhiteSpace(CustomVersionId) ? null : CustomVersionId.Trim()),
                 CreateProgress(),
                 token);
             InstalledVersionId = result.InstalledVersionId;
             CanCompleteResources = result.Succeeded;
             StatusKey = result.MessageKey;
             ErrorDetail = result.ErrorDetail;
+            if (result.Succeeded && !string.IsNullOrWhiteSpace(result.InstalledVersionId))
+            {
+                await MarkInstanceReadyAsync(result.InstalledVersionId, token);
+            }
         }, cancellationToken);
     }
 
@@ -373,5 +384,35 @@ public sealed partial class DownloadLoaderViewModel : PageViewModel
                                     string.Equals(version.Id, selectedId, StringComparison.OrdinalIgnoreCase))
                                 ?? CatalogVersions.FirstOrDefault(version => version.IsLatestRelease)
                                 ?? CatalogVersions.FirstOrDefault();
+    }
+
+    private async Task MarkInstanceReadyAsync(
+        string installedVersionId,
+        CancellationToken cancellationToken)
+    {
+        var manifest = await _instanceService
+            .GetManifestAsync(installedVersionId, cancellationToken);
+        if (manifest is null)
+        {
+            return;
+        }
+
+        var installed = (await _instanceService.GetInstancesAsync(cancellationToken))
+            .FirstOrDefault(instance =>
+                string.Equals(instance.Id, installedVersionId, StringComparison.OrdinalIgnoreCase));
+        if (installed is null)
+        {
+            return;
+        }
+
+        await _instanceService.SaveAsync(
+            manifest with
+            {
+                MinecraftVersion = installed.MinecraftVersion,
+                LoaderKind = installed.LoaderKind,
+                LoaderVersion = installed.LoaderVersion,
+                IsPlaceholder = false
+            },
+            cancellationToken);
     }
 }

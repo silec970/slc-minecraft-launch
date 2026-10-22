@@ -14,7 +14,8 @@ public sealed class GameLaunchServiceTests
             new FakeRuntimeProvider(runtime),
             new FakeJavaService(),
             new FakePlayerProfileService(),
-            new FakePreferencesStore());
+            new FakePreferencesStore(),
+            new FakeInstanceService());
 
         var result = await service.LaunchAsync("1.21.4-fabric-0.16.9");
 
@@ -22,6 +23,8 @@ public sealed class GameLaunchServiceTests
         Assert.Equal("离线玩家", runtime.LastLaunch?.PlayerName);
         Assert.Equal("1.21.4-fabric-0.16.9", runtime.LastLaunch?.VersionId);
         Assert.True(runtime.LastLaunch?.VersionIsolation);
+        Assert.Equal(2048, runtime.LastLaunch?.InstanceSettings?.MinMemoryMb);
+        Assert.Equal(6144, runtime.LastLaunch?.InstanceSettings?.MaxMemoryMb);
     }
 
     private sealed class FakeRuntime : IGameRuntime
@@ -141,6 +144,51 @@ public sealed class GameLaunchServiceTests
             IReadOnlyDictionary<string, VersionPreference> preferences,
             CancellationToken cancellationToken = default)
             => Task.CompletedTask;
+    }
+
+    private sealed class FakeInstanceService : IInstanceService
+    {
+        private readonly InstanceManifest _manifest = new(
+            "1.21.4-fabric-0.16.9",
+            "Fabric Test",
+            "1.21.4",
+            LoaderKind.Fabric,
+            "0.16.9",
+            new InstanceLaunchSettings(2048, 6144),
+            false,
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow);
+
+        public Task<IReadOnlyList<GameInstance>> GetInstancesAsync(
+            CancellationToken cancellationToken = default)
+            => Task.FromResult<IReadOnlyList<GameInstance>>([]);
+
+        public Task<InstanceManifest?> GetManifestAsync(
+            string instanceId,
+            CancellationToken cancellationToken = default)
+            => Task.FromResult<InstanceManifest?>(_manifest);
+
+        public Task<InstanceOperationOutcome> CreateEmptyAsync(
+            NewInstanceRequest request,
+            CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
+
+        public Task<InstanceOperationOutcome> SaveAsync(
+            InstanceManifest manifest,
+            CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
+
+        public Task<InstanceOperationOutcome> DeleteAsync(
+            string instanceId,
+            CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
+
+        public Task<InstanceOperationOutcome> CopyAsync(
+            string sourceInstanceId,
+            string targetInstanceId,
+            string targetName,
+            CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
     }
 }
 

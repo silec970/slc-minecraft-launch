@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Downloading;
 using ProjBobcat.Class.Helper;
+using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.Class.Model.YggdrasilAuth;
 using ProjBobcat.DefaultComponent;
 using ProjBobcat.DefaultComponent.Authenticator;
@@ -565,13 +566,24 @@ public sealed class ProjBobcatGameRuntime : IGameRuntime
                 authResult.Error?.ErrorMessage);
         }
 
+        var instanceSettings = request.InstanceSettings ?? new InstanceLaunchSettings();
         var gameArguments = new GameArguments
         {
             Java = javaInfo,
-            MinMemory = 1024,
-            MaxMemory = 4096,
+            MinMemory = (uint)Math.Max(512, instanceSettings.MinMemoryMb),
+            MaxMemory = (uint)Math.Max(instanceSettings.MinMemoryMb, instanceSettings.MaxMemoryMb),
             GcType = GcType.G1Gc,
-            Resolution = null
+            Resolution = new ResolutionModel
+            {
+                Width = (uint)Math.Max(320, instanceSettings.WindowWidth),
+                Height = (uint)Math.Max(240, instanceSettings.WindowHeight),
+                FullScreen = instanceSettings.Fullscreen
+            },
+            AdditionalJvmArguments = instanceSettings.JvmArguments ?? [],
+            AdvanceArguments = string.Join(
+                ' ',
+                (instanceSettings.GameArguments ?? [])
+                    .Select(QuoteLaunchArgument))
         };
         var launchSettings = new LaunchSettings
         {
@@ -741,6 +753,13 @@ public sealed class ProjBobcatGameRuntime : IGameRuntime
         return Uri.TryCreate(sourceUrl, UriKind.Absolute, out var uri)
             ? uri.GetLeftPart(UriPartial.Authority) + "/"
             : null;
+    }
+
+    private static string QuoteLaunchArgument(string argument)
+    {
+        return argument.Any(char.IsWhiteSpace) && !argument.StartsWith('"')
+            ? $"\"{argument.Replace("\"", "\\\"", StringComparison.Ordinal)}\""
+            : argument;
     }
 
     private static bool IsPathWithin(string directory, string fileName)

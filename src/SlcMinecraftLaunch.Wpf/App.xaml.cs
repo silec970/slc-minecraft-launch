@@ -14,6 +14,7 @@ using SlcMinecraftLaunch.Domain.Models;
 using SlcMinecraftLaunch.Infrastructure.Configuration;
 using SlcMinecraftLaunch.Infrastructure.Crash;
 using SlcMinecraftLaunch.Infrastructure.Java;
+using SlcMinecraftLaunch.Infrastructure.Instances;
 using SlcMinecraftLaunch.Infrastructure.Loaders;
 using SlcMinecraftLaunch.Infrastructure.Mojang;
 using SlcMinecraftLaunch.Infrastructure.Mods;
@@ -143,6 +144,9 @@ public partial class App : System.Windows.Application
             services.AddSingleton<IVanillaInstallationService, VanillaInstallationService>();
             services.AddSingleton<ISmokeTestService, SmokeTestService>();
             services.AddSingleton<IVersionService, VersionService>();
+            services.AddSingleton<IInstanceStorage, LocalInstanceStorage>();
+            services.AddSingleton<IInstanceService, InstanceService>();
+            services.AddSingleton<IInstanceTransferService, InstanceTransferService>();
             services.AddSingleton<ICrashAnalysisBackend, ProjBobcatCrashAnalysisBackend>();
             services.AddSingleton<ICrashReportStore>(
                 _ => new JsonCrashReportStore(paths.DataRoot));

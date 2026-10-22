@@ -1,9 +1,15 @@
+using System.IO;
 using System.Net;
+using System.Net.Http;
+using System.Text.Json;
 using System.Windows;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SlcMinecraftLaunch.Application;
+using SlcMinecraftLaunch.Domain.Abstractions;
+using SlcMinecraftLaunch.Domain.Models;
 using SlcMinecraftLaunch.Infrastructure.Configuration;
+using SlcMinecraftLaunch.Infrastructure.Mojang;
 using SlcMinecraftLaunch.Infrastructure.ProjBobcat;
 using SlcMinecraftLaunch.Wpf.ViewModels;
 
@@ -12,7 +18,6 @@ namespace SlcMinecraftLaunch.Wpf;
 public partial class App : System.Windows.Application
 {
     private ServiceProvider? _services;
-    private ProjBobcatGameRuntime? _gameRuntime;
 
     protected override async void OnStartup(StartupEventArgs e)
     {
@@ -32,19 +37,50 @@ public partial class App : System.Windows.Application
                 .AddEnvironmentVariables("SLC_")
                 .Build();
 
+            var commandLine = CommandLineOptions.Parse(e.Args);
             var paths = PortableLauncherPaths.Resolve(
-                configuration["Game:RootDirectory"],
+                commandLine.GameRoot ?? configuration["Game:RootDirectory"],
                 AppContext.BaseDirectory);
-
-            _gameRuntime = await ProjBobcatGameRuntime.CreateAsync(paths);
+            var manifestUrl = configuration["Mojang:VersionManifestUrl"]
+                              ?? throw new InvalidOperationException(
+                                  "Mojang:VersionManifestUrl is not configured.");
 
             var services = new ServiceCollection();
-            services.AddSingleton(_gameRuntime);
+            services.AddHttpClient();
+            services.AddSingleton(paths);
+            services.AddSingleton<IJavaDiscovery, ProjBobcatJavaDiscovery>();
+            services.AddSingleton<IGameRuntimeProvider, ProjBobcatRuntimeProvider>();
+            services.AddSingleton<IGameVersionMaterializer>(serviceProvider =>
+                new MojangVersionMaterializer(
+                    serviceProvider.GetRequiredService<IHttpClientFactory>(),
+                    manifestUrl));
+            services.AddSingleton<JavaSelectionPolicy>();
+            services.AddSingleton<ISmokeTestService, SmokeTestService>();
             services.AddSingleton<LaunchApplicationService>();
             services.AddSingleton<ShellViewModel>();
 
             _services = services.BuildServiceProvider();
 
+            if (commandLine.SmokeTest)
+            {
+                ShutdownMode = ShutdownMode.OnExplicitShutdown;
+
+                var targetVersion = commandLine.Version
+                                    ?? configuration["SmokeTest:TargetVersion"]
+                                    ?? "1.21.4";
+                var smokeService = _services.GetRequiredService<ISmokeTestService>();
+                var result = await smokeService.RunAsync(
+                    new SmokeTestRequest(
+                        paths.GameRoot,
+                        targetVersion,
+                        commandLine.JavaPath));
+
+                await WriteSmokeResultAsync(paths.DataRoot, result).ConfigureAwait(true);
+                Shutdown(result.Succeeded ? 0 : 1);
+                return;
+            }
+
+            ShutdownMode = ShutdownMode.OnMainWindowClose;
             var viewModel = _services.GetRequiredService<ShellViewModel>();
             await viewModel.RefreshAsync();
 
@@ -73,12 +109,36 @@ public partial class App : System.Windows.Application
         {
             await _services.DisposeAsync();
         }
-        else if (_gameRuntime is not null)
-        {
-            await _gameRuntime.DisposeAsync();
-        }
 
         base.OnExit(e);
     }
-}
 
+    private static async Task WriteSmokeResultAsync(string dataRoot, SmokeTestResult result)
+    {
+        Directory.CreateDirectory(dataRoot);
+        var outputPath = Path.Combine(dataRoot, "smoke-result.json");
+        var temporaryPath = $"{outputPath}.{Guid.NewGuid():N}.tmp";
+
+        await using (var output = File.Create(temporaryPath))
+        {
+            await JsonSerializer.SerializeAsync(
+                output,
+                new
+                {
+                    result.Succeeded,
+                    result.TargetVersion,
+                    result.FinalStage,
+                    result.MessageKey,
+                    result.Duration,
+                    result.ExitCode,
+                    result.Warnings,
+                    result.ErrorDetail,
+                    ProgressCount = result.Progress.Count,
+                    LastProgress = result.Progress.LastOrDefault()
+                },
+                new JsonSerializerOptions { WriteIndented = true });
+        }
+
+        File.Move(temporaryPath, outputPath, true);
+    }
+}

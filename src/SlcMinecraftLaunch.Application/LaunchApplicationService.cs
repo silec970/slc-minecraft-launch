@@ -3,11 +3,12 @@ using SlcMinecraftLaunch.Domain.Models;
 
 namespace SlcMinecraftLaunch.Application;
 
-public sealed class LaunchApplicationService(IGameRuntime gameRuntime)
+public sealed class LaunchApplicationService(IGameRuntimeProvider runtimeProvider)
 {
-    public Task<GameRuntimeSnapshot> GetSnapshotAsync(CancellationToken cancellationToken = default)
+    public async Task<GameRuntimeSnapshot> GetSnapshotAsync(CancellationToken cancellationToken = default)
     {
-        return gameRuntime.GetSnapshotAsync(cancellationToken);
+        var runtime = await runtimeProvider.GetAsync(cancellationToken).ConfigureAwait(false);
+        return await runtime.GetSnapshotAsync(cancellationToken).ConfigureAwait(false);
     }
 }
 

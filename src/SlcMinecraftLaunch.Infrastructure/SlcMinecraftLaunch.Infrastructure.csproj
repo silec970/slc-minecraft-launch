@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SlcMinecraftLaunch.Domain\SlcMinecraftLaunch.Domain.csproj" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.13" />
     <PackageReference Include="ProjBobcat" Version="2.1.2" />
   </ItemGroup>
 

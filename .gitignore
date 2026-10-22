@@ -23,6 +23,7 @@ secrets.json
 .minecraft/
 launcher_profiles.json
 launcher_accounts.json
+launcher-data/
 runtimes/
 crash-reports/
 logs/

@@ -175,4 +175,7 @@
 - 预期体积约为 70–100 MB；压缩后具体大小会随 SDK 和依赖变化。
 - `publish/` 为本地分发产物，不提交到 Git。
 - 当前缺少 `Assets\launcher.ico`，`ApplicationIcon` 暂时注释，属于待补充图标。
+- 所有强制配置键必须由 `LauncherEndpointDefaults` 提供代码默认值。
+  配置覆盖顺序固定为：代码默认值 → 可选 `appsettings.json` → `SLC_` 环境变量。
+- 发布验收必须仅复制 EXE 到空目录并成功进入主页，不能依赖同目录配置文件。
 

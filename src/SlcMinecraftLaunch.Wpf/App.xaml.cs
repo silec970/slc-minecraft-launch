@@ -42,6 +42,7 @@ public partial class App : System.Windows.Application
         {
             var configuration = new ConfigurationBuilder()
                 .SetBasePath(AppContext.BaseDirectory)
+                .AddInMemoryCollection(LauncherEndpointDefaults.Configuration)
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: false)
                 .AddEnvironmentVariables("SLC_")
                 .Build();
@@ -50,31 +51,19 @@ public partial class App : System.Windows.Application
             var paths = PortableLauncherPaths.Resolve(
                 commandLine.GameRoot ?? configuration["Game:RootDirectory"],
                 AppContext.BaseDirectory);
-            var manifestUrl = configuration["Mojang:VersionManifestUrl"]
-                              ?? throw new InvalidOperationException(
-                                  "Mojang:VersionManifestUrl is not configured.");
+            var manifestUrl = GetRequiredSetting(configuration, "Mojang:VersionManifestUrl");
             var javaSourceOptions = new JavaSourceOptions(
-                configuration["JavaSources:MojangRuntimeManifestUrl"]
-                ?? throw new InvalidOperationException("JavaSources:MojangRuntimeManifestUrl is not configured."),
-                configuration["JavaSources:AdoptiumAssetsUrlTemplate"]
-                ?? throw new InvalidOperationException("JavaSources:AdoptiumAssetsUrlTemplate is not configured."));
+                GetRequiredSetting(configuration, "JavaSources:MojangRuntimeManifestUrl"),
+                GetRequiredSetting(configuration, "JavaSources:AdoptiumAssetsUrlTemplate"));
             var loaderSourceOptions = new LoaderSourceOptions(
-                configuration["Loaders:FabricVersionsUrlTemplate"]
-                ?? throw new InvalidOperationException("Loaders:FabricVersionsUrlTemplate is not configured."),
-                configuration["Loaders:FabricArtifactUrlTemplate"]
-                ?? throw new InvalidOperationException("Loaders:FabricArtifactUrlTemplate is not configured."),
-                configuration["Loaders:ForgeMetadataUrl"]
-                ?? throw new InvalidOperationException("Loaders:ForgeMetadataUrl is not configured."),
-                configuration["Loaders:ForgeDownloadUrlTemplate"]
-                ?? throw new InvalidOperationException("Loaders:ForgeDownloadUrlTemplate is not configured."),
-                configuration["Loaders:NeoForgeMetadataUrl"]
-                ?? throw new InvalidOperationException("Loaders:NeoForgeMetadataUrl is not configured."),
-                configuration["Loaders:NeoForgeDownloadUrlTemplate"]
-                ?? throw new InvalidOperationException("Loaders:NeoForgeDownloadUrlTemplate is not configured."),
-                configuration["Loaders:OptiFineListUrlTemplate"]
-                ?? throw new InvalidOperationException("Loaders:OptiFineListUrlTemplate is not configured."),
-                configuration["Loaders:OptiFineDownloadUrlTemplate"]
-                ?? throw new InvalidOperationException("Loaders:OptiFineDownloadUrlTemplate is not configured."));
+                GetRequiredSetting(configuration, "Loaders:FabricVersionsUrlTemplate"),
+                GetRequiredSetting(configuration, "Loaders:FabricArtifactUrlTemplate"),
+                GetRequiredSetting(configuration, "Loaders:ForgeMetadataUrl"),
+                GetRequiredSetting(configuration, "Loaders:ForgeDownloadUrlTemplate"),
+                GetRequiredSetting(configuration, "Loaders:NeoForgeMetadataUrl"),
+                GetRequiredSetting(configuration, "Loaders:NeoForgeDownloadUrlTemplate"),
+                GetRequiredSetting(configuration, "Loaders:OptiFineListUrlTemplate"),
+                GetRequiredSetting(configuration, "Loaders:OptiFineDownloadUrlTemplate"));
             var downloadSourceOptions = new DownloadSourceOptions(
                 GetConfiguredList(configuration, "DownloadSources:VersionMetadata"),
                 GetConfiguredList(configuration, "DownloadSources:AssetIndex"),
@@ -85,10 +74,8 @@ public partial class App : System.Windows.Application
                 GetConfiguredList(configuration, "DownloadSources:FabricMaven"),
                 GetConfiguredList(configuration, "DownloadSources:QuiltMaven"));
             var modApiOptions = new ModApiOptions(
-                configuration["ModApis:ModrinthBaseUrl"]
-                ?? throw new InvalidOperationException("ModApis:ModrinthBaseUrl is not configured."),
-                configuration["ModApis:CurseForgeBaseUrl"]
-                ?? throw new InvalidOperationException("ModApis:CurseForgeBaseUrl is not configured."),
+                GetRequiredSetting(configuration, "ModApis:ModrinthBaseUrl"),
+                GetRequiredSetting(configuration, "ModApis:CurseForgeBaseUrl"),
                 Environment.GetEnvironmentVariable("CURSEFORGE_API_KEY"));
 
             var services = new ServiceCollection();
@@ -462,12 +449,27 @@ public partial class App : System.Windows.Application
         IConfiguration configuration,
         string sectionPath)
     {
-        return configuration.GetSection(sectionPath)
+        var values = configuration.GetSection(sectionPath)
             .GetChildren()
             .Select(child => child.Value)
             .OfType<string>()
             .Where(value => !string.IsNullOrWhiteSpace(value))
             .ToArray();
+        return values.Length == 0
+            ? LauncherEndpointDefaults.GetDefaultList(sectionPath)
+            : values;
+    }
+
+    private static string GetRequiredSetting(IConfiguration configuration, string key)
+    {
+        var configured = configuration[key];
+        if (!string.IsNullOrWhiteSpace(configured))
+        {
+            return configured;
+        }
+
+        return LauncherEndpointDefaults.Configuration.GetValueOrDefault(key)
+               ?? throw new InvalidOperationException($"{key} is not configured.");
     }
 
     private static async Task WriteCrashReportAsync(

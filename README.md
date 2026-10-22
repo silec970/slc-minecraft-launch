@@ -15,6 +15,8 @@ dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=
 ```
 
 发布产物位于 `./publish`，目标为可直接运行的 Windows x64 自包含 EXE。
+所有官方端点均内置为代码默认值，因此仅复制 EXE 也能启动；外部
+`appsettings.json` 只用于覆盖默认配置。
 
 ## 待补充图标
 

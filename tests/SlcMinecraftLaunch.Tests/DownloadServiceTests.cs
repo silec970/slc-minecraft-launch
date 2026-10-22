@@ -67,6 +67,12 @@ public sealed class DownloadServiceTests
             CancellationToken cancellationToken = default)
             => Task.FromResult(new ResourceCompletionOutcome(true, "Mods.Downloaded"));
 
+        public Task<GameLaunchOutcome> LaunchOfflineAsync(
+            GameLaunchRequest request,
+            IProgress<OperationProgress>? progress = null,
+            CancellationToken cancellationToken = default)
+            => Task.FromResult(new GameLaunchOutcome(true, "Launch.Started"));
+
         public Task<SmokeLaunchOutcome> LaunchSmokeAsync(
             SmokeLaunchRequest request,
             IProgress<OperationProgress>? progress = null,

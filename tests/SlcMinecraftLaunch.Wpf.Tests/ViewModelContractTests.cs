@@ -11,13 +11,13 @@ public sealed class ViewModelContractTests
     {
         PageViewModel[] pages =
         [
-            new HomeViewModel(null!, null!),
+            new HomeViewModel(null!, null!, null!, null!),
             new VersionsViewModel(null!),
             new DownloadLoaderViewModel(null!, null!, null!, null!, null!),
             new JavaViewModel(null!, null!),
             new ModsViewModel(null!, null!),
             new CrashViewModel(null!, null!),
-            new SettingsViewModel(new FakeSettingsService(), new FakeUiPreferences())
+            new SettingsViewModel(new FakeSettingsService(), new FakeUiPreferences(), new FakePlayerProfileService())
         ];
 
         Assert.All(pages, page =>
@@ -31,13 +31,16 @@ public sealed class ViewModelContractTests
     [Fact]
     public void Shell_ContainsOnePagePerWorkflowModule()
     {
-        var home = new HomeViewModel(null!, null!);
+        var home = new HomeViewModel(null!, null!, null!, null!);
         var versions = new VersionsViewModel(null!);
         var download = new DownloadLoaderViewModel(null!, null!, null!, null!, null!);
         var java = new JavaViewModel(null!, null!);
         var mods = new ModsViewModel(null!, null!);
         var crash = new CrashViewModel(null!, null!);
-        var settings = new SettingsViewModel(new FakeSettingsService(), new FakeUiPreferences());
+        var settings = new SettingsViewModel(
+            new FakeSettingsService(),
+            new FakeUiPreferences(),
+            new FakePlayerProfileService());
         var preferences = new FakeUiPreferences();
 
         var shell = new ShellViewModel(home, versions, download, java, mods, crash, settings, preferences);
@@ -53,13 +56,15 @@ public sealed class ViewModelContractTests
     {
         var settingsService = new FakeSettingsService();
         var preferences = new FakeUiPreferences();
-        var viewModel = new SettingsViewModel(settingsService, preferences)
+        var playerProfile = new FakePlayerProfileService();
+        var viewModel = new SettingsViewModel(settingsService, preferences, playerProfile)
         {
             IsDarkTheme = true,
             AnimationsEnabled = false,
             BackgroundEnabled = false,
             MusicEnabled = true,
             MusicVolume = 0.3,
+            PlayerName = "OfflinePlayer",
             SelectedLanguage = new LanguageOption("en-US", "Settings.LanguageEnglish")
         };
 
@@ -69,6 +74,22 @@ public sealed class ViewModelContractTests
         Assert.Equal("en-US", settingsService.Saved?.Language);
         Assert.False(preferences.Current.AnimationsEnabled);
         Assert.True(preferences.Current.MusicEnabled);
+        Assert.Equal("OfflinePlayer", playerProfile.SavedPlayerName);
+    }
+
+    [Fact]
+    public void Home_EnablesLaunchOnlyWithVersionAndPlayerName()
+    {
+        var viewModel = new HomeViewModel(null!, null!, null!, null!)
+        {
+            SelectedVersion = "1.21.4"
+        };
+
+        Assert.False(viewModel.CanLaunch);
+
+        viewModel.PlayerName = "OfflinePlayer";
+
+        Assert.True(viewModel.CanLaunch);
     }
 
     private sealed class FakeSettingsService : ISettingsService
@@ -98,6 +119,25 @@ public sealed class ViewModelContractTests
         {
             Current = settings;
             return Task.CompletedTask;
+        }
+    }
+
+    private sealed class FakePlayerProfileService : IPlayerProfileService
+    {
+        public string? SavedPlayerName { get; private set; }
+
+        public Task<string> GetPlayerNameAsync(CancellationToken cancellationToken = default)
+            => Task.FromResult(string.Empty);
+
+        public Task<PlayerProfileSaveResult> SavePlayerNameAsync(
+            string playerName,
+            CancellationToken cancellationToken = default)
+        {
+            SavedPlayerName = playerName;
+            return Task.FromResult(new PlayerProfileSaveResult(
+                true,
+                "Settings.PlayerNameSaved",
+                playerName));
         }
     }
 }

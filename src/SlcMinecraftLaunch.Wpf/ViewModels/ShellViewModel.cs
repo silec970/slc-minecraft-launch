@@ -49,6 +49,23 @@ public sealed partial class ShellViewModel : ObservableObject
             return;
         }
 
+        await NavigateToAsync(item, cancellationToken).ConfigureAwait(true);
+    }
+
+    [RelayCommand(IncludeCancelCommand = true)]
+    private Task OpenSettingsAsync(CancellationToken cancellationToken)
+    {
+        var settingsItem = NavigationItems.FirstOrDefault(item =>
+            item.LabelKey == "Navigation.Settings");
+        return settingsItem is null
+            ? Task.CompletedTask
+            : NavigateToAsync(settingsItem, cancellationToken);
+    }
+
+    private async Task NavigateToAsync(
+        NavigationItem item,
+        CancellationToken cancellationToken)
+    {
         SelectedNavigation = item;
         CurrentPage = item.Page;
         await CurrentPage.RefreshAsync(cancellationToken);

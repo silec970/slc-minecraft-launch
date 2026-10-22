@@ -7,7 +7,8 @@ namespace SlcMinecraftLaunch.Wpf.ViewModels;
 
 public sealed partial class SettingsViewModel(
     ISettingsService settingsService,
-    IUiPreferences uiPreferences) : PageViewModel
+    IUiPreferences uiPreferences,
+    IPlayerProfileService playerProfileService) : PageViewModel
 {
     public override string TitleKey => "Settings.Title";
     public override string DescriptionKey => "Settings.Description";
@@ -45,11 +46,23 @@ public sealed partial class SettingsViewModel(
     [ObservableProperty]
     private double _musicVolume = 0.45;
 
+    [ObservableProperty]
+    private string _playerName = string.Empty;
+
     [RelayCommand(IncludeCancelCommand = true)]
     private Task SaveAsync(CancellationToken cancellationToken)
     {
         return RunAsync(async token =>
         {
+            var playerResult = await playerProfileService
+                .SavePlayerNameAsync(PlayerName, token);
+            if (!playerResult.Succeeded)
+            {
+                StatusKey = playerResult.MessageKey;
+                return;
+            }
+
+            PlayerName = playerResult.PlayerName;
             var settings = new UiSettings(
                 IsDarkTheme ? UiTheme.Dark : UiTheme.Light,
                 SelectedLanguage?.Code ?? "zh-CN",
@@ -70,6 +83,7 @@ public sealed partial class SettingsViewModel(
         DataRoot = snapshot.DataRoot;
         LauncherVersion = snapshot.Version;
         var settings = await settingsService.LoadUiSettingsAsync(cancellationToken);
+        PlayerName = await playerProfileService.GetPlayerNameAsync(cancellationToken);
         IsDarkTheme = settings.Theme == UiTheme.Dark;
         AnimationsEnabled = settings.AnimationsEnabled;
         BackgroundEnabled = settings.BackgroundEnabled;

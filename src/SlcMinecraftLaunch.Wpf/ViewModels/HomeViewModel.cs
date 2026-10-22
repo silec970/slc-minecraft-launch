@@ -1,3 +1,5 @@
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SlcMinecraftLaunch.Application;
@@ -7,10 +9,14 @@ namespace SlcMinecraftLaunch.Wpf.ViewModels;
 
 public sealed partial class HomeViewModel(
     LaunchApplicationService launchApplicationService,
-    IVersionService versionService) : PageViewModel
+    IVersionService versionService,
+    IPlayerProfileService playerProfileService,
+    IGameLaunchService gameLaunchService) : PageViewModel
 {
     public override string TitleKey => "Home.Title";
     public override string DescriptionKey => "Home.Description";
+
+    public ObservableCollection<string> InstalledVersions { get; } = [];
 
     [ObservableProperty]
     private string _rootPath = string.Empty;
@@ -19,7 +25,33 @@ public sealed partial class HomeViewModel(
     private int _installedVersionCount;
 
     [ObservableProperty]
-    private string _primaryVersion = string.Empty;
+    private string? _selectedVersion;
+
+    [ObservableProperty]
+    private string _playerName = string.Empty;
+
+    public bool CanLaunch => !string.IsNullOrWhiteSpace(SelectedVersion) &&
+                             !string.IsNullOrWhiteSpace(PlayerName) &&
+                             !IsBusy;
+
+    partial void OnSelectedVersionChanged(string? value)
+    {
+        OnPropertyChanged(nameof(CanLaunch));
+    }
+
+    partial void OnPlayerNameChanged(string value)
+    {
+        OnPropertyChanged(nameof(CanLaunch));
+    }
+
+    protected override void OnPropertyChanged(PropertyChangedEventArgs e)
+    {
+        base.OnPropertyChanged(e);
+        if (e.PropertyName == nameof(IsBusy))
+        {
+            OnPropertyChanged(nameof(CanLaunch));
+        }
+    }
 
     [RelayCommand(IncludeCancelCommand = true)]
     private Task LoadAsync(CancellationToken cancellationToken)
@@ -28,9 +60,40 @@ public sealed partial class HomeViewModel(
         {
             var snapshot = await launchApplicationService.GetSnapshotAsync(token);
             var catalog = await versionService.GetCatalogAsync(token);
+            PlayerName = await playerProfileService.GetPlayerNameAsync(token);
             RootPath = snapshot.RootPath;
             InstalledVersionCount = snapshot.VersionIds.Count;
-            PrimaryVersion = catalog.AllVersions.FirstOrDefault()?.Version.Id ?? string.Empty;
+            InstalledVersions.Clear();
+            foreach (var version in catalog.AllVersions.Select(entry => entry.Version.Id))
+            {
+                InstalledVersions.Add(version);
+            }
+
+            SelectedVersion = InstalledVersions.FirstOrDefault();
+        }, cancellationToken);
+    }
+
+    [RelayCommand(IncludeCancelCommand = true)]
+    private Task LaunchAsync(CancellationToken cancellationToken)
+    {
+        return RunAsync(async token =>
+        {
+            if (string.IsNullOrWhiteSpace(SelectedVersion))
+            {
+                throw new UiOperationException("Launch.VersionRequired");
+            }
+
+            if (string.IsNullOrWhiteSpace(PlayerName))
+            {
+                throw new UiOperationException("Launch.PlayerNameRequired");
+            }
+
+            var result = await gameLaunchService.LaunchAsync(
+                SelectedVersion,
+                CreateProgress(),
+                token);
+            StatusKey = result.MessageKey;
+            ErrorDetail = result.ErrorDetail;
         }, cancellationToken);
     }
 
@@ -39,4 +102,3 @@ public sealed partial class HomeViewModel(
         return LoadAsync(cancellationToken);
     }
 }
-

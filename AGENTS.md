@@ -121,6 +121,18 @@
 - ViewModel 不得硬编码中文文案，状态和错误通过资源键暴露。
 - 默认语言为简体中文，同时保留 en-US 资源结构。
 
+## 离线模式与玩家名
+
+- 本项目仅提供离线认证，这是产品决策，不是缺失功能。
+- 不实现微软登录、设备代码流、账户切换、退出登录、令牌刷新或 Azure
+  Client ID。
+- 离线玩家名是唯一身份配置，保存在 `launcher-data/player-profile.json`。
+  玩家名为空时禁止启动；保存前去除首尾空白，限制为 1–16 个 Unicode
+  字符并拒绝控制字符。
+- 离线 UUID 由玩家名决定，界面必须提示修改玩家名会影响存档归属与皮肤引用。
+- 离线账户只保存在内存账户解析器中，启动器不得创建带 AccessToken 的
+  `launcher_accounts.json`；发现旧文件时应移除其中的令牌字段。
+
 ## WPF UI
 
 - 主导航与七个模块使用独立 View/ViewModel：Home、Versions、DownloadLoader、

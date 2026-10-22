@@ -142,6 +142,14 @@ public sealed class VersionServiceTests
             return Task.FromResult(new ResourceCompletionOutcome(true, "Mods.Downloaded"));
         }
 
+        public Task<GameLaunchOutcome> LaunchOfflineAsync(
+            GameLaunchRequest request,
+            IProgress<OperationProgress>? progress = null,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(new GameLaunchOutcome(true, "Launch.Started"));
+        }
+
         public Task<SmokeLaunchOutcome> LaunchSmokeAsync(
             SmokeLaunchRequest request,
             IProgress<OperationProgress>? progress = null,

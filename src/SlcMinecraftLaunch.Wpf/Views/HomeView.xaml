@@ -41,6 +41,42 @@
         </Grid>
       </Border>
 
+      <Border Style="{StaticResource CardStyle}">
+        <Grid>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+          </Grid.RowDefinitions>
+          <TextBlock Text="{DynamicResource Home.LaunchTitle}"
+                     FontSize="20"
+                     FontWeight="SemiBold" />
+          <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,14,0,0">
+            <ComboBox ItemsSource="{Binding InstalledVersions}"
+                      SelectedItem="{Binding SelectedVersion}"
+                      MinWidth="280" />
+            <Button Content="{DynamicResource Home.Launch}"
+                    Style="{StaticResource PrimaryButtonStyle}"
+                    IsEnabled="{Binding CanLaunch}"
+                    Command="{Binding LaunchCommand}" />
+          </StackPanel>
+          <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,4,0,0">
+            <TextBlock Text="{DynamicResource Home.CurrentPlayer}"
+                       Foreground="{StaticResource Brush.Muted}" />
+            <TextBlock Margin="6,0,0,0"
+                       Text="{Binding PlayerName}"
+                       FontWeight="SemiBold" />
+            <Button Content="{DynamicResource Home.OpenSettings}"
+                    Margin="16,0,0,0"
+                    Padding="0"
+                    BorderThickness="0"
+                    Background="Transparent"
+                    Foreground="{StaticResource Brush.Accent}"
+                    Command="{Binding DataContext.OpenSettingsCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
+          </StackPanel>
+        </Grid>
+      </Border>
+
       <Grid>
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="*" />

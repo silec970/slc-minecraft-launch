@@ -75,10 +75,13 @@ public sealed class ProjBobcatGameRuntime : IGameRuntime
         var clientToken = await new ClientTokenStore(paths.DataRoot)
             .LoadOrCreateAsync(cancellationToken)
             .ConfigureAwait(false);
+        await new LegacyAccountDataSanitizer(paths.GameRoot)
+            .SanitizeAsync(cancellationToken)
+            .ConfigureAwait(false);
 
-        // PROJBOBCAT: 2.1.2 uses DefaultLauncherAccountParser and
-        // DefaultLauncherProfileParser to own launcher account/profile persistence.
-        var accountParser = CreateAccountParser(paths.GameRoot, clientToken);
+        // PROJBOBCAT: ILauncherAccountParser remains the account contract, but
+        // the product is offline-only, so tokens are kept in memory and never saved.
+        var accountParser = new InMemoryLauncherAccountParser(clientToken);
         var profileParser = new DefaultLauncherProfileParser(paths.GameRoot, clientToken);
 
         // PROJBOBCAT: DefaultVersionLocator(string, Guid) performs version scanning,
@@ -474,6 +477,90 @@ public sealed class ProjBobcatGameRuntime : IGameRuntime
         }
     }
 
+    public async Task<GameLaunchOutcome> LaunchOfflineAsync(
+        GameLaunchRequest request,
+        IProgress<OperationProgress>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var javaInfo = new JavaRuntimeInfo(
+            request.JavaExecutablePath,
+            OSPlatform.Windows,
+            RuntimeInformation.ProcessArchitecture,
+            false,
+            false);
+
+        // PROJBOBCAT: OfflineAuthenticator owns offline UUID generation and
+        // derives identity solely from the configured player name.
+        var offlineAuth = new OfflineAuthenticator
+        {
+            Username = request.PlayerName,
+            LauncherAccountParser = _accountParser
+        };
+        var authResult = await offlineAuth.AuthTaskAsync(false).ConfigureAwait(false);
+        if (authResult.AuthStatus != AuthStatus.Succeeded)
+        {
+            return new GameLaunchOutcome(
+                false,
+                "Launch.AuthenticationFailed",
+                authResult.Error?.ErrorMessage);
+        }
+
+        var gameArguments = new GameArguments
+        {
+            Java = javaInfo,
+            MinMemory = 1024,
+            MaxMemory = 4096,
+            GcType = GcType.G1Gc,
+            Resolution = null
+        };
+        var launchSettings = new LaunchSettings
+        {
+            GameName = request.VersionId,
+            GamePath = RootPath,
+            GameResourcePath = RootPath,
+            Version = request.VersionId,
+            UseShellExecute = false,
+            EnableXmlLoggingOutput = false,
+            NativeReplacementPolicy = NativeReplacementPolicy.Disabled,
+            WindowTitle = request.VersionId,
+            VersionLocator = _versionLocator,
+            Authenticator = offlineAuth,
+            VersionInsulation = request.VersionIsolation,
+            LauncherName = "SlcMinecraftLaunch",
+            FallBackGameArguments = gameArguments,
+            GameArguments = gameArguments,
+            GameEnvironmentVariables = [],
+            UseV4NetworkingStack = false,
+            PreferUtf8Encoding = true,
+            AutoApplyFixForOldMultiPlayerGame = false,
+            OldGameTrustStorePath = null
+        };
+
+        // PROJBOBCAT: DefaultGameCore performs authentication, argument
+        // construction, classpath assembly, and process launch.
+        var launchResult = await _gameCore
+            .LaunchTaskAsync(launchSettings)
+            .ConfigureAwait(false);
+        if (launchResult.ErrorType != LaunchErrorType.None ||
+            launchResult.GameProcess is null)
+        {
+            return new GameLaunchOutcome(
+                false,
+                "Launch.StartFailed",
+                launchResult.Error?.Exception?.ToString()
+                ?? launchResult.Error?.Cause
+                ?? launchResult.Error?.ErrorMessage
+                ?? launchResult.Error?.Error);
+        }
+
+        progress?.Report(new OperationProgress(
+            SmokeTestStage.Completed,
+            "Launch.Started",
+            1));
+        return new GameLaunchOutcome(true, "Launch.Started");
+    }
+
     public async Task<ResourceCompletionOutcome> DownloadModAsync(
         ModDownloadRequest request,
         IProgress<OperationProgress>? progress = null,
@@ -635,19 +722,6 @@ public sealed class ProjBobcatGameRuntime : IGameRuntime
         }
 
         return LoaderKind.Vanilla;
-    }
-
-    private static DefaultLauncherAccountParser CreateAccountParser(string rootPath, Guid clientToken)
-    {
-        // The 2.1.2 type marks a constructor-assigned property as required, but
-        // its public constructor has no [SetsRequiredMembers]. Invoke that public
-        // constructor so the package can load an existing account file without
-        // clearing it through an object initializer.
-        return Activator.CreateInstance(
-                   typeof(DefaultLauncherAccountParser),
-                   rootPath,
-                   clientToken) as DefaultLauncherAccountParser
-               ?? throw new InvalidOperationException("Unable to create the ProjBobcat account parser.");
     }
 
     public ValueTask DisposeAsync()

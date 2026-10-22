@@ -106,6 +106,8 @@ public partial class App : System.Windows.Application
                 _ => new JsonVersionPreferencesStore(paths.DataRoot));
             services.AddSingleton<IUiSettingsStore>(
                 _ => new JsonUiSettingsStore(paths.DataRoot));
+            services.AddSingleton<IPlayerProfileStore>(
+                _ => new JsonPlayerProfileStore(paths.DataRoot));
             services.AddSingleton<IGameVersionMaterializer>(serviceProvider =>
                 new MojangVersionMaterializer(
                     serviceProvider.GetRequiredService<IHttpClientFactory>(),
@@ -164,6 +166,8 @@ public partial class App : System.Windows.Application
             services.AddSingleton<ILocalModStore, LocalModStore>();
             services.AddSingleton<ModConflictAnalyzer>();
             services.AddSingleton<IModService, ModService>();
+            services.AddSingleton<IPlayerProfileService, PlayerProfileService>();
+            services.AddSingleton<IGameLaunchService, GameLaunchService>();
             services.AddSingleton<BackgroundMusicService>();
             services.AddSingleton<UiPreferencesService>();
             services.AddSingleton<IUiPreferences>(

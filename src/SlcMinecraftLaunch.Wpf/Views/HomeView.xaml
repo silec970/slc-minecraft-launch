@@ -41,20 +41,6 @@
         </Grid>
       </Border>
 
-      <Border Style="{StaticResource CardStyle}"
-              Background="#FFF7E8"
-              BorderBrush="#F1D5A5">
-        <StackPanel>
-          <TextBlock Text="{DynamicResource Home.Account}"
-                     FontSize="17"
-                     FontWeight="SemiBold" />
-          <TextBlock Margin="0,7,0,0"
-                     Text="{DynamicResource Home.MicrosoftAccountRequired}"
-                     Foreground="{StaticResource Brush.Muted}"
-                     TextWrapping="Wrap" />
-        </StackPanel>
-      </Border>
-
       <Grid>
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="*" />

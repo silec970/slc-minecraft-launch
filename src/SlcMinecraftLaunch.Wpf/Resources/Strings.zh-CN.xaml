@@ -8,8 +8,6 @@
   <sys:String x:Key="Home.InstalledVersions">已发现版本</sys:String>
   <sys:String x:Key="Home.VersionCount">已安装实例</sys:String>
   <sys:String x:Key="Home.GameRoot">游戏目录</sys:String>
-  <sys:String x:Key="Home.Account">账户状态</sys:String>
-  <sys:String x:Key="Home.MicrosoftAccountRequired">需要配置 Microsoft 应用 Client ID 后才能启用正式登录与启动。冒烟测试可使用离线认证。</sys:String>
   <sys:String x:Key="Home.VersionHint">版本实例</sys:String>
   <sys:String x:Key="Home.VersionHintDetail">收藏常用实例，并为每个实例独立保存 Mod 和配置。</sys:String>
   <sys:String x:Key="Home.ModHint">Mod 管理</sys:String>
@@ -23,7 +21,6 @@
   <sys:String x:Key="Navigation.Mods">Mod 管理</sys:String>
   <sys:String x:Key="Navigation.Crash">崩溃分析</sys:String>
   <sys:String x:Key="Navigation.Settings">设置</sys:String>
-  <sys:String x:Key="Navigation.Account">Microsoft 账户</sys:String>
   <sys:String x:Key="Status.Ready">就绪</sys:String>
   <sys:String x:Key="Status.Working">正在处理</sys:String>
   <sys:String x:Key="Status.Cancelled">操作已取消</sys:String>
@@ -88,7 +85,6 @@
   <sys:String x:Key="Settings.MusicHint">将原创或无版权音频放入 launcher-data/music，启动器会播放首个支持的本地文件。</sys:String>
   <sys:String x:Key="Settings.Save">保存设置</sys:String>
   <sys:String x:Key="Settings.Saved">设置已保存</sys:String>
-  <sys:String x:Key="Settings.AccountNote">正式启动要求 Microsoft 账户。请配置 Microsoft 应用 Client ID；离线认证仅供自动冒烟测试使用。</sys:String>
   <sys:String x:Key="Crash.Category.Mod.Title">疑似 Mod 导致崩溃</sys:String>
   <sys:String x:Key="Crash.Category.Mod.Suggestion">逐个禁用最近安装的 Mod，并检查依赖版本与加载器是否匹配。</sys:String>
   <sys:String x:Key="Crash.Category.Memory.Title">Java 内存不足</sys:String>

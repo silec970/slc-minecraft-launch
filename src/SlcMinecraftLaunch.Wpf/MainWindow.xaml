@@ -74,7 +74,6 @@
         <Grid.RowDefinitions>
           <RowDefinition Height="Auto" />
           <RowDefinition Height="*" />
-          <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <StackPanel Margin="22,26,18,22">
@@ -113,22 +112,6 @@
           </ItemsControl.ItemTemplate>
         </ItemsControl>
 
-        <Border Grid.Row="2"
-                Margin="16,16,16,22"
-                Padding="14"
-                CornerRadius="12"
-                Background="#1D3B4D">
-          <StackPanel>
-            <TextBlock Text="{DynamicResource Navigation.Account}"
-                       Foreground="#8FB0C3"
-                       FontSize="11" />
-            <TextBlock Margin="0,5,0,0"
-                       Text="{Binding AccountStatusKey, Converter={StaticResource Key}}"
-                       Foreground="White"
-                       FontSize="13"
-                       TextWrapping="Wrap" />
-          </StackPanel>
-        </Border>
       </Grid>
     </Border>
 

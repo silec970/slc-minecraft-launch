@@ -82,7 +82,8 @@
 - 若版本条目不存在，先使用 Mojang 版本清单物化原始版本 JSON 与 client JAR。
 - 物化只创建版本条目，不解析 `inheritsFrom`、不拼 classpath、不执行认证交换。
 - 物化成功后必须重新调用 locator，再由 `DefaultResourceCompleter` 补全资源。
-- 冒烟认证只允许 `OfflineAuthenticator` 与 `SmokeTestBot`，不得用于正式登录。
+- 本项目仅支持离线认证。正式启动使用设置页玩家名并通过
+  `OfflineAuthenticator` 构造离线身份，这是产品决策而非未完成功能。
 - 启动后通过 ProjBobcat 事件确认存活至少 5 秒。
 - `26.3` 仅作为可用时的原版兼容抽检，不绑定加载器。
 
@@ -128,7 +129,9 @@
 - 异步命令使用 MVVM Toolkit 的 CancelCommand，禁止并发重入和 UI 线程阻塞。
 - 共享颜色、按钮和卡片样式位于 `Resources/Styles.xaml`。
 - 新增用户文案必须同时添加 zh-CN 与 en-US 资源。
-- 正式 UI 启动要求 Microsoft 账户配置；离线认证不得用于生产启动路径。
+- 离线模式没有登录、切换账户或退出登录语义；玩家名是配置项，不是
+  账户状态。任何人不得提议或补回微软登录、设备代码流、令牌刷新或
+  Azure Client ID。
 
 ## 主题与体验
 

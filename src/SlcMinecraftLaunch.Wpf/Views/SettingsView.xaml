@@ -83,12 +83,6 @@
         </StackPanel>
       </Border>
 
-      <Border Style="{StaticResource CardStyle}" Background="#FFF7E8">
-        <TextBlock Text="{DynamicResource Settings.AccountNote}"
-                   TextWrapping="Wrap"
-                   Foreground="{StaticResource Brush.Muted}" />
-      </Border>
-
       <ProgressBar Value="{Binding Progress}"
                    Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" />
       <TextBlock Text="{Binding StatusKey, Converter={StaticResource Key}}" />

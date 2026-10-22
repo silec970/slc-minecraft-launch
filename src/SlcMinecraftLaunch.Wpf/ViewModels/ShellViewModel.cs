@@ -38,9 +38,6 @@ public sealed partial class ShellViewModel : ObservableObject
     [ObservableProperty]
     private NavigationItem _selectedNavigation;
 
-    [ObservableProperty]
-    private string _accountStatusKey = "Home.MicrosoftAccountRequired";
-
     public ObservableCollection<NavigationItem> NavigationItems { get; }
     public IUiPreferences Preferences { get; }
 

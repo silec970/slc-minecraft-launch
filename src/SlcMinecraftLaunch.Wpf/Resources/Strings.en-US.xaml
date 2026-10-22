@@ -8,8 +8,6 @@
   <sys:String x:Key="Home.InstalledVersions">Installed versions</sys:String>
   <sys:String x:Key="Home.VersionCount">Installed instances</sys:String>
   <sys:String x:Key="Home.GameRoot">Game directory</sys:String>
-  <sys:String x:Key="Home.Account">Account status</sys:String>
-  <sys:String x:Key="Home.MicrosoftAccountRequired">Configure a Microsoft application Client ID to enable production sign-in and launching. Offline auth is reserved for smoke tests.</sys:String>
   <sys:String x:Key="Home.VersionHint">Instances</sys:String>
   <sys:String x:Key="Home.VersionHintDetail">Favorite common instances and keep mods and config isolated per instance.</sys:String>
   <sys:String x:Key="Home.ModHint">Mod management</sys:String>
@@ -23,7 +21,6 @@
   <sys:String x:Key="Navigation.Mods">Mods</sys:String>
   <sys:String x:Key="Navigation.Crash">Crash analysis</sys:String>
   <sys:String x:Key="Navigation.Settings">Settings</sys:String>
-  <sys:String x:Key="Navigation.Account">Microsoft account</sys:String>
   <sys:String x:Key="Status.Ready">Ready</sys:String>
   <sys:String x:Key="Status.Working">Working</sys:String>
   <sys:String x:Key="Status.Cancelled">Cancelled</sys:String>
@@ -88,7 +85,6 @@
   <sys:String x:Key="Settings.MusicHint">Place original or royalty-free audio in launcher-data/music. The first supported local file will play.</sys:String>
   <sys:String x:Key="Settings.Save">Save settings</sys:String>
   <sys:String x:Key="Settings.Saved">Settings saved</sys:String>
-  <sys:String x:Key="Settings.AccountNote">Production launch requires a Microsoft account. Configure a Microsoft application Client ID; offline auth is only for automated smoke tests.</sys:String>
   <sys:String x:Key="Crash.Category.Mod.Title">A mod likely caused the crash</sys:String>
   <sys:String x:Key="Crash.Category.Mod.Suggestion">Disable recently installed mods and verify dependencies and loader versions.</sys:String>
   <sys:String x:Key="Crash.Category.Memory.Title">Insufficient Java memory</sys:String>

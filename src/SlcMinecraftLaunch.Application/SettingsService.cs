@@ -10,7 +10,11 @@ public sealed class SettingsService(
 {
     public LauncherSettingsSnapshot GetSnapshot()
     {
-        return new LauncherSettingsSnapshot(paths.GameRoot, paths.DataRoot, "0.1.0");
+        return new LauncherSettingsSnapshot(
+            paths.GameRoot,
+            paths.DataRoot,
+            "0.1.0",
+            Path.Combine(paths.DataRoot, "logs"));
     }
 
     public Task<UiSettings> LoadUiSettingsAsync(CancellationToken cancellationToken = default)

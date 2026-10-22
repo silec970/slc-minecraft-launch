@@ -1,3 +1,4 @@
+using System.IO;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SlcMinecraftLaunch.Domain.Abstractions;
@@ -9,7 +10,8 @@ public sealed partial class SettingsViewModel(
     ISettingsService settingsService,
     IUiPreferences uiPreferences,
     IPlayerProfileService playerProfileService,
-    ICurseForgeCredentialService curseForgeCredentials) : PageViewModel
+    ICurseForgeCredentialService curseForgeCredentials,
+    IDiagnosticBundleService diagnosticBundleService) : PageViewModel
 {
     public override string TitleKey => "Settings.Title";
     public override string DescriptionKey => "Settings.Description";
@@ -28,6 +30,12 @@ public sealed partial class SettingsViewModel(
 
     [ObservableProperty]
     private string _launcherVersion = string.Empty;
+
+    [ObservableProperty]
+    private string _logDirectory = string.Empty;
+
+    [ObservableProperty]
+    private string? _lastDiagnosticBundlePath;
 
     [ObservableProperty]
     private LanguageOption? _selectedLanguage;
@@ -109,12 +117,31 @@ public sealed partial class SettingsViewModel(
         }, cancellationToken);
     }
 
+    [RelayCommand(IncludeCancelCommand = true)]
+    private Task CreateDiagnosticBundleAsync(
+        string? destinationPath,
+        CancellationToken cancellationToken)
+    {
+        return RunAsync(async token =>
+        {
+            if (string.IsNullOrWhiteSpace(destinationPath))
+            {
+                return;
+            }
+
+            LastDiagnosticBundlePath = await diagnosticBundleService
+                .CreateAsync(destinationPath, token);
+            StatusKey = "Settings.DiagnosticCreated";
+        }, cancellationToken);
+    }
+
     public override async Task RefreshAsync(CancellationToken cancellationToken = default)
     {
         var snapshot = settingsService.GetSnapshot();
         GameRoot = snapshot.GameRoot;
         DataRoot = snapshot.DataRoot;
         LauncherVersion = snapshot.Version;
+        LogDirectory = snapshot.LogDirectory ?? Path.Combine(snapshot.DataRoot, "logs");
         var settings = await settingsService.LoadUiSettingsAsync(cancellationToken);
         PlayerName = await playerProfileService.GetPlayerNameAsync(cancellationToken);
         IsDarkTheme = settings.Theme == UiTheme.Dark;

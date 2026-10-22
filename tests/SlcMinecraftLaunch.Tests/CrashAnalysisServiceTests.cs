@@ -172,6 +172,10 @@ public sealed class CrashAnalysisServiceTests
 
     private sealed class FakeLogger : IAppLogger
     {
+        public void Information(string message)
+        {
+        }
+
         public void Warning(string message)
         {
         }

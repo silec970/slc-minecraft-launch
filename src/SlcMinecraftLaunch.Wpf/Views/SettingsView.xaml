@@ -124,6 +124,35 @@
         </StackPanel>
       </Border>
 
+      <Border Style="{StaticResource CardStyle}">
+        <StackPanel>
+          <TextBlock Text="{DynamicResource Settings.Diagnostics}"
+                     FontSize="18"
+                     FontWeight="SemiBold" />
+          <TextBlock Margin="0,8,0,0"
+                     Text="{DynamicResource Settings.LogDirectory}"
+                     Foreground="{StaticResource Brush.Muted}" />
+          <TextBlock Text="{Binding LogDirectory}"
+                     TextWrapping="Wrap" />
+          <WrapPanel Margin="0,12,0,0">
+            <Button Content="{DynamicResource Settings.OpenLogDirectory}"
+                    Style="{StaticResource SecondaryButtonStyle}"
+                    Click="OpenLogDirectory_Click" />
+            <Button Content="{DynamicResource Settings.CreateDiagnosticBundle}"
+                    Style="{StaticResource SecondaryButtonStyle}"
+                    Click="CreateDiagnosticBundle_Click" />
+          </WrapPanel>
+          <TextBlock Margin="0,8,0,0"
+                     Text="{DynamicResource Settings.DiagnosticHint}"
+                     Foreground="{StaticResource Brush.Muted}"
+                     TextWrapping="Wrap" />
+          <TextBlock Margin="0,6,0,0"
+                     Text="{Binding LastDiagnosticBundlePath}"
+                     TextWrapping="Wrap"
+                     Foreground="{StaticResource Brush.Accent}" />
+        </StackPanel>
+      </Border>
+
       <ProgressBar Value="{Binding Progress}"
                    Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" />
       <TextBlock Text="{Binding StatusKey, Converter={StaticResource Key}}" />

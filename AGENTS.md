@@ -186,6 +186,17 @@
 - 关闭 `KNOWN_ISSUES.md` 条目时必须附日期、commit、产物/日志位置和可复核的
   验收结果。
 
+## 日志与诊断
+
+- `IAppLogger` 的生产实现使用 Serilog 文件 Sink，输出到
+  `launcher-data/logs/slc-<date>.log`。
+- 文件按天和 10 MiB 滚动，保留最近 7 个文件并启用 `shared: true`。
+- 认证载荷、访问/刷新/客户端令牌、Authorization 和 CurseForge API Key
+  必须经过 `LogRedactor`，禁止写入日志或诊断包。
+- 诊断包只包含最近日志、实例 `instance.json` 和 Java 运行时摘要；不得包含
+  `curseforge-credential.json`、`launcher_accounts.json` 或令牌文件。
+- 设置页提供打开日志目录和生成诊断包入口。
+
 ## 本地化
 
 - 用户可见字符串必须放入资源字典。

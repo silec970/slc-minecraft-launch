@@ -249,6 +249,12 @@
   <sys:String x:Key="Settings.CurseForgeKeySaved">CurseForge API key encrypted and saved</sys:String>
   <sys:String x:Key="Settings.CurseForgeKeyCleared">CurseForge API key cleared</sys:String>
   <sys:String x:Key="Settings.CurseForgeKeyUnreadable">The CurseForge API key could not be decrypted; enter it again</sys:String>
+  <sys:String x:Key="Settings.Diagnostics">Logs and diagnostics</sys:String>
+  <sys:String x:Key="Settings.LogDirectory">Log directory</sys:String>
+  <sys:String x:Key="Settings.OpenLogDirectory">Open log directory</sys:String>
+  <sys:String x:Key="Settings.CreateDiagnosticBundle">Create diagnostic bundle</sys:String>
+  <sys:String x:Key="Settings.DiagnosticHint">The bundle contains recent logs, instance configuration, and Java information. Account tokens and the CurseForge key are never included.</sys:String>
+  <sys:String x:Key="Settings.DiagnosticCreated">Diagnostic bundle created</sys:String>
   <sys:String x:Key="Settings.Save">Save settings</sys:String>
   <sys:String x:Key="Settings.Saved">Settings saved</sys:String>
   <sys:String x:Key="Launch.AlreadyRunning">The game is already starting or running</sys:String>

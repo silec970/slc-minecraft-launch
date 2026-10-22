@@ -123,7 +123,13 @@ public partial class App : System.Windows.Application
             services.AddSingleton<ICrashAnalysisBackend, ProjBobcatCrashAnalysisBackend>();
             services.AddSingleton<ICrashReportStore>(
                 _ => new JsonCrashReportStore(paths.DataRoot));
-            services.AddSingleton<IAppLogger, DebugAppLogger>();
+            services.AddSingleton<IAppLogger>(
+                _ => SerilogAppLogger.Create(paths.DataRoot));
+            services.AddSingleton<IDiagnosticBundleService>(serviceProvider =>
+                new DiagnosticBundleService(
+                    paths.GameRoot,
+                    paths.DataRoot,
+                    serviceProvider.GetRequiredService<IJavaDiscovery>()));
             services.AddSingleton<CrashAnalysisService>();
             services.AddSingleton<ICrashAnalysisService>(serviceProvider =>
                 serviceProvider.GetRequiredService<CrashAnalysisService>());
@@ -191,6 +197,8 @@ public partial class App : System.Windows.Application
             services.AddSingleton<ShellViewModel>();
 
             _services = services.BuildServiceProvider();
+            _services.GetRequiredService<IAppLogger>().Information(
+                "SlcMinecraftLaunch application started.");
             await _services
                 .GetRequiredService<ICurseForgeCredentialService>()
                 .LoadStatusAsync()

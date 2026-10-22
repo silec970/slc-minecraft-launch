@@ -13,6 +13,16 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows</TargetFramework>
+    <AssemblyName>SlcMinecraftLaunch.Wpf</AssemblyName>
+    <Product>SLC Minecraft Launcher</Product>
+    <Company>SLC</Company>
+    <Copyright>Copyright © 2026 SLC</Copyright>
+    <Version>0.1.0</Version>
+    <FileVersion>0.1.0.0</FileVersion>
+    <ProductVersion>0.1.0</ProductVersion>
+    <InformationalVersion>0.1.0</InformationalVersion>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    <ApplicationIcon>..\..\Assets\launcher.ico</ApplicationIcon>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
@@ -28,8 +38,6 @@
     <DebugType>none</DebugType>
     <DebugSymbols>false</DebugSymbols>
     <PublishTrimmed>false</PublishTrimmed>
-    <!-- 待补充图标：Assets\launcher.ico 加入后启用下一行。 -->
-    <!-- <ApplicationIcon>Assets\launcher.ico</ApplicationIcon> -->
   </PropertyGroup>
 
   <ItemGroup>

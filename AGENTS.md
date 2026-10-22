@@ -285,9 +285,17 @@
 
 - 产物路径：`./publish/SlcMinecraftLaunch.Wpf.exe`。
 - 预期体积约为 70–100 MB；压缩后具体大小会随 SDK 和依赖变化。
-- `publish/` 为本地分发产物，不提交到 Git。
-- 当前缺少 `Assets\launcher.ico`，`ApplicationIcon` 暂时注释，属于待补充图标。
+- `publish/` 与 `release/` 为本地分发产物，不提交到 Git。
+- `Assets/launcher.ico` 由 `tools/generate-icon.ps1` 生成，必须包含
+  16/32/48/256 四种尺寸。当前图标是原创几何占位资产，正式品牌仍待确认。
+- 发布 EXE 的 `FileVersion` 为 `0.1.0.0`，`ProductVersion`/InformationalVersion
+  为 `0.1.0`，Company 为 `SLC`。
+- 安装包通过 `installer/SlcMinecraftLaunch.iss` 使用 Inno Setup 编译到
+  `release/`，安装范围为当前用户，并创建开始菜单快捷方式和卸载程序。
+- `release/SHA256SUMS.txt` 必须覆盖独立 EXE、安装包和随附文档。
+- 第三方组件清单和许可证链接维护在 `THIRD-PARTY-NOTICES.md`。
 - 所有强制配置键必须由 `LauncherEndpointDefaults` 提供代码默认值。
   配置覆盖顺序固定为：代码默认值 → 可选 `appsettings.json` → `SLC_` 环境变量。
 - 发布验收必须仅复制 EXE 到空目录并成功进入主页，不能依赖同目录配置文件。
+- 代码签名和自动 GitHub Release 仍为可选待办，不阻塞当前安装包交付。
 

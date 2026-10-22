@@ -4,6 +4,7 @@ obj/
 TestResults/
 *.binlog
 publish/
+release/
 
 # IDE and user state
 .vs/

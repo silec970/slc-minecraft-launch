@@ -16,14 +16,14 @@
         <StackPanel>
           <TextBlock Text="{DynamicResource Java.Download}" FontWeight="SemiBold" />
           <WrapPanel Margin="0,12,0,0">
-            <Button Content="{DynamicResource Java.Major8}" CommandParameter="8" Command="{Binding ProvisionCommand}" Style="{StaticResource SecondaryButtonStyle}" />
-            <Button Content="{DynamicResource Java.Major17}" CommandParameter="17" Command="{Binding ProvisionCommand}" Style="{StaticResource SecondaryButtonStyle}" />
-            <Button Content="{DynamicResource Java.Major21}" CommandParameter="21" Command="{Binding ProvisionCommand}" Style="{StaticResource SecondaryButtonStyle}" />
-            <Button Content="{DynamicResource Java.Major25}" CommandParameter="25" Command="{Binding ProvisionCommand}" Style="{StaticResource SecondaryButtonStyle}" />
+            <Button Content="{DynamicResource Java.Major8}" AutomationProperties.Name="{DynamicResource Java.Major8}" CommandParameter="8" Command="{Binding ProvisionCommand}" Style="{StaticResource SecondaryButtonStyle}" />
+            <Button Content="{DynamicResource Java.Major17}" AutomationProperties.Name="{DynamicResource Java.Major17}" CommandParameter="17" Command="{Binding ProvisionCommand}" Style="{StaticResource SecondaryButtonStyle}" />
+            <Button Content="{DynamicResource Java.Major21}" AutomationProperties.Name="{DynamicResource Java.Major21}" CommandParameter="21" Command="{Binding ProvisionCommand}" Style="{StaticResource SecondaryButtonStyle}" />
+            <Button Content="{DynamicResource Java.Major25}" AutomationProperties.Name="{DynamicResource Java.Major25}" CommandParameter="25" Command="{Binding ProvisionCommand}" Style="{StaticResource SecondaryButtonStyle}" />
           </WrapPanel>
           <TextBlock Margin="0,10,0,0"
                      Text="{DynamicResource Java.IntegrityHint}"
-                     Foreground="{StaticResource Brush.Muted}"
+                     Foreground="{DynamicResource Brush.Muted}"
                      TextWrapping="Wrap" />
         </StackPanel>
       </Border>
@@ -33,7 +33,7 @@
           <TextBlock Text="{DynamicResource Java.ManualPath}" FontSize="18" FontWeight="SemiBold" />
           <TextBlock Margin="0,8,0,0"
                      Text="{DynamicResource Java.ManualPathHint}"
-                     Foreground="{StaticResource Brush.Muted}"
+                     Foreground="{DynamicResource Brush.Muted}"
                      TextWrapping="Wrap" />
           <Grid Margin="0,12,0,0">
             <Grid.ColumnDefinitions>
@@ -41,17 +41,21 @@
               <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <TextBox Text="{Binding ManualJavaPath, UpdateSourceTrigger=PropertyChanged}"
+                     AutomationProperties.Name="{DynamicResource Java.ManualPath}"
                      Margin="0,0,8,0" />
             <Button Grid.Column="1"
                     Content="{DynamicResource Java.SelectExecutable}"
+                    AutomationProperties.Name="{DynamicResource Java.SelectExecutable}"
                     Style="{StaticResource SecondaryButtonStyle}"
                     Click="SelectJavaExecutable_Click" />
           </Grid>
           <WrapPanel Margin="0,10,0,0">
             <Button Content="{DynamicResource Java.SaveManualPath}"
+                    AutomationProperties.Name="{DynamicResource Java.SaveManualPath}"
                     Style="{StaticResource PrimaryButtonStyle}"
                     Command="{Binding SaveManualCommand}" />
             <Button Content="{DynamicResource Java.ClearManualPath}"
+                    AutomationProperties.Name="{DynamicResource Java.ClearManualPath}"
                     Style="{StaticResource SecondaryButtonStyle}"
                     Command="{Binding ClearManualCommand}" />
           </WrapPanel>
@@ -62,7 +66,7 @@
         <ItemsControl ItemsSource="{Binding Runtimes}">
           <ItemsControl.ItemTemplate>
             <DataTemplate>
-              <Border BorderBrush="{StaticResource Brush.Border}"
+              <Border BorderBrush="{DynamicResource Brush.Border}"
                       BorderThickness="0,0,0,1"
                       Padding="0,12">
                 <Grid>
@@ -82,19 +86,19 @@
                   </StackPanel>
                   <TextBlock Grid.Column="1"
                              Text="{Binding SourceKey, Converter={StaticResource Key}}"
-                             Foreground="{StaticResource Brush.Muted}" />
+                             Foreground="{DynamicResource Brush.Muted}" />
                   <TextBlock Grid.Column="2"
                              Text="{Binding CompatibilityKey, Converter={StaticResource Key}}"
-                             Foreground="{StaticResource Brush.Muted}" />
+                             Foreground="{DynamicResource Brush.Muted}" />
                   <TextBlock Grid.Column="3"
                              Text="{Binding IntegrityKey, Converter={StaticResource Key}}"
-                             Foreground="{StaticResource Brush.Muted}" />
+                             Foreground="{DynamicResource Brush.Muted}" />
                   <StackPanel Grid.Column="4">
                     <TextBlock Text="{Binding ExecutablePath}"
                                TextTrimming="CharacterEllipsis"
                                ToolTip="{Binding ExecutablePath}" />
                     <TextBlock Text="{DynamicResource Java.ManualOverride}"
-                               Foreground="{StaticResource Brush.Accent}">
+                               Foreground="{DynamicResource Brush.Accent}">
                       <TextBlock.Style>
                         <Style TargetType="TextBlock">
                           <Setter Property="Visibility" Value="Collapsed" />
@@ -108,15 +112,18 @@
                     </TextBlock>
                     <WrapPanel Margin="0,6,0,0">
                       <Button Content="{DynamicResource Java.UseAsManual}"
+                              AutomationProperties.Name="{DynamicResource Java.UseAsManual}"
                               Style="{StaticResource SecondaryButtonStyle}"
                               Command="{Binding DataContext.UseAsManualCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                               CommandParameter="{Binding ExecutablePath}" />
                       <Button Content="{DynamicResource Java.Reverify}"
+                              AutomationProperties.Name="{DynamicResource Java.Reverify}"
                               Style="{StaticResource SecondaryButtonStyle}"
                               IsEnabled="{Binding CanReverify}"
                               Command="{Binding DataContext.ReverifyCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                               CommandParameter="{Binding ExecutablePath}" />
                       <Button Content="{DynamicResource Java.Delete}"
+                              AutomationProperties.Name="{DynamicResource Java.Delete}"
                               Style="{StaticResource SecondaryButtonStyle}"
                               IsEnabled="{Binding CanDelete}"
                               Tag="{Binding ExecutablePath}"
@@ -133,7 +140,7 @@
       <ProgressBar Value="{Binding Progress}"
                    Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" />
       <TextBlock Text="{Binding StatusKey, Converter={StaticResource Key}}" />
-      <TextBlock Text="{Binding ErrorDetail}" Foreground="#B94A48" TextWrapping="Wrap" />
+      <TextBlock Text="{Binding ErrorDetail}" Foreground="{DynamicResource Brush.Danger}" TextWrapping="Wrap" />
     </StackPanel>
   </ScrollViewer>
 </UserControl>

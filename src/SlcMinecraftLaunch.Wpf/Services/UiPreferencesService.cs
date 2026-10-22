@@ -1,15 +1,24 @@
+using System.ComponentModel;
 using System.Windows;
+using System.Windows.Data;
+using System.Windows.Media;
+using System.Windows.Media.Media3D;
 using CommunityToolkit.Mvvm.ComponentModel;
 using SlcMinecraftLaunch.Domain.Abstractions;
 using SlcMinecraftLaunch.Domain.Models;
-using SlcMinecraftLaunch.Wpf.ViewModels;
 
 namespace SlcMinecraftLaunch.Wpf.Services;
 
-public sealed class UiPreferencesService(
-    BackgroundMusicService backgroundMusicService) : ObservableObject, IUiPreferences, IAsyncDisposable
+public sealed class UiPreferencesService : ObservableObject, IUiPreferences, IAsyncDisposable
 {
+    private readonly BackgroundMusicService _backgroundMusicService;
     private UiSettings _current = new();
+
+    public UiPreferencesService(BackgroundMusicService backgroundMusicService)
+    {
+        _backgroundMusicService = backgroundMusicService;
+        SystemParameters.StaticPropertyChanged += OnSystemParametersChanged;
+    }
 
     public UiSettings Current
     {
@@ -25,8 +34,6 @@ public sealed class UiPreferencesService(
         UiSettings settings,
         CancellationToken cancellationToken = default)
     {
-        var previousTheme = Current.Theme;
-        var previousLanguage = Current.Language;
         Current = settings with
         {
             MusicVolume = Math.Clamp(settings.MusicVolume, 0, 1)
@@ -34,15 +41,10 @@ public sealed class UiPreferencesService(
 
         ApplyLanguage(settings.Language);
         ApplyTheme(settings.Theme);
-        await backgroundMusicService
+        RefreshBindings();
+        await _backgroundMusicService
             .ApplyAsync(Current, cancellationToken)
             .ConfigureAwait(true);
-
-        if (previousTheme != settings.Theme ||
-            !string.Equals(previousLanguage, settings.Language, StringComparison.OrdinalIgnoreCase))
-        {
-            RecreateMainWindow();
-        }
     }
 
     private static void ApplyLanguage(string language)
@@ -55,9 +57,11 @@ public sealed class UiPreferencesService(
 
     private static void ApplyTheme(UiTheme theme)
     {
-        var source = theme == UiTheme.Dark
-            ? "Resources/Themes.Dark.xaml"
-            : "Resources/Themes.Light.xaml";
+        var source = SystemParameters.HighContrast
+            ? "Resources/Themes.HighContrast.xaml"
+            : theme == UiTheme.Dark
+                ? "Resources/Themes.Dark.xaml"
+                : "Resources/Themes.Light.xaml";
         ReplaceDictionary("Resources/Themes.", source);
     }
 
@@ -81,29 +85,72 @@ public sealed class UiPreferencesService(
         dictionaries[index] = replacement;
     }
 
-    private static void RecreateMainWindow()
+    private static void RefreshBindings()
     {
-        if (System.Windows.Application.Current.MainWindow is not MainWindow current ||
-            current.DataContext is not ShellViewModel shell)
+        if (System.Windows.Application.Current.MainWindow is not { } window)
         {
             return;
         }
 
-        System.Windows.Application.Current.Dispatcher.BeginInvoke(() =>
+        RefreshBindings(window, new HashSet<DependencyObject>(ReferenceEqualityComparer.Instance));
+        window.InvalidateVisual();
+    }
+
+    private static void RefreshBindings(
+        DependencyObject dependencyObject,
+        ISet<DependencyObject> visited)
+    {
+        if (!visited.Add(dependencyObject))
         {
-            var replacement = new MainWindow
+            return;
+        }
+
+        var values = dependencyObject.GetLocalValueEnumerator();
+        while (values.MoveNext())
+        {
+            var property = values.Current.Property;
+            if (property is null)
             {
-                DataContext = shell
-            };
-            System.Windows.Application.Current.MainWindow = replacement;
-            replacement.Show();
-            current.Close();
+                continue;
+            }
+
+            BindingOperations.GetBindingExpression(dependencyObject, property)?.UpdateTarget();
+        }
+
+        foreach (var child in LogicalTreeHelper.GetChildren(dependencyObject).OfType<DependencyObject>())
+        {
+            RefreshBindings(child, visited);
+        }
+
+        if (dependencyObject is not Visual && dependencyObject is not Visual3D)
+        {
+            return;
+        }
+
+        for (var index = 0; index < VisualTreeHelper.GetChildrenCount(dependencyObject); index++)
+        {
+            RefreshBindings(VisualTreeHelper.GetChild(dependencyObject, index), visited);
+        }
+    }
+
+    private void OnSystemParametersChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(SystemParameters.HighContrast) ||
+            System.Windows.Application.Current?.Dispatcher is not { } dispatcher)
+        {
+            return;
+        }
+
+        dispatcher.BeginInvoke(() =>
+        {
+            ApplyTheme(Current.Theme);
+            RefreshBindings();
         });
     }
 
     public async ValueTask DisposeAsync()
     {
-        await backgroundMusicService.DisposeAsync().ConfigureAwait(false);
+        SystemParameters.StaticPropertyChanged -= OnSystemParametersChanged;
+        await _backgroundMusicService.DisposeAsync().ConfigureAwait(false);
     }
 }
-

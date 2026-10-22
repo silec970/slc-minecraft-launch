@@ -20,11 +20,11 @@
           </Grid.ColumnDefinitions>
           <StackPanel>
             <TextBlock Text="{DynamicResource Home.VersionCount}"
-                       Foreground="{StaticResource Brush.Muted}" />
+                       Foreground="{DynamicResource Brush.Muted}" />
             <TextBlock Text="{Binding InstalledVersionCount}"
                        FontSize="42"
                        FontWeight="Bold"
-                       Foreground="{StaticResource Brush.Accent}" />
+                       Foreground="{DynamicResource Brush.Accent}" />
             <TextBlock Margin="0,4,0,0"
                        Text="{Binding PrimaryVersion}"
                        FontSize="15"
@@ -32,7 +32,7 @@
           </StackPanel>
           <StackPanel Grid.Column="1" VerticalAlignment="Center">
             <TextBlock Text="{DynamicResource Home.GameRoot}"
-                       Foreground="{StaticResource Brush.Muted}" />
+                       Foreground="{DynamicResource Brush.Muted}" />
             <TextBlock Text="{Binding RootPath}"
                        MaxWidth="620"
                        TextWrapping="Wrap"
@@ -54,24 +54,27 @@
           <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,14,0,0">
             <ComboBox ItemsSource="{Binding InstalledVersions}"
                       SelectedItem="{Binding SelectedVersion}"
+                      AutomationProperties.Name="{DynamicResource Home.VersionHint}"
                       MinWidth="280" />
             <Button Content="{DynamicResource Home.Launch}"
+                    AutomationProperties.Name="{DynamicResource Home.Launch}"
                     Style="{StaticResource PrimaryButtonStyle}"
                     IsEnabled="{Binding CanLaunch}"
                     Command="{Binding LaunchCommand}" />
           </StackPanel>
           <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,4,0,0">
             <TextBlock Text="{DynamicResource Home.CurrentPlayer}"
-                       Foreground="{StaticResource Brush.Muted}" />
+                       Foreground="{DynamicResource Brush.Muted}" />
             <TextBlock Margin="6,0,0,0"
                        Text="{Binding PlayerName}"
                        FontWeight="SemiBold" />
             <Button Content="{DynamicResource Home.OpenSettings}"
+                    AutomationProperties.Name="{DynamicResource Home.OpenSettings}"
                     Margin="16,0,0,0"
                     Padding="0"
                     BorderThickness="0"
                     Background="Transparent"
-                    Foreground="{StaticResource Brush.Accent}"
+                    Foreground="{DynamicResource Brush.Accent}"
                     Command="{Binding DataContext.OpenSettingsCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
           </StackPanel>
         </Grid>
@@ -88,7 +91,7 @@
             <TextBlock Text="{DynamicResource Home.VersionHint}" FontWeight="SemiBold" />
             <TextBlock Margin="0,7,0,0"
                        Text="{DynamicResource Home.VersionHintDetail}"
-                       Foreground="{StaticResource Brush.Muted}"
+                       Foreground="{DynamicResource Brush.Muted}"
                        TextWrapping="Wrap" />
           </StackPanel>
         </Border>
@@ -97,7 +100,7 @@
             <TextBlock Text="{DynamicResource Home.ModHint}" FontWeight="SemiBold" />
             <TextBlock Margin="0,7,0,0"
                        Text="{DynamicResource Home.ModHintDetail}"
-                       Foreground="{StaticResource Brush.Muted}"
+                       Foreground="{DynamicResource Brush.Muted}"
                        TextWrapping="Wrap" />
           </StackPanel>
         </Border>
@@ -106,7 +109,7 @@
             <TextBlock Text="{DynamicResource Home.CrashHint}" FontWeight="SemiBold" />
             <TextBlock Margin="0,7,0,0"
                        Text="{DynamicResource Home.CrashHintDetail}"
-                       Foreground="{StaticResource Brush.Muted}"
+                       Foreground="{DynamicResource Brush.Muted}"
                        TextWrapping="Wrap" />
           </StackPanel>
         </Border>
@@ -114,11 +117,10 @@
 
       <ProgressBar Value="{Binding Progress}" Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" />
       <TextBlock Text="{Binding StatusKey, Converter={StaticResource Key}}"
-                 Foreground="{StaticResource Brush.Muted}" />
+                 Foreground="{DynamicResource Brush.Muted}" />
       <TextBlock Text="{Binding ErrorDetail}"
-                 Foreground="#B94A48"
+                 Foreground="{DynamicResource Brush.Danger}"
                  TextWrapping="Wrap" />
     </StackPanel>
   </ScrollViewer>
 </UserControl>
-

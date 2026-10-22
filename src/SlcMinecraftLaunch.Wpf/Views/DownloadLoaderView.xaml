@@ -19,6 +19,7 @@
           <WrapPanel Margin="0,10,0,0">
             <ComboBox ItemsSource="{Binding CatalogVersions}"
                       SelectedItem="{Binding SelectedCatalogVersion}"
+                      AutomationProperties.Name="{DynamicResource Download.VanillaCatalog}"
                       MinWidth="260">
               <ComboBox.ItemTemplate>
                 <DataTemplate>
@@ -26,29 +27,32 @@
                     <TextBlock Text="{Binding Id}" FontWeight="SemiBold" />
                     <TextBlock Margin="8,0,0,0"
                                Text="{Binding Type}"
-                               Foreground="{StaticResource Brush.Muted}" />
+                               Foreground="{DynamicResource Brush.Muted}" />
                   </StackPanel>
                 </DataTemplate>
               </ComboBox.ItemTemplate>
             </ComboBox>
             <CheckBox Content="{DynamicResource Download.ShowSnapshots}"
                       IsChecked="{Binding ShowSnapshots}"
+                      AutomationProperties.Name="{DynamicResource Download.ShowSnapshots}"
                       VerticalAlignment="Center"
                       Margin="0,0,14,10" />
             <Button Content="{DynamicResource Download.InstallVanilla}"
+                    AutomationProperties.Name="{DynamicResource Download.InstallVanilla}"
                     Style="{StaticResource PrimaryButtonStyle}"
                     Command="{Binding InstallVanillaCommand}" />
           </WrapPanel>
           <TextBlock Text="{DynamicResource Download.LoaderSection}"
                      Margin="0,8,0,0"
-                     Foreground="{StaticResource Brush.Muted}" />
+                     Foreground="{DynamicResource Brush.Muted}" />
           <TextBlock Text="{DynamicResource Download.LiteLoaderUnsupported}"
                      Margin="0,8,0,0"
-                     Foreground="{StaticResource Brush.Muted}"
+                     Foreground="{DynamicResource Brush.Muted}"
                      TextWrapping="Wrap" />
           <WrapPanel Margin="0,10,0,0">
             <ComboBox ItemsSource="{Binding LoaderKinds}"
-                      SelectedItem="{Binding SelectedLoaderKind}">
+                      SelectedItem="{Binding SelectedLoaderKind}"
+                      AutomationProperties.Name="{DynamicResource Download.LoaderSection}">
               <ComboBox.ItemTemplate>
                 <DataTemplate>
                   <TextBlock Text="{Binding Converter={StaticResource LoaderKindKey}}" />
@@ -56,22 +60,28 @@
               </ComboBox.ItemTemplate>
             </ComboBox>
             <Button Content="{DynamicResource Download.ResolveLoader}"
+                    AutomationProperties.Name="{DynamicResource Download.ResolveLoader}"
                     Style="{StaticResource SecondaryButtonStyle}"
                     Command="{Binding ResolveLoaderVersionsCommand}" />
           </WrapPanel>
           <ComboBox Margin="0,8,0,0"
                     ItemsSource="{Binding LoaderVersions}"
                     SelectedItem="{Binding SelectedLoaderVersion}"
+                    AutomationProperties.Name="{DynamicResource Instances.LoaderVersion}"
                     DisplayMemberPath="DisplayName" />
           <TextBox Text="{Binding JavaPath, UpdateSourceTrigger=PropertyChanged}"
+                   AutomationProperties.Name="{DynamicResource Java.ManualPath}"
                    ToolTip="{DynamicResource Download.JavaPathHint}" />
           <TextBox Text="{Binding CustomVersionId, UpdateSourceTrigger=PropertyChanged}"
+                   AutomationProperties.Name="{DynamicResource Instances.Id}"
                    ToolTip="{DynamicResource Download.CustomVersionIdHint}" />
           <WrapPanel>
             <Button Content="{DynamicResource Download.InstallLoader}"
+                    AutomationProperties.Name="{DynamicResource Download.InstallLoader}"
                     Style="{StaticResource PrimaryButtonStyle}"
                     Command="{Binding InstallLoaderCommand}" />
             <Button Content="{DynamicResource Download.CompleteResources}"
+                    AutomationProperties.Name="{DynamicResource Download.CompleteResources}"
                     Style="{StaticResource SecondaryButtonStyle}"
                     IsEnabled="{Binding CanCompleteDownload}"
                     Command="{Binding CompleteResourcesCommand}" />
@@ -79,7 +89,7 @@
           <TextBlock Margin="0,14,0,0"
                      Text="{Binding InstalledVersionId}"
                      FontWeight="SemiBold"
-                     Foreground="{StaticResource Brush.Accent}" />
+                     Foreground="{DynamicResource Brush.Accent}" />
         </StackPanel>
       </Border>
 
@@ -91,6 +101,7 @@
           <ListBox Margin="0,10,0,0"
                    MaxHeight="230"
                    ItemsSource="{Binding DownloadTasks}"
+                   AutomationProperties.Name="{DynamicResource Download.Tasks}"
                    SelectedItem="{Binding SelectedDownloadTask}">
             <ListBox.ItemTemplate>
               <DataTemplate>
@@ -103,7 +114,7 @@
                   <TextBlock Text="{Binding VersionId}" FontWeight="SemiBold" />
                   <TextBlock Grid.Column="1"
                              Text="{Binding MessageKey, Converter={StaticResource Key}}"
-                             Foreground="{StaticResource Brush.Muted}" />
+                             Foreground="{DynamicResource Brush.Muted}" />
                   <ProgressBar Grid.Column="2"
                                Minimum="0"
                                Maximum="1"
@@ -114,20 +125,24 @@
           </ListBox>
           <WrapPanel Margin="0,10,0,0">
             <Button Content="{DynamicResource Download.PauseTask}"
+                    AutomationProperties.Name="{DynamicResource Download.PauseTask}"
                     Style="{StaticResource SecondaryButtonStyle}"
                     IsEnabled="{Binding CanPauseDownload}"
                     Command="{Binding PauseDownloadCommand}" />
             <Button Content="{DynamicResource Download.ResumeTask}"
+                    AutomationProperties.Name="{DynamicResource Download.ResumeTask}"
                     Style="{StaticResource SecondaryButtonStyle}"
                     IsEnabled="{Binding CanRetryDownload}"
                     Command="{Binding ResumeDownloadCommand}"
                     CommandParameter="{Binding SelectedDownloadTask.TaskId}" />
             <Button Content="{DynamicResource Download.RetryFailed}"
+                    AutomationProperties.Name="{DynamicResource Download.RetryFailed}"
                     Style="{StaticResource SecondaryButtonStyle}"
                     IsEnabled="{Binding CanRetryDownload}"
                     Command="{Binding RetryFailedCommand}"
                     CommandParameter="{Binding SelectedDownloadTask.TaskId}" />
             <Button Content="{DynamicResource Download.DeleteTask}"
+                    AutomationProperties.Name="{DynamicResource Download.DeleteTask}"
                     Style="{StaticResource SecondaryButtonStyle}"
                     IsEnabled="{Binding CanDeleteDownload}"
                     Command="{Binding DeleteDownloadTaskCommand}"
@@ -143,7 +158,7 @@
                            Text="{Binding TargetPath}"
                            ToolTip="{Binding ErrorDetail}"
                            TextTrimming="CharacterEllipsis"
-                           Foreground="{StaticResource Brush.Muted}" />
+                           Foreground="{DynamicResource Brush.Muted}" />
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>
@@ -156,7 +171,7 @@
                 <TextBlock Margin="0,3,0,0"
                            Text="{Binding}"
                            TextTrimming="CharacterEllipsis"
-                           Foreground="{StaticResource Brush.Muted}" />
+                           Foreground="{DynamicResource Brush.Muted}" />
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>
@@ -166,9 +181,8 @@
       <ProgressBar Value="{Binding Progress}"
                    Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" />
       <TextBlock Text="{Binding StatusKey, Converter={StaticResource Key}}"
-                 Foreground="{StaticResource Brush.Muted}" />
-      <TextBlock Text="{Binding ErrorDetail}" Foreground="#B94A48" TextWrapping="Wrap" />
+                 Foreground="{DynamicResource Brush.Muted}" />
+      <TextBlock Text="{Binding ErrorDetail}" Foreground="{DynamicResource Brush.Danger}" TextWrapping="Wrap" />
     </StackPanel>
   </ScrollViewer>
 </UserControl>
-

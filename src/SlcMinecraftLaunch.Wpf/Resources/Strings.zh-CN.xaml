@@ -31,6 +31,8 @@
   <sys:String x:Key="Status.Failed">操作失败</sys:String>
   <sys:String x:Key="Versions.Title">版本管理</sys:String>
   <sys:String x:Key="Versions.Description">从 ProjBobcat 定位器读取实例，管理隔离、启动参数、复制、导入导出与备份。</sys:String>
+  <sys:String x:Key="Versions.Favorite">切换实例收藏</sys:String>
+  <sys:String x:Key="Versions.Isolation">切换实例隔离</sys:String>
   <sys:String x:Key="VersionGroup.Vanilla">原版</sys:String>
   <sys:String x:Key="VersionGroup.NeoForge">NeoForge</sys:String>
   <sys:String x:Key="VersionGroup.Forge">Forge</sys:String>

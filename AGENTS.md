@@ -269,7 +269,14 @@
 
 - UI 设置持久化到 `launcher-data/ui-settings.json`。
 - 语言切换通过替换 zh-CN/en-US 资源字典完成，资源键必须保持一一对应。
-- 主题通过 Themes.Light/Dark 资源字典完成，切换后重建主窗口以刷新静态资源。
+- 主题通过 Themes.Light/Dark/HighContrast 资源字典完成，切换时原位替换字典并
+  刷新绑定，不得关闭并重建主窗口。
+- 所有 UI 画刷必须使用 `DynamicResource`；固定前景、背景和边框颜色不得散落
+  在各 View 中。
+- 系统启用高对比度时自动使用 HighContrast 主题，并监听系统设置变化原位刷新。
+- 按钮、输入、导航和主要列表必须提供 `AutomationProperties.Name`；按钮与输入
+  必须有可见键盘焦点，主窗口使用循环键盘 Tab 导航。
+- 主题测试必须验证三套字典键一致，以及文字/背景对比度满足 WCAG AA。
 - 背景使用原创渐变与形状，不复制 PCL2 的商标或素材。
 - 导航动效为 180ms 淡入和位移动画，可由“启用轻量动效”关闭。
 - 背景音乐只播放 `launcher-data/music` 中的用户本地音频；无文件时安静降级。

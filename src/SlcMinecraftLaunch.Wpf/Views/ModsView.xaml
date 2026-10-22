@@ -16,23 +16,27 @@
                  Style="{StaticResource PageDescriptionStyle}" />
 
       <Border Style="{StaticResource CardStyle}"
-              Background="#F9FCFD">
+              Background="{DynamicResource Brush.DropZone}"
+              AutomationProperties.Name="{DynamicResource Mods.DropHint}">
         <StackPanel>
           <TextBlock Text="{DynamicResource Mods.DropHint}"
                      HorizontalAlignment="Center"
                      FontSize="18"
-                     Foreground="{StaticResource Brush.AccentDark}" />
+                     Foreground="{DynamicResource Brush.AccentDark}" />
           <TextBlock Text="{DynamicResource Mods.DropDetail}"
                      Margin="0,6,0,14"
                      HorizontalAlignment="Center"
-                     Foreground="{StaticResource Brush.Muted}" />
+                     Foreground="{DynamicResource Brush.Muted}" />
           <WrapPanel HorizontalAlignment="Center">
             <ComboBox ItemsSource="{Binding Versions}"
                       SelectedItem="{Binding SelectedVersion}"
+                      AutomationProperties.Name="{DynamicResource Home.VersionHint}"
                       MinWidth="240" />
             <ComboBox ItemsSource="{Binding LoaderKinds}"
-                      SelectedItem="{Binding SelectedLoaderKind}" />
+                      SelectedItem="{Binding SelectedLoaderKind}"
+                      AutomationProperties.Name="{DynamicResource Instances.Loader}" />
             <Button Content="{DynamicResource Mods.Refresh}"
+                    AutomationProperties.Name="{DynamicResource Mods.Refresh}"
                     Style="{StaticResource SecondaryButtonStyle}"
                     Command="{Binding RefreshInstalledCommand}" />
           </WrapPanel>
@@ -44,16 +48,20 @@
           <TextBlock Text="{DynamicResource Mods.Search}" FontSize="17" FontWeight="SemiBold" />
           <WrapPanel Margin="0,10,0,0">
             <TextBox Width="360"
+                     AutomationProperties.Name="{DynamicResource Mods.Search}"
                      Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
             <Button Content="{DynamicResource Mods.SearchAction}"
+                    AutomationProperties.Name="{DynamicResource Mods.SearchAction}"
                     Style="{StaticResource PrimaryButtonStyle}"
                     Command="{Binding SearchCommand}" />
             <Button Content="{DynamicResource Mods.InstallSelected}"
+                    AutomationProperties.Name="{DynamicResource Mods.InstallSelected}"
                     Style="{StaticResource SecondaryButtonStyle}"
                     Command="{Binding InstallSelectedCommand}" />
           </WrapPanel>
           <ListBox ItemsSource="{Binding SearchResults}"
                    SelectedItem="{Binding SelectedSearchResult}"
+                   AutomationProperties.Name="{DynamicResource Mods.Search}"
                    MaxHeight="260"
                    BorderThickness="0">
             <ListBox.ItemTemplate>
@@ -64,14 +72,14 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                   </Grid.ColumnDefinitions>
-                  <Border Width="44" Height="44" CornerRadius="9" Background="#E4F1F0">
+                  <Border Width="44" Height="44" CornerRadius="9" Background="{DynamicResource Brush.IconPlaceholder}">
                     <TextBlock Text="{Binding Name, StringFormat={}{0}}" FontSize="10" TextWrapping="Wrap" TextAlignment="Center" VerticalAlignment="Center" />
                   </Border>
                   <StackPanel Grid.Column="1">
                     <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
-                    <TextBlock Text="{Binding Description}" TextTrimming="CharacterEllipsis" Foreground="{StaticResource Brush.Muted}" />
+                    <TextBlock Text="{Binding Description}" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush.Muted}" />
                   </StackPanel>
-                  <TextBlock Grid.Column="2" Text="{Binding Provider}" VerticalAlignment="Center" Foreground="{StaticResource Brush.Muted}" />
+                  <TextBlock Grid.Column="2" Text="{Binding Provider}" VerticalAlignment="Center" Foreground="{DynamicResource Brush.Muted}" />
                 </Grid>
               </DataTemplate>
             </ListBox.ItemTemplate>
@@ -92,7 +100,7 @@
                 <DataTemplate>
                   <StackPanel Margin="0,8">
                     <TextBlock Text="{Binding Metadata.Name}" FontWeight="SemiBold" />
-                    <TextBlock Text="{Binding Metadata.ModId}" Foreground="{StaticResource Brush.Muted}" />
+                    <TextBlock Text="{Binding Metadata.ModId}" Foreground="{DynamicResource Brush.Muted}" />
                   </StackPanel>
                 </DataTemplate>
               </ItemsControl.ItemTemplate>
@@ -105,11 +113,12 @@
             <ItemsControl ItemsSource="{Binding Conflicts}">
               <ItemsControl.ItemTemplate>
                 <DataTemplate>
-                  <Border Margin="0,7" Padding="10" CornerRadius="8" Background="#FFF7E8">
+                  <Border Margin="0,7" Padding="10" CornerRadius="8" Background="{DynamicResource Brush.WarningSurface}">
                     <StackPanel>
                       <TextBlock Text="{Binding MessageKey, Converter={StaticResource Key}}" FontWeight="SemiBold" />
-                      <TextBlock Text="{Binding SecondModId}" Foreground="{StaticResource Brush.Muted}" />
+                      <TextBlock Text="{Binding SecondModId}" Foreground="{DynamicResource Brush.Muted}" />
                       <Button Content="{DynamicResource Mods.InstallDependency}"
+                              AutomationProperties.Name="{DynamicResource Mods.InstallDependency}"
                               HorizontalAlignment="Left"
                               Margin="0,8,0,0"
                               Style="{StaticResource SecondaryButtonStyle}"
@@ -128,10 +137,9 @@
                    Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" />
       <TextBlock Text="{Binding StatusKey, Converter={StaticResource Key}}" />
       <TextBlock Text="{Binding WarningDetail, Converter={StaticResource Key}}"
-                 Foreground="#B77718"
+                 Foreground="{DynamicResource Brush.Warning}"
                  TextWrapping="Wrap" />
-      <TextBlock Text="{Binding ErrorDetail}" Foreground="#B94A48" TextWrapping="Wrap" />
+      <TextBlock Text="{Binding ErrorDetail}" Foreground="{DynamicResource Brush.Danger}" TextWrapping="Wrap" />
     </StackPanel>
   </ScrollViewer>
 </UserControl>
-

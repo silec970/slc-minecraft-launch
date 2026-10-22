@@ -48,6 +48,28 @@ public sealed class LoaderInstallationServiceTests
         Assert.Equal("Loader.InstallFailed", result.MessageKey);
     }
 
+    [Fact]
+    public async Task Install_LiteLoader_ReportsTemporaryUnsupportedStatus()
+    {
+        var service = new LoaderInstallationService(null!, null!, null!, null!);
+
+        var result = await service.InstallAsync(
+            new LoaderInstallRequest("1.12.2", LoaderKind.LiteLoader));
+
+        Assert.False(result.Succeeded);
+        Assert.Equal("Loader.LiteLoaderUnsupported", result.MessageKey);
+    }
+
+    [Fact]
+    public async Task LoaderCatalog_LiteLoader_IsRegisteredWithoutNetworkLookup()
+    {
+        var catalog = new Infrastructure.Loaders.ProjBobcatLoaderCatalogService(null!, null!);
+
+        var versions = await catalog.GetVersionsAsync("1.12.2", LoaderKind.LiteLoader);
+
+        Assert.Empty(versions);
+    }
+
     private sealed class FakeCatalog(IReadOnlyList<LoaderVersionOption> versions) : ILoaderCatalogService
     {
         public Task<IReadOnlyList<LoaderVersionOption>> GetVersionsAsync(

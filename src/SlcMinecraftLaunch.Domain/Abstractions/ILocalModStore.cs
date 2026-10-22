@@ -21,5 +21,9 @@ public interface ILocalModStore
         bool versionIsolation,
         string sourceFilePath,
         CancellationToken cancellationToken = default);
+
+    Task<ModEntry?> InspectAsync(
+        string filePath,
+        CancellationToken cancellationToken = default);
 }
 

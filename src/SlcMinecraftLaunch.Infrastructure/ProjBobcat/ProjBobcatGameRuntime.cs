@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Downloading;
 using ProjBobcat.Class.Helper;
+using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.Class.Model.YggdrasilAuth;
 using ProjBobcat.DefaultComponent;
 using ProjBobcat.DefaultComponent.Authenticator;
@@ -39,6 +40,7 @@ public sealed class ProjBobcatGameRuntime : IGameRuntime
     private readonly ILauncherAccountParser _accountParser;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly DownloadSourceOptions _downloadSourceOptions;
+    private readonly ISourceHealthService _sourceHealthService;
     private bool _disposed;
 
     private ProjBobcatGameRuntime(
@@ -47,6 +49,7 @@ public sealed class ProjBobcatGameRuntime : IGameRuntime
         ILauncherAccountParser accountParser,
         IHttpClientFactory httpClientFactory,
         DownloadSourceOptions downloadSourceOptions,
+        ISourceHealthService sourceHealthService,
         string rootPath)
     {
         _gameCore = gameCore;
@@ -54,6 +57,7 @@ public sealed class ProjBobcatGameRuntime : IGameRuntime
         _accountParser = accountParser;
         _httpClientFactory = httpClientFactory;
         _downloadSourceOptions = downloadSourceOptions;
+        _sourceHealthService = sourceHealthService;
         RootPath = rootPath;
         // PROJBOBCAT: GameExitEventDelegate is the public process lifecycle
         // contract consumed by the crash-analysis hook.
@@ -70,6 +74,7 @@ public sealed class ProjBobcatGameRuntime : IGameRuntime
         PortableLauncherPaths paths,
         IHttpClientFactory httpClientFactory,
         DownloadSourceOptions downloadSourceOptions,
+        ISourceHealthService sourceHealthService,
         CancellationToken cancellationToken = default)
     {
         var clientToken = await new ClientTokenStore(paths.DataRoot)
@@ -108,6 +113,7 @@ public sealed class ProjBobcatGameRuntime : IGameRuntime
             accountParser,
             httpClientFactory,
             downloadSourceOptions,
+            sourceHealthService,
             paths.GameRoot);
     }
 
@@ -156,8 +162,21 @@ public sealed class ProjBobcatGameRuntime : IGameRuntime
         return Task.FromResult<IReadOnlyList<GameVersionDescriptor>>(versions);
     }
 
-    public async Task<ResourceCompletionOutcome> CompleteResourcesAsync(
+    public Task<ResourceCompletionOutcome> CompleteResourcesAsync(
         ResourceCompletionRequest request,
+        IProgress<OperationProgress>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        return CompleteResourcesObservedAsync(
+            request,
+            null,
+            progress,
+            cancellationToken);
+    }
+
+    public async Task<ResourceCompletionOutcome> CompleteResourcesObservedAsync(
+        ResourceCompletionRequest request,
+        IResourceDownloadObserver? observer,
         IProgress<OperationProgress>? progress = null,
         CancellationToken cancellationToken = default)
     {
@@ -197,6 +216,23 @@ public sealed class ProjBobcatGameRuntime : IGameRuntime
             "Progress.CompletingResources",
             0.25));
 
+        // PROJBOBCAT: DownloadUriInfo.Weight is the public weighted fallback
+        // contract used to favor healthy roots without removing any source.
+        var allSourceRoots = _downloadSourceOptions.VersionMetadataRoots
+            .Concat(_downloadSourceOptions.AssetIndexRoots)
+            .Concat(_downloadSourceOptions.AssetObjectRoots)
+            .Concat(_downloadSourceOptions.LibraryRoots)
+            .Concat(_downloadSourceOptions.ForgeFileRoots)
+            .Concat(_downloadSourceOptions.ForgeMavenRoots)
+            .Concat(_downloadSourceOptions.FabricMavenRoots)
+            .Concat(_downloadSourceOptions.QuiltMavenRoots)
+            .Where(root => !string.IsNullOrWhiteSpace(root))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+        var sourceScores = await _sourceHealthService
+            .GetScoresAsync(allSourceRoots, cancellationToken)
+            .ConfigureAwait(false);
+
         using var completer = new DefaultResourceCompleter
         {
             // PROJBOBCAT: DefaultResourceCompleter is the sole multi-part
@@ -214,21 +250,21 @@ public sealed class ProjBobcatGameRuntime : IGameRuntime
                     // PROJBOBCAT: AssetInfoResolver downloads and validates
                     // asset indexes and asset objects through its public API.
                     HttpClientFactory = _httpClientFactory,
-                    AssetIndexUriRoots = ToUriRoots(_downloadSourceOptions.AssetIndexRoots),
-                    AssetUriRoots = ToUriRoots(_downloadSourceOptions.AssetObjectRoots)
+                    AssetIndexUriRoots = ToUriRoots(_downloadSourceOptions.AssetIndexRoots, sourceScores),
+                    AssetUriRoots = ToUriRoots(_downloadSourceOptions.AssetObjectRoots, sourceScores)
                 },
                 new LibraryInfoResolver
                 {
-                    LibraryUriRoots = ToUriRoots(_downloadSourceOptions.LibraryRoots),
-                    ForgeUriRoots = ToUriRoots(_downloadSourceOptions.ForgeFileRoots),
-                    ForgeMavenUriRoots = ToUriRoots(_downloadSourceOptions.ForgeMavenRoots),
-                    ForgeMavenOldUriRoots = ToUriRoots(_downloadSourceOptions.ForgeMavenRoots),
-                    FabricMavenUriRoots = ToUriRoots(_downloadSourceOptions.FabricMavenRoots),
-                    QuiltMavenUriRoots = ToUriRoots(_downloadSourceOptions.QuiltMavenRoots)
+                    LibraryUriRoots = ToUriRoots(_downloadSourceOptions.LibraryRoots, sourceScores),
+                    ForgeUriRoots = ToUriRoots(_downloadSourceOptions.ForgeFileRoots, sourceScores),
+                    ForgeMavenUriRoots = ToUriRoots(_downloadSourceOptions.ForgeMavenRoots, sourceScores),
+                    ForgeMavenOldUriRoots = ToUriRoots(_downloadSourceOptions.ForgeMavenRoots, sourceScores),
+                    FabricMavenUriRoots = ToUriRoots(_downloadSourceOptions.FabricMavenRoots, sourceScores),
+                    QuiltMavenUriRoots = ToUriRoots(_downloadSourceOptions.QuiltMavenRoots, sourceScores)
                 },
                 new VersionInfoResolver
                 {
-                    VersionUriRoots = ToUriRoots(_downloadSourceOptions.VersionMetadataRoots)
+                    VersionUriRoots = ToUriRoots(_downloadSourceOptions.VersionMetadataRoots, sourceScores)
                 },
                 new GameLoggingInfoResolver()
             ]
@@ -256,6 +292,30 @@ public sealed class ProjBobcatGameRuntime : IGameRuntime
                 eventArgs.BytesReceived,
                 eventArgs.TotalBytes,
                 eventArgs.Speed));
+        };
+
+        // PROJBOBCAT: DownloadFileCompletedEvent exposes the final per-file
+        // source, checksum, and success state for task persistence and health.
+        completer.DownloadFileCompletedEvent += (sender, eventArgs) =>
+        {
+            if (sender is not MultiSourceDownloadFile file)
+            {
+                return;
+            }
+
+            var sourceUrl = file.GetDownloadUrl();
+            var targetPath = Path.IsPathRooted(file.FileName)
+                ? file.FileName
+                : Path.Combine(file.DownloadPath, file.FileName);
+            observer?.OnFileCompleted(new ResourceDownloadFileResult(
+                file.FileName,
+                targetPath,
+                FindSourceRoot(file.DownloadUris, sourceUrl),
+                sourceUrl,
+                file.FileSize,
+                file.CheckSum,
+                eventArgs.DownloadEventArgs.Success,
+                eventArgs.DownloadEventArgs.Error?.Message));
         };
 
         var completionResult = await completer.CheckAndDownloadTaskAsync(
@@ -313,7 +373,7 @@ public sealed class ProjBobcatGameRuntime : IGameRuntime
             0.77));
 
         // This authenticator is restricted to the explicit smoke-test path.
-        // Production authentication must use the ProjBobcat Microsoft model.
+        // The desktop application remains offline-only by product decision.
         var offlineAuth = new OfflineAuthenticator
         {
             // PROJBOBCAT: OfflineAuthenticator and ILauncherAccountParser own
@@ -506,13 +566,24 @@ public sealed class ProjBobcatGameRuntime : IGameRuntime
                 authResult.Error?.ErrorMessage);
         }
 
+        var instanceSettings = request.InstanceSettings ?? new InstanceLaunchSettings();
         var gameArguments = new GameArguments
         {
             Java = javaInfo,
-            MinMemory = 1024,
-            MaxMemory = 4096,
+            MinMemory = (uint)Math.Max(512, instanceSettings.MinMemoryMb),
+            MaxMemory = (uint)Math.Max(instanceSettings.MinMemoryMb, instanceSettings.MaxMemoryMb),
             GcType = GcType.G1Gc,
-            Resolution = null
+            Resolution = new ResolutionModel
+            {
+                Width = (uint)Math.Max(320, instanceSettings.WindowWidth),
+                Height = (uint)Math.Max(240, instanceSettings.WindowHeight),
+                FullScreen = instanceSettings.Fullscreen
+            },
+            AdditionalJvmArguments = instanceSettings.JvmArguments ?? [],
+            AdvanceArguments = string.Join(
+                ' ',
+                (instanceSettings.GameArguments ?? [])
+                    .Select(QuoteLaunchArgument))
         };
         var launchSettings = new LaunchSettings
         {
@@ -566,6 +637,13 @@ public sealed class ProjBobcatGameRuntime : IGameRuntime
         IProgress<OperationProgress>? progress = null,
         CancellationToken cancellationToken = default)
     {
+        if (!IsPathWithin(request.ModsDirectory, request.FileName))
+        {
+            return new ResourceCompletionOutcome(
+                false,
+                "Mods.InvalidFileName");
+        }
+
         var gameInfo = _versionLocator.GetGame(request.VersionId);
         if (gameInfo is not VersionInfo concreteVersion)
         {
@@ -642,12 +720,53 @@ public sealed class ProjBobcatGameRuntime : IGameRuntime
         await process.WaitForExitAsync().ConfigureAwait(false);
     }
 
-    private static IReadOnlyList<DownloadUriInfo> ToUriRoots(IReadOnlyList<string> roots)
+    private static IReadOnlyList<DownloadUriInfo> ToUriRoots(
+        IReadOnlyList<string> roots,
+        IReadOnlyDictionary<string, DownloadSourceScore>? scores = null)
     {
         return roots
             .Where(root => !string.IsNullOrWhiteSpace(root))
-            .Select((root, index) => new DownloadUriInfo(root, index + 1))
+            .Select((root, index) =>
+            {
+                var priority = roots.Count - index;
+                var score = scores?.GetValueOrDefault(root)?.Score ?? 50;
+                var healthWeight = Math.Clamp((int)Math.Round(score / 10d), 1, 10);
+                return new DownloadUriInfo(root, Math.Max(1, priority * healthWeight));
+            })
             .ToArray();
+    }
+
+    private static string? FindSourceRoot(
+        IReadOnlyList<DownloadUriInfo> sources,
+        string sourceUrl)
+    {
+        var matchingRoot = sources
+            .Select(source => source.DownloadUri)
+            .Where(root => sourceUrl.StartsWith(root, StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(root => root.Length)
+            .FirstOrDefault();
+        if (!string.IsNullOrWhiteSpace(matchingRoot))
+        {
+            return matchingRoot;
+        }
+
+        return Uri.TryCreate(sourceUrl, UriKind.Absolute, out var uri)
+            ? uri.GetLeftPart(UriPartial.Authority) + "/"
+            : null;
+    }
+
+    private static string QuoteLaunchArgument(string argument)
+    {
+        return argument.Any(char.IsWhiteSpace) && !argument.StartsWith('"')
+            ? $"\"{argument.Replace("\"", "\\\"", StringComparison.Ordinal)}\""
+            : argument;
+    }
+
+    private static bool IsPathWithin(string directory, string fileName)
+    {
+        var root = Path.GetFullPath(directory) + Path.DirectorySeparatorChar;
+        var candidate = Path.GetFullPath(Path.Combine(directory, fileName));
+        return candidate.StartsWith(root, StringComparison.OrdinalIgnoreCase);
     }
 
     private static GameVersionDescriptor CreateVersionDescriptor(VersionInfo version)

@@ -14,11 +14,14 @@ using SlcMinecraftLaunch.Domain.Models;
 using SlcMinecraftLaunch.Infrastructure.Configuration;
 using SlcMinecraftLaunch.Infrastructure.Crash;
 using SlcMinecraftLaunch.Infrastructure.Java;
+using SlcMinecraftLaunch.Infrastructure.Instances;
 using SlcMinecraftLaunch.Infrastructure.Loaders;
+using SlcMinecraftLaunch.Infrastructure.Logging;
 using SlcMinecraftLaunch.Infrastructure.Mojang;
 using SlcMinecraftLaunch.Infrastructure.Mods;
 using SlcMinecraftLaunch.Infrastructure.Persistence;
 using SlcMinecraftLaunch.Infrastructure.ProjBobcat;
+using SlcMinecraftLaunch.Infrastructure.Security;
 using SlcMinecraftLaunch.Wpf.ViewModels;
 using SlcMinecraftLaunch.Wpf.Services;
 
@@ -75,8 +78,7 @@ public partial class App : System.Windows.Application
                 GetConfiguredList(configuration, "DownloadSources:QuiltMaven"));
             var modApiOptions = new ModApiOptions(
                 GetRequiredSetting(configuration, "ModApis:ModrinthBaseUrl"),
-                GetRequiredSetting(configuration, "ModApis:CurseForgeBaseUrl"),
-                Environment.GetEnvironmentVariable("CURSEFORGE_API_KEY"));
+                GetRequiredSetting(configuration, "ModApis:CurseForgeBaseUrl"));
 
             var services = new ServiceCollection();
             services.AddHttpClient();
@@ -85,7 +87,11 @@ public partial class App : System.Windows.Application
             services.AddSingleton(loaderSourceOptions);
             services.AddSingleton(downloadSourceOptions);
             services.AddSingleton(modApiOptions);
-            services.AddSingleton<IJavaDiscovery, ProjBobcatJavaDiscovery>();
+            services.AddSingleton<JsonSourceHealthStore>(
+                _ => new JsonSourceHealthStore(paths.DataRoot));
+            services.AddSingleton<ISourceHealthService, DownloadSourceHealthService>();
+            services.AddSingleton<IDownloadTaskStore>(
+                _ => new JsonDownloadTaskStore(paths.DataRoot));
             services.AddSingleton<ProjBobcatRuntimeProvider>();
             services.AddSingleton<IGameRuntimeProvider>(
                 serviceProvider => serviceProvider.GetRequiredService<ProjBobcatRuntimeProvider>());
@@ -95,6 +101,15 @@ public partial class App : System.Windows.Application
                 _ => new JsonUiSettingsStore(paths.DataRoot));
             services.AddSingleton<IPlayerProfileStore>(
                 _ => new JsonPlayerProfileStore(paths.DataRoot));
+            services.AddSingleton<IJavaSettingsStore>(
+                _ => new JsonJavaSettingsStore(paths.DataRoot));
+            services.AddSingleton<JavaRuntimeIntegrityVerifier>();
+            services.AddSingleton<ManagedJavaRuntimeStore>();
+            services.AddSingleton<IJavaRuntimeStore>(serviceProvider =>
+                serviceProvider.GetRequiredService<ManagedJavaRuntimeStore>());
+            services.AddSingleton<ProjBobcatJavaDiscovery>();
+            services.AddSingleton<IJavaDiscovery>(serviceProvider =>
+                serviceProvider.GetRequiredService<ProjBobcatJavaDiscovery>());
             services.AddSingleton<IGameVersionMaterializer>(serviceProvider =>
                 new MojangVersionMaterializer(
                     serviceProvider.GetRequiredService<IHttpClientFactory>(),
@@ -110,24 +125,50 @@ public partial class App : System.Windows.Application
                     javaSourceOptions.MojangRuntimeManifestUrl,
                     javaSourceOptions.AdoptiumAssetsUrlTemplate));
             services.AddSingleton<JavaSelectionPolicy>();
-            services.AddSingleton<IJavaRuntimeService, JavaRuntimeService>();
+            services.AddSingleton<JavaRuntimeService>();
+            services.AddSingleton<IJavaRuntimeService>(serviceProvider =>
+                serviceProvider.GetRequiredService<JavaRuntimeService>());
+            services.AddSingleton<IJavaRuntimeManagementService>(serviceProvider =>
+                serviceProvider.GetRequiredService<JavaRuntimeService>());
             services.AddSingleton<ILoaderCatalogService, ProjBobcatLoaderCatalogService>();
+            services.AddSingleton<RemoteArtifactHashVerifier>();
             services.AddSingleton<ILoaderInstallBackend>(serviceProvider =>
                 new ProjBobcatLoaderInstallBackend(
                     paths,
                     serviceProvider.GetRequiredService<IHttpClientFactory>(),
                     serviceProvider.GetRequiredService<ProjBobcatRuntimeProvider>(),
-                    loaderSourceOptions));
+                    loaderSourceOptions,
+                    serviceProvider.GetRequiredService<RemoteArtifactHashVerifier>()));
             services.AddSingleton<ILoaderInstallationService, LoaderInstallationService>();
+            services.AddSingleton<IDownloadTaskService, DownloadTaskService>();
             services.AddSingleton<IDownloadService, DownloadService>();
             services.AddSingleton<IVanillaInstallationService, VanillaInstallationService>();
             services.AddSingleton<ISmokeTestService, SmokeTestService>();
             services.AddSingleton<IVersionService, VersionService>();
+            services.AddSingleton<IInstanceStorage, LocalInstanceStorage>();
+            services.AddSingleton<IInstanceService, InstanceService>();
+            services.AddSingleton<IInstanceTransferService, InstanceTransferService>();
             services.AddSingleton<ICrashAnalysisBackend, ProjBobcatCrashAnalysisBackend>();
             services.AddSingleton<ICrashReportStore>(
                 _ => new JsonCrashReportStore(paths.DataRoot));
-            services.AddSingleton<ICrashAnalysisService, CrashAnalysisService>();
+            services.AddSingleton<IAppLogger, DebugAppLogger>();
+            services.AddSingleton<CrashAnalysisService>();
+            services.AddSingleton<ICrashAnalysisService>(serviceProvider =>
+                serviceProvider.GetRequiredService<CrashAnalysisService>());
+            services.AddSingleton<ICrashHistoryService>(serviceProvider =>
+                serviceProvider.GetRequiredService<CrashAnalysisService>());
             services.AddSingleton<CrashAnalysisCoordinator>();
+            services.AddSingleton<TokenProtector>();
+            services.AddSingleton(serviceProvider => new JsonCurseForgeCredentialStore(
+                paths.DataRoot,
+                serviceProvider.GetRequiredService<TokenProtector>()));
+            services.AddSingleton<ModApiCredentialState>();
+            services.AddSingleton<CurseForgeCredentialService>();
+            services.AddSingleton<ICurseForgeCredentialService>(
+                serviceProvider => serviceProvider.GetRequiredService<CurseForgeCredentialService>());
+            services.AddTransient<CurseForgeAuthenticationHandler>();
+            services.AddHttpClient("CurseForgeApi")
+                .AddHttpMessageHandler<CurseForgeAuthenticationHandler>();
             services.AddSingleton<ModApiSettingsProvider>();
             services.AddSingleton<IModrinthApiService>(serviceProvider =>
             {
@@ -139,12 +180,10 @@ public partial class App : System.Windows.Application
             });
             services.AddSingleton<ICurseForgeApiService>(serviceProvider =>
             {
-                var client = serviceProvider.GetRequiredService<IHttpClientFactory>().CreateClient();
+                var client = serviceProvider
+                    .GetRequiredService<IHttpClientFactory>()
+                    .CreateClient("CurseForgeApi");
                 client.DefaultRequestHeaders.UserAgent.ParseAdd("SlcMinecraftLaunch/0.1");
-                if (!string.IsNullOrWhiteSpace(modApiOptions.CurseForgeApiKey))
-                {
-                    client.DefaultRequestHeaders.Add("x-api-key", modApiOptions.CurseForgeApiKey);
-                }
 
                 return new CurseForgeApiService(
                     client,
@@ -154,8 +193,10 @@ public partial class App : System.Windows.Application
                 new ProjBobcatModProviderCatalog(
                     serviceProvider.GetRequiredService<IModrinthApiService>(),
                     serviceProvider.GetRequiredService<ICurseForgeApiService>(),
-                    !string.IsNullOrWhiteSpace(modApiOptions.CurseForgeApiKey)));
+                    serviceProvider.GetRequiredService<ICurseForgeCredentialService>()));
             services.AddSingleton<ILocalModStore, LocalModStore>();
+            services.AddSingleton<IModSourceStore>(
+                _ => new JsonModSourceStore(paths.DataRoot));
             services.AddSingleton<ModConflictAnalyzer>();
             services.AddSingleton<IModService, ModService>();
             services.AddSingleton<IPlayerProfileService, PlayerProfileService>();
@@ -176,6 +217,10 @@ public partial class App : System.Windows.Application
             services.AddSingleton<ShellViewModel>();
 
             _services = services.BuildServiceProvider();
+            await _services
+                .GetRequiredService<ICurseForgeCredentialService>()
+                .LoadStatusAsync()
+                .ConfigureAwait(true);
 
             if (commandLine.ListVersions)
             {

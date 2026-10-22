@@ -18,6 +18,15 @@ public interface IGameRuntime : IAsyncDisposable
         IProgress<OperationProgress>? progress = null,
         CancellationToken cancellationToken = default);
 
+    Task<ResourceCompletionOutcome> CompleteResourcesObservedAsync(
+        ResourceCompletionRequest request,
+        IResourceDownloadObserver? observer,
+        IProgress<OperationProgress>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        return CompleteResourcesAsync(request, progress, cancellationToken);
+    }
+
     Task<ResourceCompletionOutcome> DownloadModAsync(
         ModDownloadRequest request,
         IProgress<OperationProgress>? progress = null,

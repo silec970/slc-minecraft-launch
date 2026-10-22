@@ -41,15 +41,37 @@ public sealed class ModConflictAnalyzerTests
             conflict => conflict.Kind == ModConflictKind.KnownIncompatibility);
     }
 
+    [Fact]
+    public void Analyze_DetectsVersionMismatchAndDiamondConflict()
+    {
+        var analyzer = new ModConflictAnalyzer();
+        var mods = new[]
+        {
+            CreateEntry("parent-a.jar", "parent-a", [new ModRequirement("library", true, "[1.0,2.0)")]),
+            CreateEntry("parent-b.jar", "parent-b", [new ModRequirement("library", true, "[2.0,3.0]")]),
+            CreateEntry("library.jar", "library", [], "1.5.0")
+        };
+
+        var conflicts = analyzer.Analyze(mods);
+
+        Assert.Contains(
+            conflicts,
+            conflict => conflict.Kind == ModConflictKind.DiamondDependencyConflict);
+        Assert.Contains(
+            conflicts,
+            conflict => conflict.Kind == ModConflictKind.IncompatibleDependencyVersion);
+    }
+
     private static ModEntry CreateEntry(
         string fileName,
         string modId,
-        IReadOnlyList<ModRequirement> requirements)
+        IReadOnlyList<ModRequirement> requirements,
+        string version = "1.0")
     {
         return new ModEntry(
             Path.Combine(Path.GetTempPath(), fileName),
             fileName,
-            new ModMetadata(modId, modId, "1.0", requirements),
+            new ModMetadata(modId, modId, version, requirements),
             100);
     }
 }

@@ -10,7 +10,7 @@ public sealed class DownloadServiceTests
     public async Task CompleteResources_ForwardsProgressAndCancellation()
     {
         var runtime = new FakeRuntime();
-        var service = new DownloadService(new FakeRuntimeProvider(runtime));
+        var service = new DownloadService(new FakeDownloadTaskService(runtime));
         using var cancellation = new CancellationTokenSource();
         cancellation.Cancel();
         var reports = new List<OperationProgress>();
@@ -82,9 +82,65 @@ public sealed class DownloadServiceTests
         public ValueTask DisposeAsync() => ValueTask.CompletedTask;
     }
 
-    private sealed class FakeRuntimeProvider(IGameRuntime runtime) : IGameRuntimeProvider
+    private sealed class FakeDownloadTaskService(IGameRuntime runtime) : IDownloadTaskService
     {
-        public Task<IGameRuntime> GetAsync(CancellationToken cancellationToken = default)
-            => Task.FromResult(runtime);
+        public event EventHandler<DownloadTaskRecord>? TaskChanged
+        {
+            add { }
+            remove { }
+        }
+
+        public string? ActiveTaskId => null;
+
+        public Task<IReadOnlyList<DownloadTaskRecord>> GetTasksAsync(
+            CancellationToken cancellationToken = default)
+            => Task.FromResult<IReadOnlyList<DownloadTaskRecord>>([]);
+
+        public async Task<DownloadTaskRecord> StartAsync(
+            ResourceCompletionRequest request,
+            IProgress<OperationProgress>? progress = null,
+            CancellationToken cancellationToken = default)
+        {
+            var result = await runtime.CompleteResourcesAsync(
+                request,
+                progress,
+                cancellationToken);
+            var now = DateTimeOffset.UtcNow;
+            return new DownloadTaskRecord(
+                Guid.NewGuid().ToString("N"),
+                request.VersionId,
+                request.JavaPath,
+                runtime.RootPath,
+                result.Succeeded ? DownloadTaskStatus.Completed : DownloadTaskStatus.Failed,
+                result.MessageKey,
+                result.Succeeded ? 1 : 0,
+                1,
+                now,
+                now,
+                [],
+                []);
+        }
+
+        public Task<DownloadTaskRecord?> PauseAsync(
+            string taskId,
+            CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
+
+        public Task<DownloadTaskRecord> ResumeAsync(
+            string taskId,
+            IProgress<OperationProgress>? progress = null,
+            CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
+
+        public Task<DownloadTaskRecord> RetryFailedAsync(
+            string taskId,
+            IProgress<OperationProgress>? progress = null,
+            CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
+
+        public Task<bool> DeleteAsync(
+            string taskId,
+            CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
     }
 }

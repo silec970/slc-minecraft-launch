@@ -24,5 +24,12 @@ public interface IModService
         ModInstallRequest request,
         IProgress<OperationProgress>? progress = null,
         CancellationToken cancellationToken = default);
+
+    Task<ModInstallOutcome> InstallRecommendedDependencyAsync(
+        string versionId,
+        LoaderKind loaderKind,
+        ModConflict conflict,
+        IProgress<OperationProgress>? progress = null,
+        CancellationToken cancellationToken = default);
 }
 

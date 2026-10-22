@@ -109,6 +109,12 @@
                     <StackPanel>
                       <TextBlock Text="{Binding MessageKey, Converter={StaticResource Key}}" FontWeight="SemiBold" />
                       <TextBlock Text="{Binding SecondModId}" Foreground="{StaticResource Brush.Muted}" />
+                      <Button Content="{DynamicResource Mods.InstallDependency}"
+                              HorizontalAlignment="Left"
+                              Margin="0,8,0,0"
+                              Style="{StaticResource SecondaryButtonStyle}"
+                              Command="{Binding DataContext.InstallConflictCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                              CommandParameter="{Binding}" />
                     </StackPanel>
                   </Border>
                 </DataTemplate>
@@ -121,6 +127,9 @@
       <ProgressBar Value="{Binding Progress}"
                    Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" />
       <TextBlock Text="{Binding StatusKey, Converter={StaticResource Key}}" />
+      <TextBlock Text="{Binding WarningDetail, Converter={StaticResource Key}}"
+                 Foreground="#B77718"
+                 TextWrapping="Wrap" />
       <TextBlock Text="{Binding ErrorDetail}" Foreground="#B94A48" TextWrapping="Wrap" />
     </StackPanel>
   </ScrollViewer>

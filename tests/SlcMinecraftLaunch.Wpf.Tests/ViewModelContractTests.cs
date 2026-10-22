@@ -12,12 +12,23 @@ public sealed class ViewModelContractTests
         PageViewModel[] pages =
         [
             new HomeViewModel(null!, null!, null!, null!),
-            new VersionsViewModel(null!),
-            new DownloadLoaderViewModel(null!, null!, null!, null!, null!, null!),
-            new JavaViewModel(null!, null!),
+            new VersionsViewModel(null!, null!, null!),
+            new DownloadLoaderViewModel(
+                null!,
+                null!,
+                null!,
+                null!,
+                null!,
+                new FakeDownloadTaskService(),
+                null!),
+            new JavaViewModel(null!),
             new ModsViewModel(null!, null!),
-            new CrashViewModel(null!, null!),
-            new SettingsViewModel(new FakeSettingsService(), new FakeUiPreferences(), new FakePlayerProfileService())
+            new CrashViewModel(null!, null!, null!),
+            new SettingsViewModel(
+                new FakeSettingsService(),
+                new FakeUiPreferences(),
+                new FakePlayerProfileService(),
+                new FakeCurseForgeCredentialService())
         ];
 
         Assert.All(pages, page =>
@@ -32,15 +43,23 @@ public sealed class ViewModelContractTests
     public void Shell_ContainsOnePagePerWorkflowModule()
     {
         var home = new HomeViewModel(null!, null!, null!, null!);
-        var versions = new VersionsViewModel(null!);
-        var download = new DownloadLoaderViewModel(null!, null!, null!, null!, null!, null!);
-        var java = new JavaViewModel(null!, null!);
+        var versions = new VersionsViewModel(null!, null!, null!);
+        var download = new DownloadLoaderViewModel(
+            null!,
+            null!,
+            null!,
+            null!,
+            null!,
+            new FakeDownloadTaskService(),
+            null!);
+        var java = new JavaViewModel(null!);
         var mods = new ModsViewModel(null!, null!);
-        var crash = new CrashViewModel(null!, null!);
+        var crash = new CrashViewModel(null!, null!, null!);
         var settings = new SettingsViewModel(
             new FakeSettingsService(),
             new FakeUiPreferences(),
-            new FakePlayerProfileService());
+            new FakePlayerProfileService(),
+            new FakeCurseForgeCredentialService());
         var preferences = new FakeUiPreferences();
 
         var shell = new ShellViewModel(home, versions, download, java, mods, crash, settings, preferences);
@@ -57,7 +76,12 @@ public sealed class ViewModelContractTests
         var settingsService = new FakeSettingsService();
         var preferences = new FakeUiPreferences();
         var playerProfile = new FakePlayerProfileService();
-        var viewModel = new SettingsViewModel(settingsService, preferences, playerProfile)
+        var credentialService = new FakeCurseForgeCredentialService();
+        var viewModel = new SettingsViewModel(
+            settingsService,
+            preferences,
+            playerProfile,
+            credentialService)
         {
             IsDarkTheme = true,
             AnimationsEnabled = false,
@@ -78,6 +102,23 @@ public sealed class ViewModelContractTests
     }
 
     [Fact]
+    public async Task SettingsSave_UpdatesCurseForgeCredentialStatus()
+    {
+        var credentialService = new FakeCurseForgeCredentialService();
+        var viewModel = new SettingsViewModel(
+            new FakeSettingsService(),
+            new FakeUiPreferences(),
+            new FakePlayerProfileService(),
+            credentialService);
+
+        await viewModel.SaveCurseForgeKeyCommand.ExecuteAsync("cf-test-secret");
+
+        Assert.Equal("cf-test-secret", credentialService.SavedApiKey);
+        Assert.True(viewModel.HasCurseForgeKey);
+        Assert.Equal("Settings.CurseForgeKeySaved", viewModel.CurseForgeKeyStatusKey);
+    }
+
+    [Fact]
     public void Home_EnablesLaunchOnlyWithVersionAndPlayerName()
     {
         var viewModel = new HomeViewModel(null!, null!, null!, null!)
@@ -90,6 +131,22 @@ public sealed class ViewModelContractTests
         viewModel.PlayerName = "OfflinePlayer";
 
         Assert.True(viewModel.CanLaunch);
+    }
+
+    [Fact]
+    public async Task ModsSearch_WithoutCurseForgeKey_ShowsLocalizedGuidanceWithoutThrowing()
+    {
+        var viewModel = new ModsViewModel(new FakeVersionService(), new FakeModService())
+        {
+            SelectedVersion = "1.21.4",
+            SearchText = "sodium"
+        };
+
+        await viewModel.SearchCommand.ExecuteAsync(null);
+
+        Assert.Equal("Mods.CurseForgeKeyMissing", viewModel.StatusKey);
+        Assert.Null(viewModel.ErrorDetail);
+        Assert.Empty(viewModel.SearchResults);
     }
 
     private sealed class FakeSettingsService : ISettingsService
@@ -139,5 +196,143 @@ public sealed class ViewModelContractTests
                 "Settings.PlayerNameSaved",
                 playerName));
         }
+    }
+
+    private sealed class FakeCurseForgeCredentialService : ICurseForgeCredentialService
+    {
+        public bool IsConfigured { get; private set; }
+        public string? SavedApiKey { get; private set; }
+
+        public Task<CurseForgeCredentialStatus> LoadStatusAsync(
+            CancellationToken cancellationToken = default)
+            => Task.FromResult(new CurseForgeCredentialStatus(
+                IsConfigured,
+                IsConfigured
+                    ? "Settings.CurseForgeKeyConfigured"
+                    : "Settings.CurseForgeKeyMissing"));
+
+        public Task<CurseForgeCredentialStatus> SaveApiKeyAsync(
+            string apiKey,
+            CancellationToken cancellationToken = default)
+        {
+            SavedApiKey = apiKey;
+            IsConfigured = !string.IsNullOrWhiteSpace(apiKey);
+            return Task.FromResult(new CurseForgeCredentialStatus(
+                IsConfigured,
+                IsConfigured
+                    ? "Settings.CurseForgeKeySaved"
+                    : "Settings.CurseForgeKeyRequired"));
+        }
+
+        public Task<CurseForgeCredentialStatus> ClearApiKeyAsync(
+            CancellationToken cancellationToken = default)
+        {
+            SavedApiKey = null;
+            IsConfigured = false;
+            return Task.FromResult(new CurseForgeCredentialStatus(
+                false,
+                "Settings.CurseForgeKeyCleared"));
+        }
+    }
+
+    private sealed class FakeDownloadTaskService : IDownloadTaskService
+    {
+        public event EventHandler<DownloadTaskRecord>? TaskChanged
+        {
+            add { }
+            remove { }
+        }
+
+        public string? ActiveTaskId => null;
+
+        public Task<IReadOnlyList<DownloadTaskRecord>> GetTasksAsync(
+            CancellationToken cancellationToken = default)
+            => Task.FromResult<IReadOnlyList<DownloadTaskRecord>>([]);
+
+        public Task<DownloadTaskRecord> StartAsync(
+            ResourceCompletionRequest request,
+            IProgress<OperationProgress>? progress = null,
+            CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
+
+        public Task<DownloadTaskRecord?> PauseAsync(
+            string taskId,
+            CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
+
+        public Task<DownloadTaskRecord> ResumeAsync(
+            string taskId,
+            IProgress<OperationProgress>? progress = null,
+            CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
+
+        public Task<DownloadTaskRecord> RetryFailedAsync(
+            string taskId,
+            IProgress<OperationProgress>? progress = null,
+            CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
+
+        public Task<bool> DeleteAsync(
+            string taskId,
+            CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
+    }
+
+    private sealed class FakeVersionService : IVersionService
+    {
+        public Task<GameVersionCatalog> GetCatalogAsync(
+            CancellationToken cancellationToken = default)
+            => Task.FromResult(new GameVersionCatalog(@"C:\Minecraft", []));
+
+        public Task SetFavoriteAsync(
+            string versionId,
+            bool isFavorite,
+            CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
+
+        public Task SetIsolationAsync(
+            string versionId,
+            bool isIsolated,
+            CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
+    }
+
+    private sealed class FakeModService : IModService
+    {
+        public Task<ModSearchOutcome> SearchAsync(
+            ModSearchQuery query,
+            CancellationToken cancellationToken = default)
+            => Task.FromResult(new ModSearchOutcome(
+                [],
+                ["Mods.CurseForgeKeyMissing"]));
+
+        public Task<IReadOnlyList<ModEntry>> ScanAsync(
+            string versionId,
+            CancellationToken cancellationToken = default)
+            => Task.FromResult<IReadOnlyList<ModEntry>>([]);
+
+        public Task<IReadOnlyList<ModConflict>> DetectConflictsAsync(
+            string versionId,
+            CancellationToken cancellationToken = default)
+            => Task.FromResult<IReadOnlyList<ModConflict>>([]);
+
+        public Task<ModInstallOutcome> InstallLocalAsync(
+            LocalModInstallRequest request,
+            CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
+
+        public Task<ModInstallOutcome> InstallRemoteAsync(
+            ModInstallRequest request,
+            IProgress<OperationProgress>? progress = null,
+            CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
+
+        public Task<ModInstallOutcome> InstallRecommendedDependencyAsync(
+            string versionId,
+            LoaderKind loaderKind,
+            ModConflict conflict,
+            IProgress<OperationProgress>? progress = null,
+            CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
     }
 }

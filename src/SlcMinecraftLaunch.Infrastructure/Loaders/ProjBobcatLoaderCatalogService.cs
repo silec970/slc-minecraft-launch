@@ -28,6 +28,7 @@ public sealed class ProjBobcatLoaderCatalogService(
             LoaderKind.OptiFine => await GetOptiFineVersionsAsync(
                 minecraftVersion,
                 cancellationToken).ConfigureAwait(false),
+            LoaderKind.LiteLoader => Array.Empty<LoaderVersionOption>(),
             _ => Array.Empty<LoaderVersionOption>()
         };
     }

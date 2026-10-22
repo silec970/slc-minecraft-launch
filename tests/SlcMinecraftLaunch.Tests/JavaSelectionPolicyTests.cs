@@ -72,6 +72,23 @@ public sealed class JavaSelectionPolicyTests
         Assert.Contains(JavaSelectionWarning.UserOverride, result.Warnings);
     }
 
+    [Fact]
+    public void Select_RejectsInvalidManagedRuntime()
+    {
+        var result = _policy.Select(
+            [
+                new JavaCandidate(
+                    @"C:\Minecraft\runtimes\mojang\java-runtime-delta\21\bin\java.exe",
+                    21,
+                    JavaRuntimeSource.Mojang,
+                    JavaIntegrityStatus.Invalid)
+            ],
+            "1.21.4",
+            LoaderKind.Vanilla);
+
+        Assert.Null(result.Selected);
+    }
+
     [Theory]
     [InlineData("1.12.2", 8)]
     [InlineData("1.16.5", 8)]

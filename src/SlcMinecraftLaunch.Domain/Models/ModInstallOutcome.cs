@@ -5,5 +5,6 @@ public sealed record ModInstallOutcome(
     string MessageKey,
     string? InstalledFilePath = null,
     string? ErrorDetail = null,
-    IReadOnlyList<ModConflict>? Conflicts = null);
+    IReadOnlyList<ModConflict>? Conflicts = null,
+    IReadOnlyList<string>? Warnings = null);
 

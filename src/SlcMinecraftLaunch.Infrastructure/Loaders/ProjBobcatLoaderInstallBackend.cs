@@ -22,7 +22,8 @@ public sealed class ProjBobcatLoaderInstallBackend(
     PortableLauncherPaths paths,
     IHttpClientFactory httpClientFactory,
     ProjBobcatRuntimeProvider runtimeProvider,
-    LoaderSourceOptions sourceOptions) : ILoaderInstallBackend
+    LoaderSourceOptions sourceOptions,
+    RemoteArtifactHashVerifier artifactHashVerifier) : ILoaderInstallBackend
 {
     public async Task<LoaderInstallOutcome> InstallAsync(
         LoaderInstallPlan plan,
@@ -43,6 +44,9 @@ public sealed class ProjBobcatLoaderInstallBackend(
                     .ConfigureAwait(false),
                 LoaderKind.NeoForge => await InstallNeoForgeAsync(plan, versionLocator, progress, cancellationToken)
                     .ConfigureAwait(false),
+                LoaderKind.LiteLoader => new LoaderInstallOutcome(
+                    false,
+                    "Loader.LiteLoaderUnsupported"),
                 _ => new LoaderInstallOutcome(false, "Loader.NativeInstallerUnavailable")
             };
         }
@@ -50,11 +54,20 @@ public sealed class ProjBobcatLoaderInstallBackend(
         {
             throw;
         }
+        catch (ArtifactVerificationException exception)
+        {
+            return new LoaderInstallOutcome(
+                false,
+                "Loader.ArtifactHashUnavailable",
+                ErrorDetail: exception.Message);
+        }
         catch (Exception exception)
         {
             return new LoaderInstallOutcome(
                 false,
-                "Loader.InstallFailed",
+                plan.LoaderKind == LoaderKind.NeoForge
+                    ? "Loader.NeoForgeInstallerFailed"
+                    : "Loader.InstallFailed",
                 ErrorDetail: exception.ToString());
         }
     }
@@ -233,6 +246,7 @@ public sealed class ProjBobcatLoaderInstallBackend(
             "neoforge",
             plan.LoaderVersion,
             $"neoforge-{plan.LoaderVersion}-installer.jar");
+        var installerOutputPath = $"{installerPath}.install.log";
         await DownloadFileAsync(
             downloadUrl,
             installerPath,
@@ -297,13 +311,17 @@ public sealed class ProjBobcatLoaderInstallBackend(
             throw;
         }
 
+        await File.WriteAllLinesAsync(
+            installerOutputPath,
+            output.ToArray(),
+            cancellationToken).ConfigureAwait(false);
         var tail = string.Join(Environment.NewLine, output.TakeLast(40));
         if (process.ExitCode != 0)
         {
             return new LoaderInstallOutcome(
                 false,
                 "Loader.NeoForgeInstallerFailed",
-                ErrorDetail: $"Exit code {process.ExitCode}{Environment.NewLine}{tail}");
+                ErrorDetail: $"Exit code {process.ExitCode}{Environment.NewLine}{installerOutputPath}{Environment.NewLine}{tail}");
         }
 
         var installed = versionLocator.GetAllGames()
@@ -317,10 +335,14 @@ public sealed class ProjBobcatLoaderInstallBackend(
             return new LoaderInstallOutcome(
                 false,
                 "Loader.VersionNotResolvable",
-                ErrorDetail: tail);
+                ErrorDetail: $"{installerOutputPath}{Environment.NewLine}{tail}");
         }
 
-        return new LoaderInstallOutcome(true, "Loader.Installed", installed.Id);
+        return new LoaderInstallOutcome(
+            true,
+            "Loader.Installed",
+            installed.Id,
+            Warnings: [$"Loader.NeoForgeInstallerLog:{installerOutputPath}"]);
     }
 
     private string GetLoaderCachePath(string loader, string version, string fileName)
@@ -394,6 +416,15 @@ public sealed class ProjBobcatLoaderInstallBackend(
                 File.Delete(temporaryPath);
             }
         }
+
+        var verification = await artifactHashVerifier
+            .VerifyAsync(url, destinationPath, cancellationToken)
+            .ConfigureAwait(false);
+        if (verification.Status != ArtifactVerificationStatus.Verified)
+        {
+            throw new ArtifactVerificationException(
+                $"{verification.Status}: {verification.Detail ?? destinationPath}");
+        }
     }
 
     private static void ReportInstallerProgress(
@@ -427,4 +458,6 @@ public sealed class ProjBobcatLoaderInstallBackend(
         return string.Concat(value.Select(character =>
             Path.GetInvalidFileNameChars().Contains(character) ? '_' : character));
     }
+
+    private sealed class ArtifactVerificationException(string message) : Exception(message);
 }

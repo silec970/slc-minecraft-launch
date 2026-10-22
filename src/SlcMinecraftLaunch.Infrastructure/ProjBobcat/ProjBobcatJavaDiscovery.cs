@@ -4,23 +4,31 @@ using System.Text.RegularExpressions;
 using ProjBobcat.Class.Helper;
 using SlcMinecraftLaunch.Domain.Abstractions;
 using SlcMinecraftLaunch.Domain.Models;
+using SlcMinecraftLaunch.Infrastructure.Java;
 
 namespace SlcMinecraftLaunch.Infrastructure.ProjBobcat;
 
 [SupportedOSPlatform("windows")]
 public sealed partial class ProjBobcatJavaDiscovery : IJavaDiscovery
 {
+    private readonly IJavaRuntimeStore _managedRuntimeStore;
+
+    public ProjBobcatJavaDiscovery(IJavaRuntimeStore managedRuntimeStore)
+    {
+        _managedRuntimeStore = managedRuntimeStore;
+    }
+
     public async Task<IReadOnlyList<JavaCandidate>> DiscoverAsync(
         CancellationToken cancellationToken = default)
     {
-        var discovered = new List<JavaCandidate>();
-        var paths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var discovered = new Dictionary<string, JavaCandidate>(StringComparer.OrdinalIgnoreCase);
 
         // PROJBOBCAT: SystemInfoHelper.FindJava is the mandatory first-pass
         // discovery API across registries, environment variables, and game paths.
         await foreach (var path in SystemInfoHelper.FindJava().WithCancellation(cancellationToken))
         {
-            if (!paths.Add(path))
+            var fullPath = Path.GetFullPath(path);
+            if (discovered.ContainsKey(fullPath))
             {
                 continue;
             }
@@ -28,11 +36,18 @@ public sealed partial class ProjBobcatJavaDiscovery : IJavaDiscovery
             var candidate = await InspectAsync(path, cancellationToken).ConfigureAwait(false);
             if (candidate is not null)
             {
-                discovered.Add(candidate);
+                discovered[candidate.ExecutablePath] = candidate;
             }
         }
 
-        return discovered
+        foreach (var managed in await _managedRuntimeStore
+                     .DiscoverAsync(cancellationToken)
+                     .ConfigureAwait(false))
+        {
+            discovered[managed.ExecutablePath] = managed;
+        }
+
+        return discovered.Values
             .OrderBy(candidate => candidate.MajorVersion)
             .ThenBy(candidate => candidate.ExecutablePath, StringComparer.OrdinalIgnoreCase)
             .ToArray();

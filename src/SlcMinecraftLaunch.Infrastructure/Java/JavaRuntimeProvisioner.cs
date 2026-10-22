@@ -136,6 +136,7 @@ public sealed class JavaRuntimeProvisioner(
 
         try
         {
+            var officialSha1ByFile = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             var sha256ByFile = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             var completed = 0;
 
@@ -173,6 +174,7 @@ public sealed class JavaRuntimeProvisioner(
                     throw new InvalidDataException($"Mojang SHA1 mismatch for runtime file '{entry.Name}'.");
                 }
 
+                officialSha1ByFile[entry.Name] = expectedSha1;
                 sha256ByFile[entry.Name] = await HashFileAsync(
                     destinationPath,
                     SHA256.Create,
@@ -191,7 +193,10 @@ public sealed class JavaRuntimeProvisioner(
                 temporaryDirectory,
                 "mojang",
                 component,
+                requiredMajorVersion,
+                officialSha1ByFile,
                 sha256ByFile,
+                null,
                 cancellationToken).ConfigureAwait(false);
             var temporaryExecutable = Path.Combine(temporaryDirectory, "bin", "java.exe");
             if (!File.Exists(temporaryExecutable))
@@ -284,15 +289,18 @@ public sealed class JavaRuntimeProvisioner(
                     StringComparison.OrdinalIgnoreCase))
                 ?? throw new InvalidDataException("The Adoptium archive doesn't contain bin/java.exe.");
             var extractedRoot = Path.GetDirectoryName(Path.GetDirectoryName(extractedExecutable))!;
+            var sha256ByFile = await HashDirectoryFilesAsync(
+                extractedRoot,
+                cancellationToken).ConfigureAwait(false);
 
             await WriteIntegrityManifestAsync(
                 extractedRoot,
                 "adoptium",
                 $"temurin-{requiredMajorVersion}",
-                new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-                {
-                    [archiveName + ".sha256"] = actualSha256
-                },
+                requiredMajorVersion,
+                new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase),
+                sha256ByFile,
+                actualSha256,
                 cancellationToken).ConfigureAwait(false);
 
             await ReplaceDirectoryAsync(
@@ -417,19 +425,45 @@ public sealed class JavaRuntimeProvisioner(
         string root,
         string source,
         string component,
-        IReadOnlyDictionary<string, string> fileHashes,
+        int requiredMajorVersion,
+        IReadOnlyDictionary<string, string> officialSha1ByFile,
+        IReadOnlyDictionary<string, string> localSha256ByFile,
+        string? officialArchiveSha256,
         CancellationToken cancellationToken)
     {
         return File.WriteAllTextAsync(
             Path.Combine(root, ".integrity.json"),
             JsonSerializer.Serialize(new
             {
+                schemaVersion = 2,
                 source,
                 component,
+                requiredMajorVersion,
                 verifiedAt = DateTimeOffset.UtcNow,
-                files = fileHashes
+                officialSha1 = officialSha1ByFile,
+                officialArchiveSha256,
+                files = localSha256ByFile
             }, new JsonSerializerOptions { WriteIndented = true }),
             cancellationToken);
+    }
+
+    private static async Task<IReadOnlyDictionary<string, string>> HashDirectoryFilesAsync(
+        string root,
+        CancellationToken cancellationToken)
+    {
+        var hashes = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var filePath in Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var relativePath = Path.GetRelativePath(root, filePath)
+                .Replace(Path.DirectorySeparatorChar, '/');
+            hashes[relativePath] = await HashFileAsync(
+                filePath,
+                SHA256.Create,
+                cancellationToken).ConfigureAwait(false);
+        }
+
+        return hashes;
     }
 
     private static string GetDownloadArchitecture()

@@ -33,6 +33,9 @@ public sealed partial class ModsViewModel(
     [ObservableProperty]
     private ModSearchItem? _selectedSearchResult;
 
+    [ObservableProperty]
+    private string? _warningDetail;
+
     [RelayCommand(IncludeCancelCommand = true)]
     private Task LoadAsync(CancellationToken cancellationToken)
     {
@@ -74,7 +77,20 @@ public sealed partial class ModsViewModel(
 
             if (outcome.Warnings.Count > 0)
             {
-                ErrorDetail = string.Join(Environment.NewLine, outcome.Warnings);
+                var localizedWarnings = outcome.Warnings
+                    .Where(warning => !warning.Contains(':'))
+                    .ToArray();
+                if (localizedWarnings.Length > 0)
+                {
+                    StatusKey = localizedWarnings[0];
+                }
+
+                var technicalWarnings = outcome.Warnings
+                    .Where(warning => warning.Contains(':'))
+                    .ToArray();
+                ErrorDetail = technicalWarnings.Length > 0
+                    ? string.Join(Environment.NewLine, technicalWarnings)
+                    : null;
             }
         }, cancellationToken);
     }
@@ -99,6 +115,9 @@ public sealed partial class ModsViewModel(
                 token);
             StatusKey = result.MessageKey;
             ErrorDetail = result.ErrorDetail;
+            WarningDetail = result.Warnings is { Count: > 0 }
+                ? string.Join(Environment.NewLine, result.Warnings)
+                : null;
             await RefreshInstalledCoreAsync(SelectedVersion, token);
         }, cancellationToken);
     }
@@ -112,6 +131,28 @@ public sealed partial class ModsViewModel(
             {
                 await RefreshInstalledCoreAsync(SelectedVersion, token);
             }
+        }, cancellationToken);
+    }
+
+    [RelayCommand(IncludeCancelCommand = true)]
+    private Task InstallConflictAsync(ModConflict? conflict, CancellationToken cancellationToken)
+    {
+        if (SelectedVersion is null || conflict is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        return RunAsync(async token =>
+        {
+            var result = await modService.InstallRecommendedDependencyAsync(
+                SelectedVersion,
+                SelectedLoaderKind,
+                conflict,
+                CreateProgress(),
+                token);
+            StatusKey = result.MessageKey;
+            ErrorDetail = result.ErrorDetail;
+            await RefreshInstalledCoreAsync(SelectedVersion, token);
         }, cancellationToken);
     }
 
@@ -134,6 +175,9 @@ public sealed partial class ModsViewModel(
                     token);
                 StatusKey = result.MessageKey;
                 ErrorDetail = result.ErrorDetail;
+                WarningDetail = result.Warnings is { Count: > 0 }
+                    ? string.Join(Environment.NewLine, result.Warnings)
+                    : null;
             }
 
             await RefreshInstalledCoreAsync(SelectedVersion, token);

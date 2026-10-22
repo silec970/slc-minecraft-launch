@@ -20,6 +20,7 @@ using SlcMinecraftLaunch.Infrastructure.Mods;
 using SlcMinecraftLaunch.Infrastructure.Persistence;
 using SlcMinecraftLaunch.Infrastructure.ProjBobcat;
 using SlcMinecraftLaunch.Wpf.ViewModels;
+using SlcMinecraftLaunch.Wpf.Services;
 
 namespace SlcMinecraftLaunch.Wpf;
 
@@ -103,6 +104,8 @@ public partial class App : System.Windows.Application
                 serviceProvider => serviceProvider.GetRequiredService<ProjBobcatRuntimeProvider>());
             services.AddSingleton<IVersionPreferencesStore>(
                 _ => new JsonVersionPreferencesStore(paths.DataRoot));
+            services.AddSingleton<IUiSettingsStore>(
+                _ => new JsonUiSettingsStore(paths.DataRoot));
             services.AddSingleton<IGameVersionMaterializer>(serviceProvider =>
                 new MojangVersionMaterializer(
                     serviceProvider.GetRequiredService<IHttpClientFactory>(),
@@ -161,6 +164,10 @@ public partial class App : System.Windows.Application
             services.AddSingleton<ILocalModStore, LocalModStore>();
             services.AddSingleton<ModConflictAnalyzer>();
             services.AddSingleton<IModService, ModService>();
+            services.AddSingleton<BackgroundMusicService>();
+            services.AddSingleton<UiPreferencesService>();
+            services.AddSingleton<IUiPreferences>(
+                serviceProvider => serviceProvider.GetRequiredService<UiPreferencesService>());
             services.AddSingleton<ISettingsService, SettingsService>();
             services.AddSingleton<LaunchApplicationService>();
             services.AddSingleton<HomeViewModel>();
@@ -323,6 +330,9 @@ public partial class App : System.Windows.Application
             }
 
             ShutdownMode = ShutdownMode.OnMainWindowClose;
+            var settingsService = _services.GetRequiredService<ISettingsService>();
+            await _services.GetRequiredService<IUiPreferences>().ApplyAsync(
+                await settingsService.LoadUiSettingsAsync());
             var runtime = await _services.GetRequiredService<IGameRuntimeProvider>().GetAsync();
             _services.GetRequiredService<CrashAnalysisCoordinator>().Start(runtime);
             var viewModel = _services.GetRequiredService<ShellViewModel>();

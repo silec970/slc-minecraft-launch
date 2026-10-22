@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using SlcMinecraftLaunch.Domain.Abstractions;
 
 namespace SlcMinecraftLaunch.Wpf.ViewModels;
 
@@ -13,7 +14,8 @@ public sealed partial class ShellViewModel : ObservableObject
         JavaViewModel java,
         ModsViewModel mods,
         CrashViewModel crash,
-        SettingsViewModel settings)
+        SettingsViewModel settings,
+        IUiPreferences uiPreferences)
     {
         NavigationItems =
         [
@@ -27,6 +29,7 @@ public sealed partial class ShellViewModel : ObservableObject
         ];
         _currentPage = home;
         _selectedNavigation = NavigationItems[0];
+        Preferences = uiPreferences;
     }
 
     [ObservableProperty]
@@ -39,6 +42,7 @@ public sealed partial class ShellViewModel : ObservableObject
     private string _accountStatusKey = "Home.MicrosoftAccountRequired";
 
     public ObservableCollection<NavigationItem> NavigationItems { get; }
+    public IUiPreferences Preferences { get; }
 
     [RelayCommand(IncludeCancelCommand = true)]
     private async Task NavigateAsync(NavigationItem? item, CancellationToken cancellationToken)

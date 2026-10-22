@@ -78,6 +78,16 @@
   <sys:String x:Key="Settings.Version">Launcher version</sys:String>
   <sys:String x:Key="Settings.Language">Language</sys:String>
   <sys:String x:Key="Settings.LanguageChinese">Simplified Chinese</sys:String>
+  <sys:String x:Key="Settings.LanguageEnglish">English</sys:String>
+  <sys:String x:Key="Settings.Appearance">Appearance and experience</sys:String>
+  <sys:String x:Key="Settings.DarkTheme">Dark theme</sys:String>
+  <sys:String x:Key="Settings.Animations">Enable lightweight animations</sys:String>
+  <sys:String x:Key="Settings.Background">Show decorative background</sys:String>
+  <sys:String x:Key="Settings.Music">Play background music</sys:String>
+  <sys:String x:Key="Settings.MusicVolume">Music volume</sys:String>
+  <sys:String x:Key="Settings.MusicHint">Place original or royalty-free audio in launcher-data/music. The first supported local file will play.</sys:String>
+  <sys:String x:Key="Settings.Save">Save settings</sys:String>
+  <sys:String x:Key="Settings.Saved">Settings saved</sys:String>
   <sys:String x:Key="Settings.AccountNote">Production launch requires a Microsoft account. Configure a Microsoft application Client ID; offline auth is only for automated smoke tests.</sys:String>
   <sys:String x:Key="Crash.Category.Mod.Title">A mod likely caused the crash</sys:String>
   <sys:String x:Key="Crash.Category.Mod.Suggestion">Disable recently installed mods and verify dependencies and loader versions.</sys:String>

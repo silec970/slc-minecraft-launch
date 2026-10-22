@@ -6,6 +6,7 @@
       <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="Resources/Strings.zh-CN.xaml" />
         <ResourceDictionary Source="Resources/Styles.xaml" />
+        <ResourceDictionary Source="Resources/Themes.Light.xaml" />
       </ResourceDictionary.MergedDictionaries>
       <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
     </ResourceDictionary>

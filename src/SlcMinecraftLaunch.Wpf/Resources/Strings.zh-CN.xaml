@@ -78,6 +78,16 @@
   <sys:String x:Key="Settings.Version">启动器版本</sys:String>
   <sys:String x:Key="Settings.Language">界面语言</sys:String>
   <sys:String x:Key="Settings.LanguageChinese">简体中文</sys:String>
+  <sys:String x:Key="Settings.LanguageEnglish">English</sys:String>
+  <sys:String x:Key="Settings.Appearance">外观与体验</sys:String>
+  <sys:String x:Key="Settings.DarkTheme">深色主题</sys:String>
+  <sys:String x:Key="Settings.Animations">启用轻量动效</sys:String>
+  <sys:String x:Key="Settings.Background">显示背景装饰</sys:String>
+  <sys:String x:Key="Settings.Music">播放背景音乐</sys:String>
+  <sys:String x:Key="Settings.MusicVolume">音乐音量</sys:String>
+  <sys:String x:Key="Settings.MusicHint">将原创或无版权音频放入 launcher-data/music，启动器会播放首个支持的本地文件。</sys:String>
+  <sys:String x:Key="Settings.Save">保存设置</sys:String>
+  <sys:String x:Key="Settings.Saved">设置已保存</sys:String>
   <sys:String x:Key="Settings.AccountNote">正式启动要求 Microsoft 账户。请配置 Microsoft 应用 Client ID；离线认证仅供自动冒烟测试使用。</sys:String>
   <sys:String x:Key="Crash.Category.Mod.Title">疑似 Mod 导致崩溃</sys:String>
   <sys:String x:Key="Crash.Category.Mod.Suggestion">逐个禁用最近安装的 Mod，并检查依赖版本与加载器是否匹配。</sys:String>

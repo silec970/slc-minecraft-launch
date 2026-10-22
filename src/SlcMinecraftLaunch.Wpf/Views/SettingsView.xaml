@@ -22,7 +22,6 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
           </Grid.RowDefinitions>
           <TextBlock Text="{DynamicResource Settings.GameRoot}" Foreground="{StaticResource Brush.Muted}" />
           <TextBlock Grid.Column="1" Text="{Binding GameRoot}" TextWrapping="Wrap" />
@@ -30,10 +29,58 @@
           <TextBlock Grid.Row="1" Grid.Column="1" Margin="0,14,0,0" Text="{Binding DataRoot}" TextWrapping="Wrap" />
           <TextBlock Grid.Row="2" Margin="0,14,0,0" Text="{DynamicResource Settings.Version}" Foreground="{StaticResource Brush.Muted}" />
           <TextBlock Grid.Row="2" Grid.Column="1" Margin="0,14,0,0" Text="{Binding LauncherVersion}" />
-          <TextBlock Grid.Row="3" Margin="0,14,0,0" Text="{DynamicResource Settings.Language}" Foreground="{StaticResource Brush.Muted}" />
-          <TextBlock Grid.Row="3" Grid.Column="1" Margin="0,14,0,0"
-                     Text="{Binding LanguageKey, Converter={StaticResource Key}}" />
         </Grid>
+      </Border>
+
+      <Border Style="{StaticResource CardStyle}">
+        <StackPanel>
+          <TextBlock Text="{DynamicResource Settings.Appearance}" FontSize="18" FontWeight="SemiBold" />
+          <WrapPanel Margin="0,14,0,0">
+            <CheckBox Content="{DynamicResource Settings.DarkTheme}"
+                      IsChecked="{Binding IsDarkTheme}"
+                      Margin="0,0,28,12" />
+            <CheckBox Content="{DynamicResource Settings.Animations}"
+                      IsChecked="{Binding AnimationsEnabled}"
+                      Margin="0,0,28,12" />
+            <CheckBox Content="{DynamicResource Settings.Background}"
+                      IsChecked="{Binding BackgroundEnabled}"
+                      Margin="0,0,28,12" />
+            <CheckBox Content="{DynamicResource Settings.Music}"
+                      IsChecked="{Binding MusicEnabled}"
+                      Margin="0,0,28,12" />
+          </WrapPanel>
+          <StackPanel Orientation="Horizontal">
+            <TextBlock Text="{DynamicResource Settings.Language}" VerticalAlignment="Center" Margin="0,0,10,0" />
+            <ComboBox ItemsSource="{Binding Languages}"
+                      SelectedItem="{Binding SelectedLanguage}"
+                      MinWidth="200">
+              <ComboBox.ItemTemplate>
+                <DataTemplate>
+                  <TextBlock Text="{Binding LabelKey, Converter={StaticResource Key}}" />
+                </DataTemplate>
+              </ComboBox.ItemTemplate>
+            </ComboBox>
+          </StackPanel>
+          <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+            <TextBlock Text="{DynamicResource Settings.MusicVolume}"
+                       VerticalAlignment="Center"
+                       Margin="0,0,12,0" />
+            <Slider Width="260"
+                    Minimum="0"
+                    Maximum="1"
+                    TickFrequency="0.05"
+                    Value="{Binding MusicVolume}" />
+          </StackPanel>
+          <TextBlock Margin="0,12,0,0"
+                     Text="{DynamicResource Settings.MusicHint}"
+                     Foreground="{StaticResource Brush.Muted}"
+                     TextWrapping="Wrap" />
+          <Button Content="{DynamicResource Settings.Save}"
+                  Style="{StaticResource PrimaryButtonStyle}"
+                  HorizontalAlignment="Left"
+                  Margin="0,18,0,0"
+                  Command="{Binding SaveCommand}" />
+        </StackPanel>
       </Border>
 
       <Border Style="{StaticResource CardStyle}" Background="#FFF7E8">
@@ -41,7 +88,11 @@
                    TextWrapping="Wrap"
                    Foreground="{StaticResource Brush.Muted}" />
       </Border>
+
+      <ProgressBar Value="{Binding Progress}"
+                   Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" />
+      <TextBlock Text="{Binding StatusKey, Converter={StaticResource Key}}" />
+      <TextBlock Text="{Binding ErrorDetail}" Foreground="#B94A48" TextWrapping="Wrap" />
     </StackPanel>
   </ScrollViewer>
 </UserControl>
-

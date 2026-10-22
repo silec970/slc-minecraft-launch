@@ -132,9 +132,53 @@
       </Grid>
     </Border>
 
-    <ContentControl Grid.Column="1"
-                    Margin="28,22,28,24"
-                    Content="{Binding CurrentPage}" />
+    <Grid Grid.Column="1" ClipToBounds="True">
+      <Grid IsHitTestVisible="False"
+            Visibility="{Binding Preferences.Current.BackgroundEnabled, Converter={StaticResource BooleanToVisibilityConverter}}">
+        <Ellipse Width="520"
+                 Height="520"
+                 HorizontalAlignment="Right"
+                 VerticalAlignment="Top"
+                 Margin="0,-250,-150,0">
+          <Ellipse.Fill>
+            <RadialGradientBrush>
+              <GradientStop Color="#553DC9BF" Offset="0" />
+              <GradientStop Color="#003DC9BF" Offset="1" />
+            </RadialGradientBrush>
+          </Ellipse.Fill>
+        </Ellipse>
+        <Ellipse Width="420"
+                 Height="420"
+                 HorizontalAlignment="Left"
+                 VerticalAlignment="Bottom"
+                 Margin="-190,0,0,-220">
+          <Ellipse.Fill>
+            <RadialGradientBrush>
+              <GradientStop Color="#4478A9E8" Offset="0" />
+              <GradientStop Color="#0078A9E8" Offset="1" />
+            </RadialGradientBrush>
+          </Ellipse.Fill>
+        </Ellipse>
+        <Rectangle Opacity="0.22">
+          <Rectangle.Fill>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+              <GradientStop Color="#00000000" Offset="0" />
+              <GradientStop Color="#220B8F87" Offset="0.5" />
+              <GradientStop Color="#00000000" Offset="1" />
+            </LinearGradientBrush>
+          </Rectangle.Fill>
+        </Rectangle>
+      </Grid>
+
+      <ContentControl x:Name="PageHost"
+                      Margin="28,22,28,24"
+                      Content="{Binding CurrentPage}"
+                      Opacity="1">
+        <ContentControl.RenderTransform>
+          <TranslateTransform />
+        </ContentControl.RenderTransform>
+      </ContentControl>
+    </Grid>
   </Grid>
 </Window>
 

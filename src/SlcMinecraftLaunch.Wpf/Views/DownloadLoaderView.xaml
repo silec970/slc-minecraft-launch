@@ -15,10 +15,34 @@
 
       <Border Style="{StaticResource CardStyle}">
         <StackPanel>
-          <TextBlock Text="{DynamicResource Download.SelectVersion}" FontWeight="SemiBold" />
+          <TextBlock Text="{DynamicResource Download.VanillaCatalog}" FontWeight="SemiBold" />
           <WrapPanel Margin="0,10,0,0">
-            <ComboBox ItemsSource="{Binding MinecraftVersions}"
-                      SelectedItem="{Binding SelectedMinecraftVersion}" />
+            <ComboBox ItemsSource="{Binding CatalogVersions}"
+                      SelectedItem="{Binding SelectedCatalogVersion}"
+                      MinWidth="260">
+              <ComboBox.ItemTemplate>
+                <DataTemplate>
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="{Binding Id}" FontWeight="SemiBold" />
+                    <TextBlock Margin="8,0,0,0"
+                               Text="{Binding Type}"
+                               Foreground="{StaticResource Brush.Muted}" />
+                  </StackPanel>
+                </DataTemplate>
+              </ComboBox.ItemTemplate>
+            </ComboBox>
+            <CheckBox Content="{DynamicResource Download.ShowSnapshots}"
+                      IsChecked="{Binding ShowSnapshots}"
+                      VerticalAlignment="Center"
+                      Margin="0,0,14,10" />
+            <Button Content="{DynamicResource Download.InstallVanilla}"
+                    Style="{StaticResource PrimaryButtonStyle}"
+                    Command="{Binding InstallVanillaCommand}" />
+          </WrapPanel>
+          <TextBlock Text="{DynamicResource Download.LoaderSection}"
+                     Margin="0,8,0,0"
+                     Foreground="{StaticResource Brush.Muted}" />
+          <WrapPanel Margin="0,10,0,0">
             <ComboBox ItemsSource="{Binding LoaderKinds}"
                       SelectedItem="{Binding SelectedLoaderKind}">
               <ComboBox.ItemTemplate>

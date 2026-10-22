@@ -7,22 +7,32 @@ using SlcMinecraftLaunch.Domain.Models;
 namespace SlcMinecraftLaunch.Wpf.ViewModels;
 
 public sealed partial class DownloadLoaderViewModel(
-    IVersionService versionService,
     ILoaderCatalogService loaderCatalog,
     ILoaderInstallationService loaderInstallation,
     IDownloadService downloadService,
-    IJavaRuntimeService javaRuntimeService) : PageViewModel
+    IJavaRuntimeService javaRuntimeService,
+    IVanillaVersionCatalogService vanillaVersionCatalog,
+    IVanillaInstallationService vanillaInstallation) : PageViewModel
 {
     public override string TitleKey => "Download.Title";
     public override string DescriptionKey => "Download.Description";
 
-    public ObservableCollection<string> MinecraftVersions { get; } = [];
+    private IReadOnlyList<MinecraftReleaseDescriptor> _allCatalogVersions =
+        Array.Empty<MinecraftReleaseDescriptor>();
+
+    public ObservableCollection<MinecraftReleaseDescriptor> CatalogVersions { get; } = [];
     public ObservableCollection<LoaderVersionOption> LoaderVersions { get; } = [];
     public IReadOnlyList<LoaderKind> LoaderKinds { get; } =
         [LoaderKind.Fabric, LoaderKind.Forge, LoaderKind.NeoForge, LoaderKind.OptiFine];
 
     [ObservableProperty]
     private string? _selectedMinecraftVersion;
+
+    [ObservableProperty]
+    private MinecraftReleaseDescriptor? _selectedCatalogVersion;
+
+    [ObservableProperty]
+    private bool _showSnapshots;
 
     [ObservableProperty]
     private LoaderKind _selectedLoaderKind = LoaderKind.Fabric;
@@ -39,24 +49,45 @@ public sealed partial class DownloadLoaderViewModel(
     [ObservableProperty]
     private bool _canCompleteResources;
 
+    partial void OnShowSnapshotsChanged(bool value)
+    {
+        ApplyCatalogFilter();
+    }
+
+    partial void OnSelectedCatalogVersionChanged(MinecraftReleaseDescriptor? value)
+    {
+        SelectedMinecraftVersion = value?.Id;
+    }
+
     [RelayCommand(IncludeCancelCommand = true)]
     private Task LoadAsync(CancellationToken cancellationToken)
     {
         return RunAsync(async token =>
         {
-            var catalog = await versionService.GetCatalogAsync(token);
-            var versions = catalog.AllVersions
-                .Select(entry => entry.Version.BaseVersion)
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .OrderByDescending(version => version, StringComparer.OrdinalIgnoreCase)
-                .ToArray();
-            MinecraftVersions.Clear();
-            foreach (var version in versions)
+            _allCatalogVersions = await vanillaVersionCatalog
+                .GetVersionsAsync(token)
+                .ConfigureAwait(true);
+            ApplyCatalogFilter();
+        }, cancellationToken);
+    }
+
+    [RelayCommand(IncludeCancelCommand = true)]
+    private Task InstallVanillaAsync(CancellationToken cancellationToken)
+    {
+        return RunAsync(async token =>
+        {
+            if (SelectedCatalogVersion is null)
             {
-                MinecraftVersions.Add(version);
+                throw new UiOperationException("Download.SelectVersionRequired");
             }
 
-            SelectedMinecraftVersion ??= MinecraftVersions.FirstOrDefault();
+            var result = await vanillaInstallation.InstallAsync(
+                SelectedCatalogVersion.Id,
+                CreateProgress(),
+                token);
+            InstalledVersionId = result.VersionId;
+            StatusKey = result.MessageKey;
+            ErrorDetail = result.ErrorDetail;
         }, cancellationToken);
     }
 
@@ -143,6 +174,22 @@ public sealed partial class DownloadLoaderViewModel(
     public override Task RefreshAsync(CancellationToken cancellationToken = default)
     {
         return LoadAsync(cancellationToken);
+    }
+
+    private void ApplyCatalogFilter()
+    {
+        var selectedId = SelectedCatalogVersion?.Id;
+        CatalogVersions.Clear();
+        foreach (var version in _allCatalogVersions.Where(version =>
+                     version.Type == "release" || ShowSnapshots))
+        {
+            CatalogVersions.Add(version);
+        }
+
+        SelectedCatalogVersion = CatalogVersions.FirstOrDefault(version =>
+                                    string.Equals(version.Id, selectedId, StringComparison.OrdinalIgnoreCase))
+                                ?? CatalogVersions.FirstOrDefault(version => version.IsLatestRelease)
+                                ?? CatalogVersions.FirstOrDefault();
     }
 }
 

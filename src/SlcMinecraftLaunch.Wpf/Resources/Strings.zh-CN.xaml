@@ -46,6 +46,16 @@
   <sys:String x:Key="Download.Title">下载与加载器安装</sys:String>
   <sys:String x:Key="Download.Description">选择游戏版本和加载器，由 ProjBobcat 完成原生安装与资源补全。</sys:String>
   <sys:String x:Key="Download.SelectVersion">选择游戏版本</sys:String>
+  <sys:String x:Key="Download.VanillaCatalog">Mojang 原版版本清单</sys:String>
+  <sys:String x:Key="Download.ShowSnapshots">显示快照版本</sys:String>
+  <sys:String x:Key="Download.InstallVanilla">安装原版</sys:String>
+  <sys:String x:Key="Download.LoaderSection">加载器安装</sys:String>
+  <sys:String x:Key="Download.VersionRequired">请先选择原版版本</sys:String>
+  <sys:String x:Key="Download.MaterializingVanilla">正在下载版本 JSON 与客户端</sys:String>
+  <sys:String x:Key="Download.VersionNotResolved">版本文件已下载，但 locator 无法解析</sys:String>
+  <sys:String x:Key="Download.PreparingJava">正在准备兼容 Java</sys:String>
+  <sys:String x:Key="Download.CompletingVanilla">正在补全 libraries 与 assets</sys:String>
+  <sys:String x:Key="Download.VanillaInstalled">原版安装完成</sys:String>
   <sys:String x:Key="Download.ResolveLoader">获取加载器版本</sys:String>
   <sys:String x:Key="Download.JavaPathHint">可选：显式指定 Java 可执行文件</sys:String>
   <sys:String x:Key="Download.InstallLoader">安装加载器</sys:String>

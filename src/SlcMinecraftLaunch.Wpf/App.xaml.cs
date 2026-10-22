@@ -112,6 +112,10 @@ public partial class App : System.Windows.Application
                 new MojangVersionMaterializer(
                     serviceProvider.GetRequiredService<IHttpClientFactory>(),
                     manifestUrl));
+            services.AddSingleton<IVanillaVersionCatalogService>(serviceProvider =>
+                new MojangVersionCatalogService(
+                    serviceProvider.GetRequiredService<IHttpClientFactory>(),
+                    manifestUrl));
             services.AddSingleton<IJavaRuntimeProvisioner>(serviceProvider =>
                 new JavaRuntimeProvisioner(
                     paths,
@@ -129,6 +133,7 @@ public partial class App : System.Windows.Application
                     loaderSourceOptions));
             services.AddSingleton<ILoaderInstallationService, LoaderInstallationService>();
             services.AddSingleton<IDownloadService, DownloadService>();
+            services.AddSingleton<IVanillaInstallationService, VanillaInstallationService>();
             services.AddSingleton<ISmokeTestService, SmokeTestService>();
             services.AddSingleton<IVersionService, VersionService>();
             services.AddSingleton<ICrashAnalysisBackend, ProjBobcatCrashAnalysisBackend>();

@@ -46,6 +46,16 @@
   <sys:String x:Key="Download.Title">Downloads and loaders</sys:String>
   <sys:String x:Key="Download.Description">Choose a game version and loader for native ProjBobcat installation and resource completion.</sys:String>
   <sys:String x:Key="Download.SelectVersion">Select game version</sys:String>
+  <sys:String x:Key="Download.VanillaCatalog">Mojang vanilla versions</sys:String>
+  <sys:String x:Key="Download.ShowSnapshots">Show snapshots</sys:String>
+  <sys:String x:Key="Download.InstallVanilla">Install vanilla</sys:String>
+  <sys:String x:Key="Download.LoaderSection">Loader installation</sys:String>
+  <sys:String x:Key="Download.VersionRequired">Select a vanilla version first</sys:String>
+  <sys:String x:Key="Download.MaterializingVanilla">Downloading version metadata and client</sys:String>
+  <sys:String x:Key="Download.VersionNotResolved">Version files were downloaded but the locator cannot resolve them</sys:String>
+  <sys:String x:Key="Download.PreparingJava">Preparing compatible Java</sys:String>
+  <sys:String x:Key="Download.CompletingVanilla">Completing libraries and assets</sys:String>
+  <sys:String x:Key="Download.VanillaInstalled">Vanilla installation completed</sys:String>
   <sys:String x:Key="Download.ResolveLoader">Load loader versions</sys:String>
   <sys:String x:Key="Download.JavaPathHint">Optional explicit Java executable path</sys:String>
   <sys:String x:Key="Download.InstallLoader">Install loader</sys:String>

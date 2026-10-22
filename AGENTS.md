@@ -133,6 +133,14 @@
 - 离线账户只保存在内存账户解析器中，启动器不得创建带 AccessToken 的
   `launcher_accounts.json`；发现旧文件时应移除其中的令牌字段。
 
+## 原版安装
+
+- 原版清单来自 Mojang `version_manifest_v2.json`，UI 支持 release/snapshot
+  筛选，不依赖本机已有游戏版本。
+- 安装顺序固定为：版本 JSON/client JAR 物化 → locator 重新解析 →
+  兼容 Java 选择或准备 → ResourceCompleter 补全 libraries/assets。
+- 原版安装服务不得调用冒烟测试入口，也不得自行解析版本继承链或下载资源。
+
 ## WPF UI
 
 - 主导航与七个模块使用独立 View/ViewModel：Home、Versions、DownloadLoader、

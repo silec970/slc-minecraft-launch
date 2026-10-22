@@ -197,6 +197,16 @@
   `curseforge-credential.json`、`launcher_accounts.json` 或令牌文件。
 - 设置页提供打开日志目录和生成诊断包入口。
 
+## CI 与冒烟
+
+- `.github/workflows/ci.yml` 在 `windows-latest` 使用 .NET 10.x 执行 Release
+  build 和两个测试项目。
+- `.github/workflows/smoke.yml` 仅在 `main` push 和手动触发时运行，发布
+  Windows x64 单文件 EXE，上传 artifact，并执行 `--smoke-test`。
+- 联网冒烟允许失败但必须输出摘要和保留结果；失败不能用于关闭
+  `KNOWN_ISSUES.md` 中的真实联网验收条目。
+- GitHub runner 不执行 WPF UI 自动化。
+
 ## 本地化
 
 - 用户可见字符串必须放入资源字典。

@@ -2,11 +2,24 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   <SolidColorBrush x:Key="Brush.Ink" Color="#17324D" />
   <SolidColorBrush x:Key="Brush.Muted" Color="#64798B" />
-  <SolidColorBrush x:Key="Brush.Accent" Color="#0B8F87" />
+  <SolidColorBrush x:Key="Brush.Accent" Color="#087C75" />
   <SolidColorBrush x:Key="Brush.AccentDark" Color="#076E69" />
   <SolidColorBrush x:Key="Brush.Surface" Color="#F4F8FA" />
   <SolidColorBrush x:Key="Brush.Card" Color="#FFFFFFFF" />
   <SolidColorBrush x:Key="Brush.Sidebar" Color="#132A3A" />
   <SolidColorBrush x:Key="Brush.Border" Color="#DCE7EC" />
+  <SolidColorBrush x:Key="Brush.OnAccent" Color="#FFFFFFFF" />
+  <SolidColorBrush x:Key="Brush.ButtonSecondary" Color="#E4F1F0" />
+  <SolidColorBrush x:Key="Brush.InputBackground" Color="#FFFFFFFF" />
+  <SolidColorBrush x:Key="Brush.ProgressTrack" Color="#DCEBEC" />
+  <SolidColorBrush x:Key="Brush.SidebarText" Color="#C7D7E1" />
+  <SolidColorBrush x:Key="Brush.SidebarMuted" Color="#8FB0C3" />
+  <SolidColorBrush x:Key="Brush.SidebarHover" Color="#234558" />
+  <SolidColorBrush x:Key="Brush.Danger" Color="#B94A48" />
+  <SolidColorBrush x:Key="Brush.Focus" Color="#0B8F87" />
+  <SolidColorBrush x:Key="Brush.DropZone" Color="#F9FCFD" />
+  <SolidColorBrush x:Key="Brush.IconPlaceholder" Color="#E4F1F0" />
+  <SolidColorBrush x:Key="Brush.WarningSurface" Color="#FFF7E8" />
+  <SolidColorBrush x:Key="Brush.Warning" Color="#B77718" />
 </ResourceDictionary>
 

@@ -1,0 +1,87 @@
+name: Release Smoke
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish-and-smoke:
+    runs-on: windows-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Publish single-file executable
+        run: >
+          dotnet publish src\SlcMinecraftLaunch.Wpf\SlcMinecraftLaunch.Wpf.csproj
+          -c Release
+          -r win-x64
+          --self-contained true
+          -p:PublishSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -p:EnableCompressionInSingleFile=true
+          -p:DebugType=none
+          -p:DebugSymbols=false
+          -o ./publish
+
+      - name: Run network smoke test
+        id: smoke
+        continue-on-error: true
+        shell: powershell
+        run: |
+          $exe = Resolve-Path ".\publish\SlcMinecraftLaunch.Wpf.exe"
+          $gameRoot = Join-Path $env:RUNNER_TEMP "slc-smoke-game"
+          $process = Start-Process -FilePath $exe -ArgumentList @(
+            "--smoke-test",
+            "--version", "1.21.4",
+            "--game-root", $gameRoot
+          ) -WindowStyle Hidden -Wait -PassThru
+          $exitCode = $process.ExitCode
+          "SMOKE_EXIT_CODE=$exitCode" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          exit $exitCode
+
+      - name: Publish smoke summary
+        if: always()
+        shell: powershell
+        run: |
+          $resultPath = ".\publish\launcher-data\smoke-result.json"
+          $lines = @("## Release smoke test", "")
+          if (Test-Path $resultPath) {
+            $result = Get-Content -Raw $resultPath | ConvertFrom-Json
+            $lines += "- Exit code: $env:SMOKE_EXIT_CODE"
+            $lines += "- Succeeded: $($result.Succeeded)"
+            $lines += "- Final stage: $($result.FinalStage)"
+            $lines += "- Message key: $($result.MessageKey)"
+            $lines += "- Duration: $($result.Duration)"
+            if ($result.ErrorDetail) {
+              $lines += "- Error: $($result.ErrorDetail)"
+            }
+          } else {
+            $lines += "- Smoke result file was not produced."
+          }
+          $lines += ""
+          $lines += "A failed network smoke result is retained as a warning and does not mark live NeoForge or CurseForge acceptance as complete."
+          $lines | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+
+      - name: Upload release artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: slc-release-smoke
+          path: |
+            publish/SlcMinecraftLaunch.Wpf.exe
+            publish/launcher-data/smoke-result.json
+            publish/launcher-data/logs/*.log
+          if-no-files-found: warn

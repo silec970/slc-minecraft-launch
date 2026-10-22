@@ -8,5 +8,18 @@
   <SolidColorBrush x:Key="Brush.Card" Color="#172934" />
   <SolidColorBrush x:Key="Brush.Sidebar" Color="#09141C" />
   <SolidColorBrush x:Key="Brush.Border" Color="#28414F" />
+  <SolidColorBrush x:Key="Brush.OnAccent" Color="#062E2B" />
+  <SolidColorBrush x:Key="Brush.ButtonSecondary" Color="#23414A" />
+  <SolidColorBrush x:Key="Brush.InputBackground" Color="#10232D" />
+  <SolidColorBrush x:Key="Brush.ProgressTrack" Color="#203844" />
+  <SolidColorBrush x:Key="Brush.SidebarText" Color="#D8E8EF" />
+  <SolidColorBrush x:Key="Brush.SidebarMuted" Color="#8FB0C3" />
+  <SolidColorBrush x:Key="Brush.SidebarHover" Color="#1D3B48" />
+  <SolidColorBrush x:Key="Brush.Danger" Color="#FF8C8C" />
+  <SolidColorBrush x:Key="Brush.Focus" Color="#8BE6DF" />
+  <SolidColorBrush x:Key="Brush.DropZone" Color="#142832" />
+  <SolidColorBrush x:Key="Brush.IconPlaceholder" Color="#23414A" />
+  <SolidColorBrush x:Key="Brush.WarningSurface" Color="#3A2C17" />
+  <SolidColorBrush x:Key="Brush.Warning" Color="#FFD27A" />
 </ResourceDictionary>
 

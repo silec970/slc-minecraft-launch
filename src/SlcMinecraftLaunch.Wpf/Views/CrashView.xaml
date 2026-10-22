@@ -16,8 +16,10 @@
         <WrapPanel>
           <ComboBox ItemsSource="{Binding Versions}"
                     SelectedItem="{Binding SelectedVersion}"
+                    AutomationProperties.Name="{DynamicResource Crash.SelectVersion}"
                     MinWidth="260" />
           <Button Content="{DynamicResource Crash.Analyze}"
+                  AutomationProperties.Name="{DynamicResource Crash.Analyze}"
                   Style="{StaticResource PrimaryButtonStyle}"
                   Command="{Binding AnalyzeCommand}" />
         </WrapPanel>
@@ -31,6 +33,7 @@
           <ListBox Margin="0,10,0,0"
                    MaxHeight="240"
                    ItemsSource="{Binding History}"
+                   AutomationProperties.Name="{DynamicResource Crash.History.Title}"
                    SelectedItem="{Binding SelectedHistory}">
             <ListBox.ItemTemplate>
               <DataTemplate>
@@ -43,27 +46,29 @@
                   <TextBlock Text="{Binding DisplayTime}" />
                   <TextBlock Grid.Column="1"
                              Text="{Binding Report.VersionId}"
-                             Foreground="{StaticResource Brush.Muted}" />
+                             Foreground="{DynamicResource Brush.Muted}" />
                   <TextBlock Grid.Column="2"
                              Text="{Binding SummaryKey, Converter={StaticResource Key}}"
-                             Foreground="{StaticResource Brush.Muted}" />
+                             Foreground="{DynamicResource Brush.Muted}" />
                 </Grid>
               </DataTemplate>
             </ListBox.ItemTemplate>
           </ListBox>
           <WrapPanel Margin="0,10,0,0">
             <Button Content="{DynamicResource Crash.History.OpenLog}"
+                    AutomationProperties.Name="{DynamicResource Crash.History.OpenLog}"
                     Style="{StaticResource SecondaryButtonStyle}"
                     IsEnabled="{Binding HasSelectedHistory}"
                     Click="OpenCrashLog_Click" />
             <Button Content="{DynamicResource Crash.History.Delete}"
+                    AutomationProperties.Name="{DynamicResource Crash.History.Delete}"
                     Style="{StaticResource SecondaryButtonStyle}"
                     IsEnabled="{Binding HasSelectedHistory}"
                     Click="DeleteCrashReport_Click" />
           </WrapPanel>
           <TextBlock Margin="0,6,0,0"
                      Text="{DynamicResource Crash.History.Retention}"
-                     Foreground="{StaticResource Brush.Muted}" />
+                     Foreground="{DynamicResource Brush.Muted}" />
         </StackPanel>
       </Border>
 
@@ -78,21 +83,21 @@
                 <TextBlock Text="{Binding SuggestionKey, Converter={StaticResource Key}}"
                            Margin="0,8,0,0"
                            TextWrapping="Wrap"
-                           Foreground="{StaticResource Brush.Muted}" />
+                           Foreground="{DynamicResource Brush.Muted}" />
                 <TextBlock Text="{Binding CauseCode}"
                            Margin="0,10,0,0"
                            FontSize="12"
-                           Foreground="{StaticResource Brush.AccentDark}" />
+                           Foreground="{DynamicResource Brush.AccentDark}" />
                 <TextBlock Text="{Binding AttributionKey, Converter={StaticResource Key}}"
                            Margin="0,8,0,0"
                            FontWeight="SemiBold"
-                           Foreground="{StaticResource Brush.Accent}" />
+                           Foreground="{DynamicResource Brush.Accent}" />
                 <ItemsControl ItemsSource="{Binding AffectedModFiles}">
                   <ItemsControl.ItemTemplate>
                     <DataTemplate>
                       <TextBlock Text="{Binding}"
                                  Margin="0,4,0,0"
-                                 Foreground="{StaticResource Brush.Muted}" />
+                                 Foreground="{DynamicResource Brush.Muted}" />
                     </DataTemplate>
                   </ItemsControl.ItemTemplate>
                 </ItemsControl>
@@ -105,8 +110,7 @@
       <ProgressBar Value="{Binding Progress}"
                    Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" />
       <TextBlock Text="{Binding StatusKey, Converter={StaticResource Key}}" />
-      <TextBlock Text="{Binding ErrorDetail}" Foreground="#B94A48" TextWrapping="Wrap" />
+      <TextBlock Text="{Binding ErrorDetail}" Foreground="{DynamicResource Brush.Danger}" TextWrapping="Wrap" />
     </StackPanel>
   </ScrollViewer>
 </UserControl>
-

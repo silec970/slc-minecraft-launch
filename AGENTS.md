@@ -16,6 +16,11 @@
 - `SlcMinecraftLaunch.Domain` 只包含与框架无关的模型和跨层契约。
 - ViewModel 不得直接引用 ProjBobcat；ProjBobcat 类型不得穿过 Infrastructure。
 - View 不得包含业务逻辑，业务操作不得同步阻塞 Dispatcher。
+- `ProjBobcatGameRuntime` 只负责聚合和生命周期转发；核心创建、版本目录、
+  资源下载、启动和 Mod 下载分别位于独立适配器中。
+- `App.xaml.cs` 只负责组合根与桌面生命周期；配置加载位于
+  `LauncherRuntimeConfigurationFactory`，无界面命令位于
+  `CommandLineExecutionService`。
 
 ## ProjBobcat 2.1.2 契约
 
@@ -181,6 +186,27 @@
 - 关闭 `KNOWN_ISSUES.md` 条目时必须附日期、commit、产物/日志位置和可复核的
   验收结果。
 
+## 日志与诊断
+
+- `IAppLogger` 的生产实现使用 Serilog 文件 Sink，输出到
+  `launcher-data/logs/slc-<date>.log`。
+- 文件按天和 10 MiB 滚动，保留最近 7 个文件并启用 `shared: true`。
+- 认证载荷、访问/刷新/客户端令牌、Authorization 和 CurseForge API Key
+  必须经过 `LogRedactor`，禁止写入日志或诊断包。
+- 诊断包只包含最近日志、实例 `instance.json` 和 Java 运行时摘要；不得包含
+  `curseforge-credential.json`、`launcher_accounts.json` 或令牌文件。
+- 设置页提供打开日志目录和生成诊断包入口。
+
+## CI 与冒烟
+
+- `.github/workflows/ci.yml` 在 `windows-latest` 使用 .NET 10.x 执行 Release
+  build 和两个测试项目。
+- `.github/workflows/smoke.yml` 仅在 `main` push 和手动触发时运行，发布
+  Windows x64 单文件 EXE，上传 artifact，并执行 `--smoke-test`。
+- 联网冒烟允许失败但必须输出摘要和保留结果；失败不能用于关闭
+  `KNOWN_ISSUES.md` 中的真实联网验收条目。
+- GitHub runner 不执行 WPF UI 自动化。
+
 ## 本地化
 
 - 用户可见字符串必须放入资源字典。
@@ -243,7 +269,14 @@
 
 - UI 设置持久化到 `launcher-data/ui-settings.json`。
 - 语言切换通过替换 zh-CN/en-US 资源字典完成，资源键必须保持一一对应。
-- 主题通过 Themes.Light/Dark 资源字典完成，切换后重建主窗口以刷新静态资源。
+- 主题通过 Themes.Light/Dark/HighContrast 资源字典完成，切换时原位替换字典并
+  刷新绑定，不得关闭并重建主窗口。
+- 所有 UI 画刷必须使用 `DynamicResource`；固定前景、背景和边框颜色不得散落
+  在各 View 中。
+- 系统启用高对比度时自动使用 HighContrast 主题，并监听系统设置变化原位刷新。
+- 按钮、输入、导航和主要列表必须提供 `AutomationProperties.Name`；按钮与输入
+  必须有可见键盘焦点，主窗口使用循环键盘 Tab 导航。
+- 主题测试必须验证三套字典键一致，以及文字/背景对比度满足 WCAG AA。
 - 背景使用原创渐变与形状，不复制 PCL2 的商标或素材。
 - 导航动效为 180ms 淡入和位移动画，可由“启用轻量动效”关闭。
 - 背景音乐只播放 `launcher-data/music` 中的用户本地音频；无文件时安静降级。
@@ -259,9 +292,17 @@
 
 - 产物路径：`./publish/SlcMinecraftLaunch.Wpf.exe`。
 - 预期体积约为 70–100 MB；压缩后具体大小会随 SDK 和依赖变化。
-- `publish/` 为本地分发产物，不提交到 Git。
-- 当前缺少 `Assets\launcher.ico`，`ApplicationIcon` 暂时注释，属于待补充图标。
+- `publish/` 与 `release/` 为本地分发产物，不提交到 Git。
+- `Assets/launcher.ico` 由 `tools/generate-icon.ps1` 生成，必须包含
+  16/32/48/256 四种尺寸。当前图标是原创几何占位资产，正式品牌仍待确认。
+- 发布 EXE 的 `FileVersion` 为 `0.1.0.0`，`ProductVersion`/InformationalVersion
+  为 `0.1.0`，Company 为 `SLC`。
+- 安装包通过 `installer/SlcMinecraftLaunch.iss` 使用 Inno Setup 编译到
+  `release/`，安装范围为当前用户，并创建开始菜单快捷方式和卸载程序。
+- `release/SHA256SUMS.txt` 必须覆盖独立 EXE、安装包和随附文档。
+- 第三方组件清单和许可证链接维护在 `THIRD-PARTY-NOTICES.md`。
 - 所有强制配置键必须由 `LauncherEndpointDefaults` 提供代码默认值。
   配置覆盖顺序固定为：代码默认值 → 可选 `appsettings.json` → `SLC_` 环境变量。
 - 发布验收必须仅复制 EXE 到空目录并成功进入主页，不能依赖同目录配置文件。
+- 代码签名和自动 GitHub Release 仍为可选待办，不阻塞当前安装包交付。
 

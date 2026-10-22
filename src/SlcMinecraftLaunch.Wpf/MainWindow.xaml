@@ -9,7 +9,10 @@
         Height="820"
         MinWidth="980"
         MinHeight="640"
-        Background="{StaticResource Brush.Surface}"
+        AutomationProperties.Name="{DynamicResource App.Title}"
+        KeyboardNavigation.TabNavigation="Cycle"
+        KeyboardNavigation.DirectionalNavigation="Contained"
+        Background="{DynamicResource Brush.Surface}"
         WindowStartupLocation="CenterScreen">
   <Window.Resources>
     <conv:ResourceKeyConverter x:Key="Key" />
@@ -35,9 +38,11 @@
       <views:SettingsView />
     </DataTemplate>
     <Style x:Key="NavigationButtonStyle" TargetType="Button">
-      <Setter Property="Foreground" Value="#C7D7E1" />
+      <Setter Property="Foreground" Value="{DynamicResource Brush.SidebarText}" />
       <Setter Property="Background" Value="Transparent" />
-      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="BorderThickness" Value="2" />
+      <Setter Property="BorderBrush" Value="Transparent" />
+      <Setter Property="FocusVisualStyle" Value="{StaticResource AccessibleFocusVisualStyle}" />
       <Setter Property="HorizontalContentAlignment" Value="Stretch" />
       <Setter Property="Padding" Value="16,12" />
       <Setter Property="Margin" Value="10,3" />
@@ -48,13 +53,18 @@
             <Border x:Name="Root"
                     Padding="{TemplateBinding Padding}"
                     CornerRadius="10"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
                     Background="{TemplateBinding Background}">
               <ContentPresenter />
             </Border>
             <ControlTemplate.Triggers>
               <Trigger Property="IsMouseOver" Value="True">
-                <Setter TargetName="Root" Property="Background" Value="#234558" />
-                <Setter Property="Foreground" Value="White" />
+                <Setter TargetName="Root" Property="Background" Value="{DynamicResource Brush.SidebarHover}" />
+                <Setter Property="Foreground" Value="{DynamicResource Brush.SidebarText}" />
+              </Trigger>
+              <Trigger Property="IsKeyboardFocused" Value="True">
+                <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource Brush.Focus}" />
               </Trigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>
@@ -69,7 +79,7 @@
       <ColumnDefinition Width="*" />
     </Grid.ColumnDefinitions>
 
-    <Border Background="{StaticResource Brush.Sidebar}">
+    <Border Background="{DynamicResource Brush.Sidebar}">
       <Grid>
         <Grid.RowDefinitions>
           <RowDefinition Height="Auto" />
@@ -78,18 +88,21 @@
 
         <StackPanel Margin="22,26,18,22">
           <TextBlock Text="SLC"
-                     Foreground="White"
+                     Foreground="{DynamicResource Brush.SidebarText}"
                      FontSize="29"
                      FontWeight="Bold" />
           <TextBlock Text="{DynamicResource App.Subtitle}"
-                     Foreground="#8FB0C3"
+                     Foreground="{DynamicResource Brush.SidebarMuted}"
                      FontSize="12" />
         </StackPanel>
 
-        <ItemsControl Grid.Row="1" ItemsSource="{Binding NavigationItems}">
+        <ItemsControl Grid.Row="1"
+                      ItemsSource="{Binding NavigationItems}"
+                      KeyboardNavigation.TabNavigation="Continue">
           <ItemsControl.ItemTemplate>
             <DataTemplate>
               <Button Style="{StaticResource NavigationButtonStyle}"
+                      AutomationProperties.Name="{Binding LabelKey, Converter={StaticResource Key}}"
                       Command="{Binding DataContext.NavigateCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                       CommandParameter="{Binding}">
                 <Grid>
@@ -156,6 +169,7 @@
       <ContentControl x:Name="PageHost"
                       Margin="28,22,28,24"
                       Content="{Binding CurrentPage}"
+                      AutomationProperties.Name="{Binding CurrentPage.TitleKey, Converter={StaticResource Key}}"
                       Opacity="1">
         <ContentControl.RenderTransform>
           <TranslateTransform />
@@ -164,4 +178,3 @@
     </Grid>
   </Grid>
 </Window>
-

@@ -28,7 +28,8 @@ public sealed class ViewModelContractTests
                 new FakeSettingsService(),
                 new FakeUiPreferences(),
                 new FakePlayerProfileService(),
-                new FakeCurseForgeCredentialService())
+                new FakeCurseForgeCredentialService(),
+                new FakeDiagnosticBundleService())
         ];
 
         Assert.All(pages, page =>
@@ -59,7 +60,8 @@ public sealed class ViewModelContractTests
             new FakeSettingsService(),
             new FakeUiPreferences(),
             new FakePlayerProfileService(),
-            new FakeCurseForgeCredentialService());
+            new FakeCurseForgeCredentialService(),
+            new FakeDiagnosticBundleService());
         var preferences = new FakeUiPreferences();
 
         var shell = new ShellViewModel(home, versions, download, java, mods, crash, settings, preferences);
@@ -81,7 +83,8 @@ public sealed class ViewModelContractTests
             settingsService,
             preferences,
             playerProfile,
-            credentialService)
+            credentialService,
+            new FakeDiagnosticBundleService())
         {
             IsDarkTheme = true,
             AnimationsEnabled = false,
@@ -109,7 +112,8 @@ public sealed class ViewModelContractTests
             new FakeSettingsService(),
             new FakeUiPreferences(),
             new FakePlayerProfileService(),
-            credentialService);
+            credentialService,
+            new FakeDiagnosticBundleService());
 
         await viewModel.SaveCurseForgeKeyCommand.ExecuteAsync("cf-test-secret");
 
@@ -334,5 +338,13 @@ public sealed class ViewModelContractTests
             IProgress<OperationProgress>? progress = null,
             CancellationToken cancellationToken = default)
             => throw new NotSupportedException();
+    }
+
+    private sealed class FakeDiagnosticBundleService : IDiagnosticBundleService
+    {
+        public Task<string> CreateAsync(
+            string destinationPath,
+            CancellationToken cancellationToken = default)
+            => Task.FromResult(destinationPath);
     }
 }

@@ -25,7 +25,7 @@
                 <ItemsControl ItemsSource="{Binding Instances}">
                   <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                      <Border BorderBrush="{StaticResource Brush.Border}"
+                      <Border BorderBrush="{DynamicResource Brush.Border}"
                               BorderThickness="0,0,0,1"
                               Padding="0,10">
                         <Grid>
@@ -36,29 +36,32 @@
                             <ColumnDefinition Width="Auto" />
                           </Grid.ColumnDefinitions>
                           <Button HorizontalContentAlignment="Left"
+                                  AutomationProperties.Name="{Binding Name}"
                                   Background="Transparent"
                                   BorderThickness="0"
                                   Command="{Binding DataContext.SelectInstanceCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                   CommandParameter="{Binding}">
                             <StackPanel>
                               <TextBlock Text="{Binding Name}" FontSize="15" FontWeight="SemiBold" />
-                              <TextBlock Text="{Binding Id}" FontSize="12" Foreground="{StaticResource Brush.Muted}" />
+                              <TextBlock Text="{Binding Id}" FontSize="12" Foreground="{DynamicResource Brush.Muted}" />
                             </StackPanel>
                           </Button>
                           <TextBlock Grid.Column="1"
                                      Text="{Binding MinecraftVersion}"
                                      VerticalAlignment="Center"
-                                     Foreground="{StaticResource Brush.Muted}" />
+                                     Foreground="{DynamicResource Brush.Muted}" />
                           <TextBlock Grid.Column="2"
                                      Text="{Binding PlaceholderTextKey, Converter={StaticResource Key}}"
                                      VerticalAlignment="Center"
-                                     Foreground="{StaticResource Brush.Muted}" />
+                                     Foreground="{DynamicResource Brush.Muted}" />
                           <StackPanel Grid.Column="3" Orientation="Horizontal">
                             <Button Content="{Binding FavoriteGlyph}"
+                                    AutomationProperties.Name="{DynamicResource Versions.Favorite}"
                                     Style="{StaticResource IconButtonStyle}"
                                     Command="{Binding DataContext.ToggleFavoriteCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                     CommandParameter="{Binding}" />
                             <Button Content="{Binding IsolationGlyph}"
+                                    AutomationProperties.Name="{DynamicResource Versions.Isolation}"
                                     Style="{StaticResource IconButtonStyle}"
                                     Command="{Binding DataContext.ToggleIsolationCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                     CommandParameter="{Binding}" />
@@ -79,7 +82,7 @@
           <TextBlock Text="{DynamicResource Instances.CreateEmpty}" FontSize="18" FontWeight="SemiBold" />
           <TextBlock Margin="0,6,0,0"
                      Text="{DynamicResource Instances.CreateEmptyHint}"
-                     Foreground="{StaticResource Brush.Muted}"
+                     Foreground="{DynamicResource Brush.Muted}"
                      TextWrapping="Wrap" />
           <Grid Margin="0,12,0,0">
             <Grid.ColumnDefinitions>
@@ -88,11 +91,13 @@
             </Grid.ColumnDefinitions>
             <StackPanel Margin="0,0,8,0">
               <TextBlock Text="{DynamicResource Instances.Id}" />
-              <TextBox Text="{Binding NewInstanceId, UpdateSourceTrigger=PropertyChanged}" />
+              <TextBox Text="{Binding NewInstanceId, UpdateSourceTrigger=PropertyChanged}"
+                       AutomationProperties.Name="{DynamicResource Instances.Id}" />
             </StackPanel>
             <StackPanel Grid.Column="1" Margin="8,0,0,0">
               <TextBlock Text="{DynamicResource Instances.Name}" />
-              <TextBox Text="{Binding NewInstanceName, UpdateSourceTrigger=PropertyChanged}" />
+              <TextBox Text="{Binding NewInstanceName, UpdateSourceTrigger=PropertyChanged}"
+                       AutomationProperties.Name="{DynamicResource Instances.Name}" />
             </StackPanel>
           </Grid>
           <Grid Margin="0,10,0,0">
@@ -103,12 +108,14 @@
             </Grid.ColumnDefinitions>
             <StackPanel Margin="0,0,8,0">
               <TextBlock Text="{DynamicResource Instances.MinecraftVersion}" />
-              <TextBox Text="{Binding NewMinecraftVersion, UpdateSourceTrigger=PropertyChanged}" />
+              <TextBox Text="{Binding NewMinecraftVersion, UpdateSourceTrigger=PropertyChanged}"
+                       AutomationProperties.Name="{DynamicResource Instances.MinecraftVersion}" />
             </StackPanel>
             <StackPanel Grid.Column="1" Margin="8,0">
               <TextBlock Text="{DynamicResource Instances.Loader}" />
               <ComboBox ItemsSource="{Binding LoaderKinds}"
-                        SelectedItem="{Binding NewLoaderKind}">
+                        SelectedItem="{Binding NewLoaderKind}"
+                        AutomationProperties.Name="{DynamicResource Instances.Loader}">
                 <ComboBox.ItemTemplate>
                   <DataTemplate>
                     <TextBlock Text="{Binding Converter={StaticResource LoaderKindKey}}" />
@@ -118,10 +125,12 @@
             </StackPanel>
             <StackPanel Grid.Column="2" Margin="8,0,0,0">
               <TextBlock Text="{DynamicResource Instances.LoaderVersion}" />
-              <TextBox Text="{Binding NewLoaderVersion, UpdateSourceTrigger=PropertyChanged}" />
+              <TextBox Text="{Binding NewLoaderVersion, UpdateSourceTrigger=PropertyChanged}"
+                       AutomationProperties.Name="{DynamicResource Instances.LoaderVersion}" />
             </StackPanel>
           </Grid>
           <Button Content="{DynamicResource Instances.Create}"
+                  AutomationProperties.Name="{DynamicResource Instances.Create}"
                   Style="{StaticResource PrimaryButtonStyle}"
                   HorizontalAlignment="Left"
                   Margin="0,12,0,0"
@@ -134,10 +143,10 @@
           <TextBlock Text="{DynamicResource Instances.Settings}" FontSize="18" FontWeight="SemiBold" />
           <TextBlock Margin="0,6,0,0"
                      Text="{Binding SelectedInstance.Id}"
-                     Foreground="{StaticResource Brush.Accent}" />
+                     Foreground="{DynamicResource Brush.Accent}" />
           <TextBlock Margin="0,6,0,0"
                      Text="{Binding SelectedInstance.PlaceholderTextKey, Converter={StaticResource Key}}"
-                     Foreground="{StaticResource Brush.Muted}" />
+                     Foreground="{DynamicResource Brush.Muted}" />
           <Grid Margin="0,12,0,0">
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="*" />
@@ -145,11 +154,13 @@
             </Grid.ColumnDefinitions>
             <StackPanel Margin="0,0,8,0">
               <TextBlock Text="{DynamicResource Instances.Name}" />
-              <TextBox Text="{Binding EditName, UpdateSourceTrigger=PropertyChanged}" />
+              <TextBox Text="{Binding EditName, UpdateSourceTrigger=PropertyChanged}"
+                       AutomationProperties.Name="{DynamicResource Instances.Name}" />
             </StackPanel>
             <StackPanel Grid.Column="1" Margin="8,0,0,0">
               <TextBlock Text="{DynamicResource Instances.JavaPath}" />
-              <TextBox Text="{Binding JavaExecutablePath, UpdateSourceTrigger=PropertyChanged}" />
+              <TextBox Text="{Binding JavaExecutablePath, UpdateSourceTrigger=PropertyChanged}"
+                       AutomationProperties.Name="{DynamicResource Instances.JavaPath}" />
             </StackPanel>
           </Grid>
           <Grid Margin="0,10,0,0">
@@ -161,19 +172,23 @@
             </Grid.ColumnDefinitions>
             <StackPanel Margin="0,0,6,0">
               <TextBlock Text="{DynamicResource Instances.MinMemory}" />
-              <TextBox Text="{Binding MinimumMemoryMb, UpdateSourceTrigger=PropertyChanged}" />
+              <TextBox Text="{Binding MinimumMemoryMb, UpdateSourceTrigger=PropertyChanged}"
+                       AutomationProperties.Name="{DynamicResource Instances.MinMemory}" />
             </StackPanel>
             <StackPanel Grid.Column="1" Margin="6,0">
               <TextBlock Text="{DynamicResource Instances.MaxMemory}" />
-              <TextBox Text="{Binding MaximumMemoryMb, UpdateSourceTrigger=PropertyChanged}" />
+              <TextBox Text="{Binding MaximumMemoryMb, UpdateSourceTrigger=PropertyChanged}"
+                       AutomationProperties.Name="{DynamicResource Instances.MaxMemory}" />
             </StackPanel>
             <StackPanel Grid.Column="2" Margin="6,0">
               <TextBlock Text="{DynamicResource Instances.JavaMajor}" />
-              <TextBox Text="{Binding SuggestedJavaMajor, UpdateSourceTrigger=PropertyChanged}" />
+              <TextBox Text="{Binding SuggestedJavaMajor, UpdateSourceTrigger=PropertyChanged}"
+                       AutomationProperties.Name="{DynamicResource Instances.JavaMajor}" />
             </StackPanel>
             <CheckBox Grid.Column="3"
                       Content="{DynamicResource Instances.Fullscreen}"
                       IsChecked="{Binding Fullscreen}"
+                      AutomationProperties.Name="{DynamicResource Instances.Fullscreen}"
                       VerticalAlignment="Bottom"
                       Margin="6,0,0,8" />
           </Grid>
@@ -184,11 +199,13 @@
             </Grid.ColumnDefinitions>
             <StackPanel Margin="0,0,8,0">
               <TextBlock Text="{DynamicResource Instances.WindowWidth}" />
-              <TextBox Text="{Binding WindowWidth, UpdateSourceTrigger=PropertyChanged}" />
+              <TextBox Text="{Binding WindowWidth, UpdateSourceTrigger=PropertyChanged}"
+                       AutomationProperties.Name="{DynamicResource Instances.WindowWidth}" />
             </StackPanel>
             <StackPanel Grid.Column="1" Margin="8,0,0,0">
               <TextBlock Text="{DynamicResource Instances.WindowHeight}" />
-              <TextBox Text="{Binding WindowHeight, UpdateSourceTrigger=PropertyChanged}" />
+              <TextBox Text="{Binding WindowHeight, UpdateSourceTrigger=PropertyChanged}"
+                       AutomationProperties.Name="{DynamicResource Instances.WindowHeight}" />
             </StackPanel>
           </Grid>
           <Grid Margin="0,10,0,0">
@@ -200,28 +217,32 @@
               <TextBlock Text="{DynamicResource Instances.JvmArguments}" />
               <TextBox MinHeight="70"
                        AcceptsReturn="True"
+                       AutomationProperties.Name="{DynamicResource Instances.JvmArguments}"
                        TextWrapping="Wrap"
                        VerticalScrollBarVisibility="Auto"
                        Text="{Binding JvmArgumentsText, UpdateSourceTrigger=PropertyChanged}" />
               <TextBlock Text="{DynamicResource Instances.ArgumentsHint}"
-                         Foreground="{StaticResource Brush.Muted}" />
+                         Foreground="{DynamicResource Brush.Muted}" />
             </StackPanel>
             <StackPanel Grid.Column="1" Margin="8,0,0,0">
               <TextBlock Text="{DynamicResource Instances.GameArguments}" />
               <TextBox MinHeight="70"
                        AcceptsReturn="True"
+                       AutomationProperties.Name="{DynamicResource Instances.GameArguments}"
                        TextWrapping="Wrap"
                        VerticalScrollBarVisibility="Auto"
                        Text="{Binding GameArgumentsText, UpdateSourceTrigger=PropertyChanged}" />
               <TextBlock Text="{DynamicResource Instances.ArgumentsHint}"
-                         Foreground="{StaticResource Brush.Muted}" />
+                         Foreground="{DynamicResource Brush.Muted}" />
             </StackPanel>
           </Grid>
           <WrapPanel Margin="0,12,0,0">
             <Button Content="{DynamicResource Instances.Save}"
+                    AutomationProperties.Name="{DynamicResource Instances.Save}"
                     Style="{StaticResource PrimaryButtonStyle}"
                     Command="{Binding SaveSelectedCommand}" />
             <Button Content="{DynamicResource Instances.Delete}"
+                    AutomationProperties.Name="{DynamicResource Instances.Delete}"
                     Style="{StaticResource SecondaryButtonStyle}"
                     Click="DeleteInstance_Click" />
           </WrapPanel>
@@ -235,13 +256,16 @@
             </Grid.ColumnDefinitions>
             <TextBox Margin="0,0,8,0"
                      Text="{Binding CopyTargetId, UpdateSourceTrigger=PropertyChanged}"
+                     AutomationProperties.Name="{DynamicResource Instances.Id}"
                      ToolTip="{DynamicResource Instances.Id}" />
             <TextBox Grid.Column="1"
                      Margin="8,0"
                      Text="{Binding CopyTargetName, UpdateSourceTrigger=PropertyChanged}"
+                     AutomationProperties.Name="{DynamicResource Instances.Name}"
                      ToolTip="{DynamicResource Instances.Name}" />
             <Button Grid.Column="2"
                     Content="{DynamicResource Instances.CopyAction}"
+                    AutomationProperties.Name="{DynamicResource Instances.CopyAction}"
                     Style="{StaticResource SecondaryButtonStyle}"
                     Command="{Binding CopySelectedCommand}" />
           </Grid>
@@ -253,32 +277,39 @@
           <TextBlock Text="{DynamicResource Instances.Transfer}" FontSize="18" FontWeight="SemiBold" />
           <TextBlock Margin="0,6,0,0"
                      Text="{DynamicResource Instances.TransferHint}"
-                     Foreground="{StaticResource Brush.Muted}"
+                     Foreground="{DynamicResource Brush.Muted}"
                      TextWrapping="Wrap" />
           <WrapPanel Margin="0,10,0,0">
             <CheckBox Content="{DynamicResource Instances.IncludeSaves}"
                       IsChecked="{Binding IncludeSaves}"
+                      AutomationProperties.Name="{DynamicResource Instances.IncludeSaves}"
                       Margin="0,0,20,8" />
             <CheckBox Content="{DynamicResource Instances.IncludeScreenshots}"
                       IsChecked="{Binding IncludeScreenshots}"
+                      AutomationProperties.Name="{DynamicResource Instances.IncludeScreenshots}"
                       Margin="0,0,20,8" />
             <CheckBox Content="{DynamicResource Instances.IncludeServers}"
                       IsChecked="{Binding IncludeServersFile}"
+                      AutomationProperties.Name="{DynamicResource Instances.IncludeServers}"
                       Margin="0,0,20,8" />
             <CheckBox Content="{DynamicResource Instances.IncludeLogs}"
                       IsChecked="{Binding IncludeLogs}"
+                      AutomationProperties.Name="{DynamicResource Instances.IncludeLogs}"
                       Margin="0,0,20,8" />
           </WrapPanel>
           <WrapPanel>
             <Button Content="{DynamicResource Instances.Export}"
+                    AutomationProperties.Name="{DynamicResource Instances.Export}"
                     Style="{StaticResource SecondaryButtonStyle}"
                     IsEnabled="{Binding HasSelectedInstance}"
                     Click="ExportInstance_Click" />
             <Button Content="{DynamicResource Instances.Backup}"
+                    AutomationProperties.Name="{DynamicResource Instances.Backup}"
                     Style="{StaticResource SecondaryButtonStyle}"
                     IsEnabled="{Binding HasSelectedInstance}"
                     Click="BackupInstance_Click" />
             <Button Content="{DynamicResource Instances.Import}"
+                    AutomationProperties.Name="{DynamicResource Instances.Import}"
                     Style="{StaticResource SecondaryButtonStyle}"
                     Click="ImportInstance_Click" />
           </WrapPanel>
@@ -288,8 +319,8 @@
       <ProgressBar Value="{Binding Progress}"
                    Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" />
       <TextBlock Text="{Binding StatusKey, Converter={StaticResource Key}}"
-                 Foreground="{StaticResource Brush.Muted}" />
-      <TextBlock Text="{Binding ErrorDetail}" Foreground="#B94A48" TextWrapping="Wrap" />
+                 Foreground="{DynamicResource Brush.Muted}" />
+      <TextBlock Text="{Binding ErrorDetail}" Foreground="{DynamicResource Brush.Danger}" TextWrapping="Wrap" />
     </StackPanel>
   </ScrollViewer>
 </UserControl>

@@ -23,11 +23,11 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
           </Grid.RowDefinitions>
-          <TextBlock Text="{DynamicResource Settings.GameRoot}" Foreground="{StaticResource Brush.Muted}" />
+          <TextBlock Text="{DynamicResource Settings.GameRoot}" Foreground="{DynamicResource Brush.Muted}" />
           <TextBlock Grid.Column="1" Text="{Binding GameRoot}" TextWrapping="Wrap" />
-          <TextBlock Grid.Row="1" Margin="0,14,0,0" Text="{DynamicResource Settings.DataRoot}" Foreground="{StaticResource Brush.Muted}" />
+          <TextBlock Grid.Row="1" Margin="0,14,0,0" Text="{DynamicResource Settings.DataRoot}" Foreground="{DynamicResource Brush.Muted}" />
           <TextBlock Grid.Row="1" Grid.Column="1" Margin="0,14,0,0" Text="{Binding DataRoot}" TextWrapping="Wrap" />
-          <TextBlock Grid.Row="2" Margin="0,14,0,0" Text="{DynamicResource Settings.Version}" Foreground="{StaticResource Brush.Muted}" />
+          <TextBlock Grid.Row="2" Margin="0,14,0,0" Text="{DynamicResource Settings.Version}" Foreground="{DynamicResource Brush.Muted}" />
           <TextBlock Grid.Row="2" Grid.Column="1" Margin="0,14,0,0" Text="{Binding LauncherVersion}" />
         </Grid>
       </Border>
@@ -39,9 +39,10 @@
                      FontWeight="SemiBold" />
           <TextBox Margin="0,12,0,0"
                    MaxLength="16"
+                   AutomationProperties.Name="{DynamicResource Settings.PlayerName}"
                    Text="{Binding PlayerName, UpdateSourceTrigger=PropertyChanged}" />
           <TextBlock Text="{DynamicResource Settings.PlayerNameHint}"
-                     Foreground="{StaticResource Brush.Muted}"
+                     Foreground="{DynamicResource Brush.Muted}"
                      TextWrapping="Wrap" />
         </StackPanel>
       </Border>
@@ -52,21 +53,26 @@
           <WrapPanel Margin="0,14,0,0">
             <CheckBox Content="{DynamicResource Settings.DarkTheme}"
                       IsChecked="{Binding IsDarkTheme}"
+                      AutomationProperties.Name="{DynamicResource Settings.DarkTheme}"
                       Margin="0,0,28,12" />
             <CheckBox Content="{DynamicResource Settings.Animations}"
                       IsChecked="{Binding AnimationsEnabled}"
+                      AutomationProperties.Name="{DynamicResource Settings.Animations}"
                       Margin="0,0,28,12" />
             <CheckBox Content="{DynamicResource Settings.Background}"
                       IsChecked="{Binding BackgroundEnabled}"
+                      AutomationProperties.Name="{DynamicResource Settings.Background}"
                       Margin="0,0,28,12" />
             <CheckBox Content="{DynamicResource Settings.Music}"
                       IsChecked="{Binding MusicEnabled}"
+                      AutomationProperties.Name="{DynamicResource Settings.Music}"
                       Margin="0,0,28,12" />
           </WrapPanel>
           <StackPanel Orientation="Horizontal">
             <TextBlock Text="{DynamicResource Settings.Language}" VerticalAlignment="Center" Margin="0,0,10,0" />
             <ComboBox ItemsSource="{Binding Languages}"
                       SelectedItem="{Binding SelectedLanguage}"
+                      AutomationProperties.Name="{DynamicResource Settings.Language}"
                       MinWidth="200">
               <ComboBox.ItemTemplate>
                 <DataTemplate>
@@ -83,13 +89,15 @@
                     Minimum="0"
                     Maximum="1"
                     TickFrequency="0.05"
+                    AutomationProperties.Name="{DynamicResource Settings.MusicVolume}"
                     Value="{Binding MusicVolume}" />
           </StackPanel>
           <TextBlock Margin="0,12,0,0"
                      Text="{DynamicResource Settings.MusicHint}"
-                     Foreground="{StaticResource Brush.Muted}"
+                     Foreground="{DynamicResource Brush.Muted}"
                      TextWrapping="Wrap" />
           <Button Content="{DynamicResource Settings.Save}"
+                  AutomationProperties.Name="{DynamicResource Settings.Save}"
                   Style="{StaticResource PrimaryButtonStyle}"
                   HorizontalAlignment="Left"
                   Margin="0,18,0,0"
@@ -104,30 +112,64 @@
                      FontWeight="SemiBold" />
           <TextBlock Margin="0,8,0,0"
                      Text="{Binding CurseForgeKeyStatusKey, Converter={StaticResource Key}}"
-                     Foreground="{StaticResource Brush.Muted}" />
+                     Foreground="{DynamicResource Brush.Muted}" />
           <PasswordBox x:Name="CurseForgeApiKeyBox"
                        Margin="0,12,0,0"
                        MaxLength="512"
+                       AutomationProperties.Name="{DynamicResource Settings.CurseForgeKey}"
                        ToolTip="{DynamicResource Settings.CurseForgeKeyHint}" />
           <TextBlock Margin="0,6,0,0"
                      Text="{DynamicResource Settings.CurseForgeKeyHint}"
-                     Foreground="{StaticResource Brush.Muted}"
+                     Foreground="{DynamicResource Brush.Muted}"
                      TextWrapping="Wrap" />
           <WrapPanel Margin="0,12,0,0">
             <Button Content="{DynamicResource Settings.CurseForgeKeySave}"
+                    AutomationProperties.Name="{DynamicResource Settings.CurseForgeKeySave}"
                     Style="{StaticResource PrimaryButtonStyle}"
                     Click="SaveCurseForgeKey_Click" />
             <Button Content="{DynamicResource Settings.CurseForgeKeyClear}"
+                    AutomationProperties.Name="{DynamicResource Settings.CurseForgeKeyClear}"
                     Style="{StaticResource SecondaryButtonStyle}"
                     Click="ClearCurseForgeKey_Click" />
           </WrapPanel>
         </StackPanel>
       </Border>
 
+      <Border Style="{StaticResource CardStyle}">
+        <StackPanel>
+          <TextBlock Text="{DynamicResource Settings.Diagnostics}"
+                     FontSize="18"
+                     FontWeight="SemiBold" />
+          <TextBlock Margin="0,8,0,0"
+                     Text="{DynamicResource Settings.LogDirectory}"
+                     Foreground="{DynamicResource Brush.Muted}" />
+          <TextBlock Text="{Binding LogDirectory}"
+                     TextWrapping="Wrap" />
+          <WrapPanel Margin="0,12,0,0">
+            <Button Content="{DynamicResource Settings.OpenLogDirectory}"
+                    AutomationProperties.Name="{DynamicResource Settings.OpenLogDirectory}"
+                    Style="{StaticResource SecondaryButtonStyle}"
+                    Click="OpenLogDirectory_Click" />
+            <Button Content="{DynamicResource Settings.CreateDiagnosticBundle}"
+                    AutomationProperties.Name="{DynamicResource Settings.CreateDiagnosticBundle}"
+                    Style="{StaticResource SecondaryButtonStyle}"
+                    Click="CreateDiagnosticBundle_Click" />
+          </WrapPanel>
+          <TextBlock Margin="0,8,0,0"
+                     Text="{DynamicResource Settings.DiagnosticHint}"
+                     Foreground="{DynamicResource Brush.Muted}"
+                     TextWrapping="Wrap" />
+          <TextBlock Margin="0,6,0,0"
+                     Text="{Binding LastDiagnosticBundlePath}"
+                     TextWrapping="Wrap"
+                     Foreground="{DynamicResource Brush.Accent}" />
+        </StackPanel>
+      </Border>
+
       <ProgressBar Value="{Binding Progress}"
                    Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" />
       <TextBlock Text="{Binding StatusKey, Converter={StaticResource Key}}" />
-      <TextBlock Text="{Binding ErrorDetail}" Foreground="#B94A48" TextWrapping="Wrap" />
+      <TextBlock Text="{Binding ErrorDetail}" Foreground="{DynamicResource Brush.Danger}" TextWrapping="Wrap" />
     </StackPanel>
   </ScrollViewer>
 </UserControl>

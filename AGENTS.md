@@ -120,3 +120,13 @@
 - ViewModel 不得硬编码中文文案，状态和错误通过资源键暴露。
 - 默认语言为简体中文，同时保留 en-US 资源结构。
 
+## WPF UI
+
+- 主导航与七个模块使用独立 View/ViewModel：Home、Versions、DownloadLoader、
+  Java、Mods、Crash、Settings。
+- View 只保留 XAML、绑定和纯交互代码；拖拽事件只把文件路径交给 ViewModel。
+- 异步命令使用 MVVM Toolkit 的 CancelCommand，禁止并发重入和 UI 线程阻塞。
+- 共享颜色、按钮和卡片样式位于 `Resources/Styles.xaml`。
+- 新增用户文案必须同时添加 zh-CN 与 en-US 资源。
+- 正式 UI 启动要求 Microsoft 账户配置；离线认证不得用于生产启动路径。
+

@@ -1,0 +1,128 @@
+<UserControl x:Class="SlcMinecraftLaunch.Wpf.Views.ModsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:conv="clr-namespace:SlcMinecraftLaunch.Wpf.Converters"
+             AllowDrop="True"
+             Drop="OnDrop"
+             DragOver="OnDragOver">
+  <UserControl.Resources>
+    <conv:ResourceKeyConverter x:Key="Key" />
+  </UserControl.Resources>
+  <ScrollViewer VerticalScrollBarVisibility="Auto">
+    <StackPanel>
+      <TextBlock Text="{Binding TitleKey, Converter={StaticResource Key}}"
+                 Style="{StaticResource PageTitleStyle}" />
+      <TextBlock Text="{Binding DescriptionKey, Converter={StaticResource Key}}"
+                 Style="{StaticResource PageDescriptionStyle}" />
+
+      <Border Style="{StaticResource CardStyle}"
+              Background="#F9FCFD">
+        <StackPanel>
+          <TextBlock Text="{DynamicResource Mods.DropHint}"
+                     HorizontalAlignment="Center"
+                     FontSize="18"
+                     Foreground="{StaticResource Brush.AccentDark}" />
+          <TextBlock Text="{DynamicResource Mods.DropDetail}"
+                     Margin="0,6,0,14"
+                     HorizontalAlignment="Center"
+                     Foreground="{StaticResource Brush.Muted}" />
+          <WrapPanel HorizontalAlignment="Center">
+            <ComboBox ItemsSource="{Binding Versions}"
+                      SelectedItem="{Binding SelectedVersion}"
+                      MinWidth="240" />
+            <ComboBox ItemsSource="{Binding LoaderKinds}"
+                      SelectedItem="{Binding SelectedLoaderKind}" />
+            <Button Content="{DynamicResource Mods.Refresh}"
+                    Style="{StaticResource SecondaryButtonStyle}"
+                    Command="{Binding RefreshInstalledCommand}" />
+          </WrapPanel>
+        </StackPanel>
+      </Border>
+
+      <Border Style="{StaticResource CardStyle}">
+        <StackPanel>
+          <TextBlock Text="{DynamicResource Mods.Search}" FontSize="17" FontWeight="SemiBold" />
+          <WrapPanel Margin="0,10,0,0">
+            <TextBox Width="360"
+                     Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
+            <Button Content="{DynamicResource Mods.SearchAction}"
+                    Style="{StaticResource PrimaryButtonStyle}"
+                    Command="{Binding SearchCommand}" />
+            <Button Content="{DynamicResource Mods.InstallSelected}"
+                    Style="{StaticResource SecondaryButtonStyle}"
+                    Command="{Binding InstallSelectedCommand}" />
+          </WrapPanel>
+          <ListBox ItemsSource="{Binding SearchResults}"
+                   SelectedItem="{Binding SelectedSearchResult}"
+                   MaxHeight="260"
+                   BorderThickness="0">
+            <ListBox.ItemTemplate>
+              <DataTemplate>
+                <Grid Margin="0,7">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="54" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                  </Grid.ColumnDefinitions>
+                  <Border Width="44" Height="44" CornerRadius="9" Background="#E4F1F0">
+                    <TextBlock Text="{Binding Name, StringFormat={}{0}}" FontSize="10" TextWrapping="Wrap" TextAlignment="Center" VerticalAlignment="Center" />
+                  </Border>
+                  <StackPanel Grid.Column="1">
+                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                    <TextBlock Text="{Binding Description}" TextTrimming="CharacterEllipsis" Foreground="{StaticResource Brush.Muted}" />
+                  </StackPanel>
+                  <TextBlock Grid.Column="2" Text="{Binding Provider}" VerticalAlignment="Center" Foreground="{StaticResource Brush.Muted}" />
+                </Grid>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+        </StackPanel>
+      </Border>
+
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Border Grid.Column="0" Style="{StaticResource CardStyle}" Margin="0,0,8,16">
+          <StackPanel>
+            <TextBlock Text="{DynamicResource Mods.Installed}" FontSize="17" FontWeight="SemiBold" />
+            <ItemsControl ItemsSource="{Binding InstalledMods}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <StackPanel Margin="0,8">
+                    <TextBlock Text="{Binding Metadata.Name}" FontWeight="SemiBold" />
+                    <TextBlock Text="{Binding Metadata.ModId}" Foreground="{StaticResource Brush.Muted}" />
+                  </StackPanel>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Border>
+        <Border Grid.Column="1" Style="{StaticResource CardStyle}" Margin="8,0,0,16">
+          <StackPanel>
+            <TextBlock Text="{DynamicResource Mods.Conflicts}" FontSize="17" FontWeight="SemiBold" />
+            <ItemsControl ItemsSource="{Binding Conflicts}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Border Margin="0,7" Padding="10" CornerRadius="8" Background="#FFF7E8">
+                    <StackPanel>
+                      <TextBlock Text="{Binding MessageKey, Converter={StaticResource Key}}" FontWeight="SemiBold" />
+                      <TextBlock Text="{Binding SecondModId}" Foreground="{StaticResource Brush.Muted}" />
+                    </StackPanel>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Border>
+      </Grid>
+
+      <ProgressBar Value="{Binding Progress}"
+                   Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" />
+      <TextBlock Text="{Binding StatusKey, Converter={StaticResource Key}}" />
+      <TextBlock Text="{Binding ErrorDetail}" Foreground="#B94A48" TextWrapping="Wrap" />
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>
+

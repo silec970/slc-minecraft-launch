@@ -4,6 +4,11 @@ namespace SlcMinecraftLaunch.Domain.Abstractions;
 
 public interface IJavaRuntimeService
 {
+    Task<JavaRuntimeProvisionOutcome> ProvisionMajorAsync(
+        int majorVersion,
+        IProgress<OperationProgress>? progress = null,
+        CancellationToken cancellationToken = default);
+
     Task<JavaRuntimeResolution> EnsureAsync(
         string versionId,
         LoaderKind loaderKind,

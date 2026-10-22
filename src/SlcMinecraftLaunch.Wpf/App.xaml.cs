@@ -161,7 +161,15 @@ public partial class App : System.Windows.Application
             services.AddSingleton<ILocalModStore, LocalModStore>();
             services.AddSingleton<ModConflictAnalyzer>();
             services.AddSingleton<IModService, ModService>();
+            services.AddSingleton<ISettingsService, SettingsService>();
             services.AddSingleton<LaunchApplicationService>();
+            services.AddSingleton<HomeViewModel>();
+            services.AddSingleton<VersionsViewModel>();
+            services.AddSingleton<DownloadLoaderViewModel>();
+            services.AddSingleton<JavaViewModel>();
+            services.AddSingleton<ModsViewModel>();
+            services.AddSingleton<CrashViewModel>();
+            services.AddSingleton<SettingsViewModel>();
             services.AddSingleton<ShellViewModel>();
 
             _services = services.BuildServiceProvider();
@@ -318,7 +326,7 @@ public partial class App : System.Windows.Application
             var runtime = await _services.GetRequiredService<IGameRuntimeProvider>().GetAsync();
             _services.GetRequiredService<CrashAnalysisCoordinator>().Start(runtime);
             var viewModel = _services.GetRequiredService<ShellViewModel>();
-            await viewModel.RefreshAsync();
+            await viewModel.InitializeAsync();
 
             var window = new MainWindow
             {

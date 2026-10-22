@@ -59,6 +59,15 @@ public sealed class LoaderInstallationServiceTests
 
     private sealed class FakeJavaService : IJavaRuntimeService
     {
+        public Task<JavaRuntimeProvisionOutcome> ProvisionMajorAsync(
+            int majorVersion,
+            IProgress<OperationProgress>? progress = null,
+            CancellationToken cancellationToken = default)
+            => Task.FromResult(new JavaRuntimeProvisionOutcome(
+                true,
+                $@"C:\Java\{majorVersion}\java.exe",
+                "Java.Ready"));
+
         public Task<JavaRuntimeResolution> EnsureAsync(
             string versionId,
             LoaderKind loaderKind,

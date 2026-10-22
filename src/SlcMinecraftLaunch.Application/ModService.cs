@@ -57,7 +57,7 @@ public sealed class ModService(
 
             return new ModInstallOutcome(
                 true,
-                "Mods.Installed",
+                "Mods.InstalledSuccess",
                 installed.FilePath,
                 Conflicts: conflictAnalyzer.Analyze(mods));
         }
@@ -121,7 +121,7 @@ public sealed class ModService(
         var mods = await ScanAsync(request.MinecraftVersion, cancellationToken).ConfigureAwait(false);
         return new ModInstallOutcome(
             true,
-            "Mods.Installed",
+            "Mods.InstalledSuccess",
             installedPath,
             Conflicts: conflictAnalyzer.Analyze(mods));
     }

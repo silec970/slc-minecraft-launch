@@ -9,6 +9,25 @@ public sealed class JavaRuntimeService(
     IGameRuntimeProvider runtimeProvider,
     JavaSelectionPolicy javaSelectionPolicy) : IJavaRuntimeService
 {
+    public async Task<JavaRuntimeProvisionOutcome> ProvisionMajorAsync(
+        int majorVersion,
+        IProgress<OperationProgress>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        var runtime = await runtimeProvider.GetAsync(cancellationToken).ConfigureAwait(false);
+        var versions = await runtime.GetVersionsAsync(cancellationToken).ConfigureAwait(false);
+        var component = versions
+            .Where(version => JavaSelectionPolicy.GetRequiredJavaMajor(version.BaseVersion) == majorVersion)
+            .Select(version => version.JavaComponent)
+            .FirstOrDefault(value => !string.IsNullOrWhiteSpace(value));
+
+        return await javaRuntimeProvisioner.EnsureAsync(
+            majorVersion,
+            component,
+            progress,
+            cancellationToken).ConfigureAwait(false);
+    }
+
     public async Task<JavaRuntimeResolution> EnsureAsync(
         string versionId,
         LoaderKind loaderKind,

@@ -2,4 +2,7 @@
   <Folder Name="/src/">
     <Project Path="src/SlcMinecraftLaunch.Wpf/SlcMinecraftLaunch.Wpf.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SlcMinecraftLaunch.Wpf.Tests/SlcMinecraftLaunch.Wpf.Tests.csproj" />
+  </Folder>
 </Solution>

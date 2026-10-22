@@ -1,0 +1,73 @@
+<UserControl x:Class="SlcMinecraftLaunch.Wpf.Views.VersionsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:conv="clr-namespace:SlcMinecraftLaunch.Wpf.Converters">
+  <UserControl.Resources>
+    <conv:ResourceKeyConverter x:Key="Key" />
+  </UserControl.Resources>
+  <ScrollViewer VerticalScrollBarVisibility="Auto">
+    <StackPanel>
+      <TextBlock Text="{Binding TitleKey, Converter={StaticResource Key}}"
+                 Style="{StaticResource PageTitleStyle}" />
+      <TextBlock Text="{Binding DescriptionKey, Converter={StaticResource Key}}"
+                 Style="{StaticResource PageDescriptionStyle}" />
+
+      <ItemsControl ItemsSource="{Binding Groups}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate>
+            <Border Style="{StaticResource CardStyle}">
+              <StackPanel>
+                <TextBlock Text="{Binding NameKey, Converter={StaticResource Key}}"
+                           FontSize="18"
+                           FontWeight="SemiBold"
+                           Margin="0,0,0,12" />
+                <ItemsControl ItemsSource="{Binding Versions}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <Border BorderBrush="{StaticResource Brush.Border}"
+                              BorderThickness="0,0,0,1"
+                              Padding="0,10">
+                        <Grid>
+                          <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="100" />
+                            <ColumnDefinition Width="Auto" />
+                          </Grid.ColumnDefinitions>
+                          <StackPanel>
+                            <TextBlock Text="{Binding DisplayName}" FontSize="15" FontWeight="SemiBold" />
+                            <TextBlock Text="{Binding Id}" FontSize="12" Foreground="{StaticResource Brush.Muted}" />
+                          </StackPanel>
+                          <TextBlock Grid.Column="1"
+                                     Text="{Binding JavaMajor, StringFormat=Java {0}}"
+                                     VerticalAlignment="Center"
+                                     Foreground="{StaticResource Brush.Muted}" />
+                          <StackPanel Grid.Column="2" Orientation="Horizontal">
+                            <Button Content="{Binding FavoriteGlyph}"
+                                    Style="{StaticResource IconButtonStyle}"
+                                    Command="{Binding DataContext.ToggleFavoriteCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                    CommandParameter="{Binding}" />
+                            <Button Content="{Binding IsolationGlyph}"
+                                    Style="{StaticResource IconButtonStyle}"
+                                    Command="{Binding DataContext.ToggleIsolationCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                    CommandParameter="{Binding}" />
+                          </StackPanel>
+                        </Grid>
+                      </Border>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </StackPanel>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+
+      <ProgressBar Value="{Binding Progress}"
+                   Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" />
+      <TextBlock Text="{Binding StatusKey, Converter={StaticResource Key}}"
+                 Foreground="{StaticResource Brush.Muted}" />
+      <TextBlock Text="{Binding ErrorDetail}" Foreground="#B94A48" TextWrapping="Wrap" />
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>
+

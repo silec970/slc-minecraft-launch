@@ -37,5 +37,15 @@ public sealed class CommandLineOptionsTests
         Assert.True(options.ProvisionJava);
         Assert.Equal(21, options.JavaMajor);
     }
+
+    [Fact]
+    public void Parse_ReadsCrashAnalysisArguments()
+    {
+        var options = CommandLineOptions.Parse(
+            ["--analyze-crash", "--version", "1.21.4"]);
+
+        Assert.True(options.AnalyzeCrash);
+        Assert.Equal("1.21.4", options.Version);
+    }
 }
 

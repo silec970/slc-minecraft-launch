@@ -86,6 +86,15 @@
 - 启动后通过 ProjBobcat 事件确认存活至少 5 秒。
 - `26.3` 仅作为可用时的原版兼容抽检，不绑定加载器。
 
+## 崩溃分析
+
+- 游戏退出通过 `GameExitEventDelegate` 转发为领域事件，正式 UI 路径由
+  `CrashAnalysisCoordinator` 做防抖、互斥和后台分析。
+- 日志解析必须使用 `DefaultLogAnalyzer` 的 `GenerateReport()`。
+- `CrashCauses` 只映射为分类、严重度和资源键；ViewModel 不保存中文建议。
+- 分析报告存入 `launcher-data/crash-insights/`，不得提交用户日志。
+- `--analyze-crash --version <id>` 可用于无界面验证。
+
 ## 安全与提交
 
 - CurseForge API key 只能从环境变量或未跟踪的用户配置读取。

@@ -5,5 +5,19 @@
   <sys:String x:Key="Home.Title">欢迎使用 SLC Minecraft 启动器</sys:String>
   <sys:String x:Key="Home.Description">版本、下载、Mod 与崩溃分析将在后续模块中接入。</sys:String>
   <sys:String x:Key="Home.InstalledVersions">已发现版本</sys:String>
+  <sys:String x:Key="Crash.Category.Mod.Title">疑似 Mod 导致崩溃</sys:String>
+  <sys:String x:Key="Crash.Category.Mod.Suggestion">逐个禁用最近安装的 Mod，并检查依赖版本与加载器是否匹配。</sys:String>
+  <sys:String x:Key="Crash.Category.Memory.Title">Java 内存不足</sys:String>
+  <sys:String x:Key="Crash.Category.Memory.Suggestion">提高最大内存，关闭占用内存的程序，并检查 Mod 是否发生内存泄漏。</sys:String>
+  <sys:String x:Key="Crash.Category.Java.Title">Java 运行时不兼容</sys:String>
+  <sys:String x:Key="Crash.Category.Java.Suggestion">按游戏和加载器版本重新选择 Java，旧版 Forge 不应使用 Java 25。</sys:String>
+  <sys:String x:Key="Crash.Category.Gpu.Title">显卡或 OpenGL 异常</sys:String>
+  <sys:String x:Key="Crash.Category.Gpu.Suggestion">更新显卡驱动，降低画质或关闭光影后重试。</sys:String>
+  <sys:String x:Key="Crash.Category.Loader.Title">加载器启动失败</sys:String>
+  <sys:String x:Key="Crash.Category.Loader.Suggestion">重新安装对应加载器，并检查 Forge/NeoForge/OptiFine 组合兼容性。</sys:String>
+  <sys:String x:Key="Crash.Category.Configuration.Title">配置或文件访问异常</sys:String>
+  <sys:String x:Key="Crash.Category.Configuration.Suggestion">检查安装路径、文件权限和游戏文件占用情况。</sys:String>
+  <sys:String x:Key="Crash.Category.Other.Title">检测到其他启动问题</sys:String>
+  <sys:String x:Key="Crash.Category.Other.Suggestion">查看 crash-report 与 latest.log 的完整堆栈以进一步定位。</sys:String>
 </ResourceDictionary>
 

@@ -71,6 +71,12 @@ public sealed class JavaRuntimeServiceTests
 
     private sealed class FakeRuntime(params GameVersionDescriptor[] versions) : IGameRuntime
     {
+        public event EventHandler<GameExitNotification>? GameExited
+        {
+            add { }
+            remove { }
+        }
+
         public IReadOnlyList<GameVersionDescriptor> Versions { get; } = versions;
         public string RootPath => @"C:\Minecraft";
 

@@ -33,6 +33,12 @@ public sealed class DownloadServiceTests
 
     private sealed class FakeRuntime : IGameRuntime
     {
+        public event EventHandler<GameExitNotification>? GameExited
+        {
+            add { }
+            remove { }
+        }
+
         public string RootPath => @"C:\Minecraft";
 
         public Task<GameRuntimeSnapshot> GetSnapshotAsync(CancellationToken cancellationToken = default)

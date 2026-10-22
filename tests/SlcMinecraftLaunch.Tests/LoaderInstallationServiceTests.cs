@@ -90,6 +90,12 @@ public sealed class LoaderInstallationServiceTests
 
     private sealed class FakeRuntime(params string[] versions) : IGameRuntime
     {
+        public event EventHandler<GameExitNotification>? GameExited
+        {
+            add { }
+            remove { }
+        }
+
         public string RootPath => @"C:\Minecraft";
 
         public Task<GameRuntimeSnapshot> GetSnapshotAsync(CancellationToken cancellationToken = default)

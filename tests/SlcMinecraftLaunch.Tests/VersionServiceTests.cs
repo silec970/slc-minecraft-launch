@@ -104,6 +104,12 @@ public sealed class VersionServiceTests
 
     private sealed class FakeRuntime(params GameVersionDescriptor[] versions) : IGameRuntime
     {
+        public event EventHandler<GameExitNotification>? GameExited
+        {
+            add { }
+            remove { }
+        }
+
         public string RootPath => @"C:\Minecraft";
 
         public Task<GameRuntimeSnapshot> GetSnapshotAsync(CancellationToken cancellationToken = default)

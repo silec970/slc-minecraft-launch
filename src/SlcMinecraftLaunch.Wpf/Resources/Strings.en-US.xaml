@@ -5,5 +5,19 @@
   <sys:String x:Key="Home.Title">Welcome to SLC Minecraft Launcher</sys:String>
   <sys:String x:Key="Home.Description">Version, download, mod, and crash tools will be connected in later modules.</sys:String>
   <sys:String x:Key="Home.InstalledVersions">Installed versions</sys:String>
+  <sys:String x:Key="Crash.Category.Mod.Title">A mod likely caused the crash</sys:String>
+  <sys:String x:Key="Crash.Category.Mod.Suggestion">Disable recently installed mods and verify dependencies and loader versions.</sys:String>
+  <sys:String x:Key="Crash.Category.Memory.Title">Insufficient Java memory</sys:String>
+  <sys:String x:Key="Crash.Category.Memory.Suggestion">Increase maximum memory, close memory-heavy apps, and check for mod leaks.</sys:String>
+  <sys:String x:Key="Crash.Category.Java.Title">Incompatible Java runtime</sys:String>
+  <sys:String x:Key="Crash.Category.Java.Suggestion">Select Java for the game and loader version; avoid Java 25 for old Forge.</sys:String>
+  <sys:String x:Key="Crash.Category.Gpu.Title">GPU or OpenGL failure</sys:String>
+  <sys:String x:Key="Crash.Category.Gpu.Suggestion">Update the graphics driver and retry without shaders or with lower settings.</sys:String>
+  <sys:String x:Key="Crash.Category.Loader.Title">Mod loader failed to start</sys:String>
+  <sys:String x:Key="Crash.Category.Loader.Suggestion">Reinstall the loader and verify Forge/NeoForge/OptiFine compatibility.</sys:String>
+  <sys:String x:Key="Crash.Category.Configuration.Title">Configuration or file access error</sys:String>
+  <sys:String x:Key="Crash.Category.Configuration.Suggestion">Check the install path, permissions, and files locked by another process.</sys:String>
+  <sys:String x:Key="Crash.Category.Other.Title">Another startup problem was detected</sys:String>
+  <sys:String x:Key="Crash.Category.Other.Suggestion">Review the complete crash-report and latest.log stack traces.</sys:String>
 </ResourceDictionary>
 

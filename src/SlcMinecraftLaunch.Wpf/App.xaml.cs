@@ -9,6 +9,7 @@ using SlcMinecraftLaunch.Application;
 using SlcMinecraftLaunch.Domain.Abstractions;
 using SlcMinecraftLaunch.Domain.Models;
 using SlcMinecraftLaunch.Infrastructure.Configuration;
+using SlcMinecraftLaunch.Infrastructure.Crash;
 using SlcMinecraftLaunch.Infrastructure.Java;
 using SlcMinecraftLaunch.Infrastructure.Loaders;
 using SlcMinecraftLaunch.Infrastructure.Mojang;
@@ -114,6 +115,11 @@ public partial class App : System.Windows.Application
             services.AddSingleton<IDownloadService, DownloadService>();
             services.AddSingleton<ISmokeTestService, SmokeTestService>();
             services.AddSingleton<IVersionService, VersionService>();
+            services.AddSingleton<ICrashAnalysisBackend, ProjBobcatCrashAnalysisBackend>();
+            services.AddSingleton<ICrashReportStore>(
+                _ => new JsonCrashReportStore(paths.DataRoot));
+            services.AddSingleton<ICrashAnalysisService, CrashAnalysisService>();
+            services.AddSingleton<CrashAnalysisCoordinator>();
             services.AddSingleton<LaunchApplicationService>();
             services.AddSingleton<ShellViewModel>();
 
@@ -179,6 +185,19 @@ public partial class App : System.Windows.Application
                 return;
             }
 
+            if (commandLine.AnalyzeCrash)
+            {
+                ShutdownMode = ShutdownMode.OnExplicitShutdown;
+                var crashService = _services.GetRequiredService<ICrashAnalysisService>();
+                var crashReport = await crashService.AnalyzeAsync(
+                    commandLine.Version
+                    ?? configuration["SmokeTest:TargetVersion"]
+                    ?? "1.21.4");
+                await WriteCrashReportAsync(paths.DataRoot, crashReport).ConfigureAwait(true);
+                Shutdown(0);
+                return;
+            }
+
             if (commandLine.SmokeTest)
             {
                 ShutdownMode = ShutdownMode.OnExplicitShutdown;
@@ -199,6 +218,8 @@ public partial class App : System.Windows.Application
             }
 
             ShutdownMode = ShutdownMode.OnMainWindowClose;
+            var runtime = await _services.GetRequiredService<IGameRuntimeProvider>().GetAsync();
+            _services.GetRequiredService<CrashAnalysisCoordinator>().Start(runtime);
             var viewModel = _services.GetRequiredService<ShellViewModel>();
             await viewModel.RefreshAsync();
 
@@ -323,5 +344,24 @@ public partial class App : System.Windows.Application
             .OfType<string>()
             .Where(value => !string.IsNullOrWhiteSpace(value))
             .ToArray();
+    }
+
+    private static async Task WriteCrashReportAsync(
+        string dataRoot,
+        CrashAnalysisReport report)
+    {
+        Directory.CreateDirectory(dataRoot);
+        var outputPath = Path.Combine(dataRoot, "crash-analysis-result.json");
+        var temporaryPath = $"{outputPath}.{Guid.NewGuid():N}.tmp";
+
+        await using (var output = File.Create(temporaryPath))
+        {
+            await JsonSerializer.SerializeAsync(
+                output,
+                report,
+                new JsonSerializerOptions { WriteIndented = true });
+        }
+
+        File.Move(temporaryPath, outputPath, true);
     }
 }

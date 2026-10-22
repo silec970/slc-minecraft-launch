@@ -5,6 +5,7 @@ public sealed record CommandLineOptions(
     bool ListVersions,
     bool InstallLoader,
     bool ProvisionJava,
+    bool AnalyzeCrash,
     string? GameRoot,
     string? Version,
     string? JavaPath,
@@ -18,6 +19,7 @@ public sealed record CommandLineOptions(
         var listVersions = false;
         var installLoader = false;
         var provisionJava = false;
+        var analyzeCrash = false;
         string? gameRoot = null;
         string? version = null;
         string? javaPath = null;
@@ -41,6 +43,9 @@ public sealed record CommandLineOptions(
                     break;
                 case "--provision-java":
                     provisionJava = true;
+                    break;
+                case "--analyze-crash":
+                    analyzeCrash = true;
                     break;
                 case "--game-root" when index + 1 < args.Count:
                     gameRoot = args[++index];
@@ -70,6 +75,7 @@ public sealed record CommandLineOptions(
             listVersions,
             installLoader,
             provisionJava,
+            analyzeCrash,
             gameRoot,
             version,
             javaPath,

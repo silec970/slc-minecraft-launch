@@ -4,6 +4,8 @@ namespace SlcMinecraftLaunch.Domain.Abstractions;
 
 public interface IGameRuntime : IAsyncDisposable
 {
+    event EventHandler<GameExitNotification>? GameExited;
+
     string RootPath { get; }
 
     Task<GameRuntimeSnapshot> GetSnapshotAsync(CancellationToken cancellationToken = default);

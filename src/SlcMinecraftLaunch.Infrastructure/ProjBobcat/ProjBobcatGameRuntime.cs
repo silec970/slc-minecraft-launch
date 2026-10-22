@@ -38,6 +38,7 @@ public sealed class ProjBobcatGameRuntime : IGameRuntime
     private readonly ILauncherAccountParser _accountParser;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly DownloadSourceOptions _downloadSourceOptions;
+    private bool _disposed;
 
     private ProjBobcatGameRuntime(
         IGameCore gameCore,
@@ -53,7 +54,12 @@ public sealed class ProjBobcatGameRuntime : IGameRuntime
         _httpClientFactory = httpClientFactory;
         _downloadSourceOptions = downloadSourceOptions;
         RootPath = rootPath;
+        // PROJBOBCAT: GameExitEventDelegate is the public process lifecycle
+        // contract consumed by the crash-analysis hook.
+        _gameCore.GameExitEventDelegate += ForwardGameExit;
     }
+
+    public event EventHandler<GameExitNotification>? GameExited;
 
     public string RootPath { get; }
 
@@ -575,7 +581,28 @@ public sealed class ProjBobcatGameRuntime : IGameRuntime
 
     public ValueTask DisposeAsync()
     {
+        if (_disposed)
+        {
+            return ValueTask.CompletedTask;
+        }
+
+        _disposed = true;
+        _gameCore.GameExitEventDelegate -= ForwardGameExit;
         _gameCore.Dispose();
         return ValueTask.CompletedTask;
+    }
+
+    private void ForwardGameExit(object? sender, GameExitEventArgs eventArgs)
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        GameExited?.Invoke(this, new GameExitNotification(
+            eventArgs.SourceGameId,
+            eventArgs.ExitCode,
+            DateTimeOffset.Now,
+            eventArgs.Exception?.ToString()));
     }
 }

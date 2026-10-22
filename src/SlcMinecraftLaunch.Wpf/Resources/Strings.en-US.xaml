@@ -43,6 +43,7 @@
   <sys:String x:Key="Loader.Forge">Forge</sys:String>
   <sys:String x:Key="Loader.NeoForge">NeoForge</sys:String>
   <sys:String x:Key="Loader.OptiFine">OptiFine</sys:String>
+  <sys:String x:Key="Loader.ArtifactHashUnavailable">The installer has no verifiable official hash. Automatic installation was stopped; use the official manual installer.</sys:String>
   <sys:String x:Key="Download.Title">Downloads and loaders</sys:String>
   <sys:String x:Key="Download.Description">Choose a game version and loader for native ProjBobcat installation and resource completion.</sys:String>
   <sys:String x:Key="Download.SelectVersion">Select game version</sys:String>

@@ -76,6 +76,14 @@
 - 多线程、续传、源回退和 SHA1 校验由 `DefaultResourceCompleter` 执行。
 - Progress 事件必须桥接为 `IProgress<OperationProgress>`，并传递 CancellationToken。
 
+## 安装器完整性
+
+- Forge、NeoForge、OptiFine 等外部安装 JAR 在调用安装器前必须校验发布方哈希。
+- 哈希探测顺序为 `.sha256` 伴生文件、`.sha1` 伴生文件、官方 API 校验字段。
+- 跟随下载重定向后，应在最终 URL 上继续寻找伴生哈希。
+- 哈希缺失或不匹配时停止自动安装并提供手动安装指引，不得以“下载成功”代替校验。
+- Fabric loader JSON 先做结构验证，其引用库文件由 ResourceCompleter 执行下载与哈希校验。
+
 ## 冒烟测试
 
 - 默认目标版本为 `1.21.4`，可由 `--version` 覆盖。

@@ -112,12 +112,14 @@ public partial class App : System.Windows.Application
             services.AddSingleton<JavaSelectionPolicy>();
             services.AddSingleton<IJavaRuntimeService, JavaRuntimeService>();
             services.AddSingleton<ILoaderCatalogService, ProjBobcatLoaderCatalogService>();
+            services.AddSingleton<RemoteArtifactHashVerifier>();
             services.AddSingleton<ILoaderInstallBackend>(serviceProvider =>
                 new ProjBobcatLoaderInstallBackend(
                     paths,
                     serviceProvider.GetRequiredService<IHttpClientFactory>(),
                     serviceProvider.GetRequiredService<ProjBobcatRuntimeProvider>(),
-                    loaderSourceOptions));
+                    loaderSourceOptions,
+                    serviceProvider.GetRequiredService<RemoteArtifactHashVerifier>()));
             services.AddSingleton<ILoaderInstallationService, LoaderInstallationService>();
             services.AddSingleton<IDownloadService, DownloadService>();
             services.AddSingleton<IVanillaInstallationService, VanillaInstallationService>();

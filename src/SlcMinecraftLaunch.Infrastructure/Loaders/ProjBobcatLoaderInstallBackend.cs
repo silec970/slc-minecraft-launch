@@ -22,7 +22,8 @@ public sealed class ProjBobcatLoaderInstallBackend(
     PortableLauncherPaths paths,
     IHttpClientFactory httpClientFactory,
     ProjBobcatRuntimeProvider runtimeProvider,
-    LoaderSourceOptions sourceOptions) : ILoaderInstallBackend
+    LoaderSourceOptions sourceOptions,
+    RemoteArtifactHashVerifier artifactHashVerifier) : ILoaderInstallBackend
 {
     public async Task<LoaderInstallOutcome> InstallAsync(
         LoaderInstallPlan plan,
@@ -49,6 +50,13 @@ public sealed class ProjBobcatLoaderInstallBackend(
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
             throw;
+        }
+        catch (ArtifactVerificationException exception)
+        {
+            return new LoaderInstallOutcome(
+                false,
+                "Loader.ArtifactHashUnavailable",
+                ErrorDetail: exception.Message);
         }
         catch (Exception exception)
         {
@@ -394,6 +402,15 @@ public sealed class ProjBobcatLoaderInstallBackend(
                 File.Delete(temporaryPath);
             }
         }
+
+        var verification = await artifactHashVerifier
+            .VerifyAsync(url, destinationPath, cancellationToken)
+            .ConfigureAwait(false);
+        if (verification.Status != ArtifactVerificationStatus.Verified)
+        {
+            throw new ArtifactVerificationException(
+                $"{verification.Status}: {verification.Detail ?? destinationPath}");
+        }
     }
 
     private static void ReportInstallerProgress(
@@ -427,4 +444,6 @@ public sealed class ProjBobcatLoaderInstallBackend(
         return string.Concat(value.Select(character =>
             Path.GetInvalidFileNameChars().Contains(character) ? '_' : character));
     }
+
+    private sealed class ArtifactVerificationException(string message) : Exception(message);
 }

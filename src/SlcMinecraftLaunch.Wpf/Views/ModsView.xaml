@@ -121,6 +121,9 @@
       <ProgressBar Value="{Binding Progress}"
                    Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" />
       <TextBlock Text="{Binding StatusKey, Converter={StaticResource Key}}" />
+      <TextBlock Text="{Binding WarningDetail, Converter={StaticResource Key}}"
+                 Foreground="#B77718"
+                 TextWrapping="Wrap" />
       <TextBlock Text="{Binding ErrorDetail}" Foreground="#B94A48" TextWrapping="Wrap" />
     </StackPanel>
   </ScrollViewer>

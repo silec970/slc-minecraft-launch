@@ -134,6 +134,8 @@
   <sys:String x:Key="Mods.Downloading">正在下载 Mod</sys:String>
   <sys:String x:Key="Mods.Downloaded">Mod 下载完成</sys:String>
   <sys:String x:Key="Mods.InvalidPackage">所选文件不是有效的 Mod JAR</sys:String>
+  <sys:String x:Key="Mods.InvalidFileName">远程 Mod 文件名不安全，已拒绝下载</sys:String>
+  <sys:String x:Key="Mods.HashUnavailable">该 CurseForge 文件没有 SHA1 哈希，已下载但无法校验完整性</sys:String>
   <sys:String x:Key="Mods.NoCompatibleFile">没有找到兼容当前游戏版本和加载器的 Mod 文件</sys:String>
   <sys:String x:Key="Mods.CurseForgeKeyMissing">未配置 CurseForge API Key，搜索结果仅包含 Modrinth</sys:String>
   <sys:String x:Key="Mods.Conflict.Duplicate">检测到重复的 Mod ID</sys:String>

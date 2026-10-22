@@ -118,12 +118,30 @@ public sealed class ModService(
         }
 
         var installedPath = Path.Combine(modsDirectory, download.FileName);
+        var warnings = string.IsNullOrWhiteSpace(download.Sha1)
+            ? new[] { "Mods.HashUnavailable" }
+            : Array.Empty<string>();
+        var inspected = await localModStore
+            .InspectAsync(installedPath, cancellationToken)
+            .ConfigureAwait(false);
+        if (inspected is null)
+        {
+            await Task.Run(() => File.Delete(installedPath), cancellationToken).ConfigureAwait(false);
+            return new ModInstallOutcome(
+                false,
+                "Mods.InvalidPackage",
+                installedPath,
+                "Downloaded file is not a valid supported mod JAR.",
+                Warnings: warnings);
+        }
+
         var mods = await ScanAsync(request.MinecraftVersion, cancellationToken).ConfigureAwait(false);
         return new ModInstallOutcome(
             true,
             "Mods.InstalledSuccess",
             installedPath,
-            Conflicts: conflictAnalyzer.Analyze(mods));
+            Conflicts: conflictAnalyzer.Analyze(mods),
+            Warnings: warnings);
     }
 
     private async Task<(IGameRuntime Runtime, bool VersionIsolation)> GetContextAsync(

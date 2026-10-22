@@ -566,6 +566,13 @@ public sealed class ProjBobcatGameRuntime : IGameRuntime
         IProgress<OperationProgress>? progress = null,
         CancellationToken cancellationToken = default)
     {
+        if (!IsPathWithin(request.ModsDirectory, request.FileName))
+        {
+            return new ResourceCompletionOutcome(
+                false,
+                "Mods.InvalidFileName");
+        }
+
         var gameInfo = _versionLocator.GetGame(request.VersionId);
         if (gameInfo is not VersionInfo concreteVersion)
         {
@@ -648,6 +655,13 @@ public sealed class ProjBobcatGameRuntime : IGameRuntime
             .Where(root => !string.IsNullOrWhiteSpace(root))
             .Select((root, index) => new DownloadUriInfo(root, index + 1))
             .ToArray();
+    }
+
+    private static bool IsPathWithin(string directory, string fileName)
+    {
+        var root = Path.GetFullPath(directory) + Path.DirectorySeparatorChar;
+        var candidate = Path.GetFullPath(Path.Combine(directory, fileName));
+        return candidate.StartsWith(root, StringComparison.OrdinalIgnoreCase);
     }
 
     private static GameVersionDescriptor CreateVersionDescriptor(VersionInfo version)

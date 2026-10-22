@@ -58,6 +58,7 @@ public sealed class LocalModStoreTests
             var store = new LocalModStore();
             await Assert.ThrowsAsync<InvalidDataException>(
                 () => store.ImportAsync(root, "1.21.4", true, source));
+            Assert.Null(await store.InspectAsync(source));
         }
         finally
         {

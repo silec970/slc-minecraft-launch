@@ -33,6 +33,9 @@ public sealed partial class ModsViewModel(
     [ObservableProperty]
     private ModSearchItem? _selectedSearchResult;
 
+    [ObservableProperty]
+    private string? _warningDetail;
+
     [RelayCommand(IncludeCancelCommand = true)]
     private Task LoadAsync(CancellationToken cancellationToken)
     {
@@ -99,6 +102,9 @@ public sealed partial class ModsViewModel(
                 token);
             StatusKey = result.MessageKey;
             ErrorDetail = result.ErrorDetail;
+            WarningDetail = result.Warnings is { Count: > 0 }
+                ? string.Join(Environment.NewLine, result.Warnings)
+                : null;
             await RefreshInstalledCoreAsync(SelectedVersion, token);
         }, cancellationToken);
     }
@@ -134,6 +140,9 @@ public sealed partial class ModsViewModel(
                     token);
                 StatusKey = result.MessageKey;
                 ErrorDetail = result.ErrorDetail;
+                WarningDetail = result.Warnings is { Count: > 0 }
+                    ? string.Join(Environment.NewLine, result.Warnings)
+                    : null;
             }
 
             await RefreshInstalledCoreAsync(SelectedVersion, token);

@@ -134,6 +134,8 @@
   <sys:String x:Key="Mods.Downloading">Downloading mod</sys:String>
   <sys:String x:Key="Mods.Downloaded">Mod download completed</sys:String>
   <sys:String x:Key="Mods.InvalidPackage">The selected file is not a valid mod JAR</sys:String>
+  <sys:String x:Key="Mods.InvalidFileName">The remote mod filename is unsafe and the download was rejected</sys:String>
+  <sys:String x:Key="Mods.HashUnavailable">This CurseForge file has no SHA1 hash; it was downloaded without integrity verification</sys:String>
   <sys:String x:Key="Mods.NoCompatibleFile">No mod file matches the current game version and loader</sys:String>
   <sys:String x:Key="Mods.CurseForgeKeyMissing">No CurseForge API key is configured; only Modrinth results are available</sys:String>
   <sys:String x:Key="Mods.Conflict.Duplicate">Duplicate mod IDs were detected</sys:String>

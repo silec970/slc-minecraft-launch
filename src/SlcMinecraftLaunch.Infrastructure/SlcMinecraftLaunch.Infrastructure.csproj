@@ -2,6 +2,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SlcMinecraftLaunch.Domain\SlcMinecraftLaunch.Domain.csproj" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.13" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.13" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.13" />
     <PackageReference Include="ProjBobcat" Version="2.1.2" />
     <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.13" />

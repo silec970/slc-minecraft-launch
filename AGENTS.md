@@ -16,6 +16,11 @@
 - `SlcMinecraftLaunch.Domain` 只包含与框架无关的模型和跨层契约。
 - ViewModel 不得直接引用 ProjBobcat；ProjBobcat 类型不得穿过 Infrastructure。
 - View 不得包含业务逻辑，业务操作不得同步阻塞 Dispatcher。
+- `ProjBobcatGameRuntime` 只负责聚合和生命周期转发；核心创建、版本目录、
+  资源下载、启动和 Mod 下载分别位于独立适配器中。
+- `App.xaml.cs` 只负责组合根与桌面生命周期；配置加载位于
+  `LauncherRuntimeConfigurationFactory`，无界面命令位于
+  `CommandLineExecutionService`。
 
 ## ProjBobcat 2.1.2 契约
 

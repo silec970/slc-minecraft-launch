@@ -6,11 +6,11 @@ namespace SlcMinecraftLaunch.Infrastructure.Crash;
 
 public sealed class ProjBobcatCrashAnalysisBackend : ICrashAnalysisBackend
 {
-    public Task<IReadOnlyList<CrashInsight>> AnalyzeAsync(
+    public async Task<IReadOnlyList<CrashInsight>> AnalyzeAsync(
         CrashAnalysisRequest request,
         CancellationToken cancellationToken = default)
     {
-        return Task.Run<IReadOnlyList<CrashInsight>>(() =>
+        return await Task.Run<IReadOnlyList<CrashInsight>>(async () =>
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -23,16 +23,22 @@ public sealed class ProjBobcatCrashAnalysisBackend : ICrashAnalysisBackend
                 VersionIsolation = request.VersionIsolation
             };
 
-            var insights = analyzer.GenerateReport()
-                .Select(report => CrashInsightClassifier.Classify(
+            var insights = new List<CrashInsight>();
+            foreach (var report in analyzer.GenerateReport())
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                var insight = CrashInsightClassifier.Classify(
                     report.Cause.ToString(),
                     report.From,
-                    report.Details?.ToArray()))
-                .ToArray();
+                    report.Details?.ToArray());
+                insights.Add(await CrashModAttributor
+                    .AttributeAsync(insight, request, cancellationToken)
+                    .ConfigureAwait(false));
+            }
 
             cancellationToken.ThrowIfCancellationRequested();
             return insights;
-        }, cancellationToken);
+        }, cancellationToken).ConfigureAwait(false);
     }
 }
 

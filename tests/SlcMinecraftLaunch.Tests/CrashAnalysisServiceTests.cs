@@ -15,7 +15,8 @@ public sealed class CrashAnalysisServiceTests
             new FakeRuntimeProvider(new FakeRuntime()),
             new FakePreferencesStore(),
             backend,
-            store);
+            store,
+            new FakeLogger());
 
         var report = await service.AnalyzeAsync("1.21.4", 1);
 
@@ -30,7 +31,7 @@ public sealed class CrashAnalysisServiceTests
     {
         var runtime = new FakeRuntime();
         var service = new RecordingCrashService();
-        await using var coordinator = new CrashAnalysisCoordinator(service);
+        await using var coordinator = new CrashAnalysisCoordinator(service, new FakeLogger());
         coordinator.Start(runtime);
 
         runtime.RaiseExit(new GameExitNotification("1.21.4", 2, DateTimeOffset.Now));
@@ -132,6 +133,21 @@ public sealed class CrashAnalysisServiceTests
             Report = report;
             return Task.FromResult(@"C:\report.json");
         }
+
+        public Task<IReadOnlyList<CrashHistoryItem>> LoadHistoryAsync(
+            string? versionId = null,
+            CancellationToken cancellationToken = default)
+            => Task.FromResult<IReadOnlyList<CrashHistoryItem>>([]);
+
+        public Task<bool> DeleteAsync(
+            string reportId,
+            CancellationToken cancellationToken = default)
+            => Task.FromResult(false);
+
+        public Task<int> CleanupExpiredAsync(
+            DateTimeOffset cutoff,
+            CancellationToken cancellationToken = default)
+            => Task.FromResult(0);
     }
 
     private sealed class RecordingCrashService : ICrashAnalysisService
@@ -151,6 +167,17 @@ public sealed class CrashAnalysisServiceTests
                 Array.Empty<CrashInsight>());
             Analyzed.TrySetResult(report);
             return Task.FromResult(report);
+        }
+    }
+
+    private sealed class FakeLogger : IAppLogger
+    {
+        public void Warning(string message)
+        {
+        }
+
+        public void Error(string message, Exception? exception = null)
+        {
         }
     }
 }

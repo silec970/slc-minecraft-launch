@@ -23,7 +23,7 @@ public sealed class ViewModelContractTests
                 null!),
             new JavaViewModel(null!),
             new ModsViewModel(null!, null!),
-            new CrashViewModel(null!, null!),
+            new CrashViewModel(null!, null!, null!),
             new SettingsViewModel(
                 new FakeSettingsService(),
                 new FakeUiPreferences(),
@@ -54,7 +54,7 @@ public sealed class ViewModelContractTests
             null!);
         var java = new JavaViewModel(null!);
         var mods = new ModsViewModel(null!, null!);
-        var crash = new CrashViewModel(null!, null!);
+        var crash = new CrashViewModel(null!, null!, null!);
         var settings = new SettingsViewModel(
             new FakeSettingsService(),
             new FakeUiPreferences(),

@@ -4,7 +4,8 @@ using SlcMinecraftLaunch.Domain.Models;
 namespace SlcMinecraftLaunch.Application;
 
 public sealed class CrashAnalysisCoordinator(
-    ICrashAnalysisService crashAnalysisService) : IAsyncDisposable
+    ICrashAnalysisService crashAnalysisService,
+    IAppLogger appLogger) : IAsyncDisposable
 {
     private readonly SemaphoreSlim _analysisGate = new(1, 1);
     private readonly CancellationTokenSource _shutdown = new();
@@ -60,6 +61,9 @@ public sealed class CrashAnalysisCoordinator(
         catch (Exception exception)
         {
             LastError = exception.ToString();
+            appLogger.Error(
+                $"Background crash analysis failed for '{notification.VersionId}'.",
+                exception);
         }
         finally
         {

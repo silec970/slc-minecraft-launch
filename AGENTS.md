@@ -124,7 +124,13 @@
   `CrashAnalysisCoordinator` 做防抖、互斥和后台分析。
 - 日志解析必须使用 `DefaultLogAnalyzer` 的 `GenerateReport()`。
 - `CrashCauses` 只映射为分类、严重度和资源键；ViewModel 不保存中文建议。
-- 分析报告存入 `launcher-data/crash-insights/`，不得提交用户日志。
+- Mod 归因必须基于 ProjBobcat 报告引用的原始日志与实例 Mod 列表：只有文件名或
+  Mod ID 出现在堆栈/加载失败证据行时才能列出具体 JAR；没有证据时必须显示
+  “无法定位到单个 Mod”，禁止猜测。
+- 分析报告存入 `launcher-data/crash-insights/`，包含唯一报告 ID、原始日志路径
+  和历史时间，不得提交用户日志。
+- 历史记录支持按版本读取、删除和打开原始日志，并自动删除超过 30 天的报告。
+- 后台分析异常必须通过 `IAppLogger` 上报；P2 将用 Serilog 替换 P1 的调试实现。
 - `--analyze-crash --version <id>` 可用于无界面验证。
 
 ## Mod 管理

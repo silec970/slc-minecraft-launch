@@ -16,6 +16,7 @@ using SlcMinecraftLaunch.Infrastructure.Crash;
 using SlcMinecraftLaunch.Infrastructure.Java;
 using SlcMinecraftLaunch.Infrastructure.Instances;
 using SlcMinecraftLaunch.Infrastructure.Loaders;
+using SlcMinecraftLaunch.Infrastructure.Logging;
 using SlcMinecraftLaunch.Infrastructure.Mojang;
 using SlcMinecraftLaunch.Infrastructure.Mods;
 using SlcMinecraftLaunch.Infrastructure.Persistence;
@@ -150,7 +151,12 @@ public partial class App : System.Windows.Application
             services.AddSingleton<ICrashAnalysisBackend, ProjBobcatCrashAnalysisBackend>();
             services.AddSingleton<ICrashReportStore>(
                 _ => new JsonCrashReportStore(paths.DataRoot));
-            services.AddSingleton<ICrashAnalysisService, CrashAnalysisService>();
+            services.AddSingleton<IAppLogger, DebugAppLogger>();
+            services.AddSingleton<CrashAnalysisService>();
+            services.AddSingleton<ICrashAnalysisService>(serviceProvider =>
+                serviceProvider.GetRequiredService<CrashAnalysisService>());
+            services.AddSingleton<ICrashHistoryService>(serviceProvider =>
+                serviceProvider.GetRequiredService<CrashAnalysisService>());
             services.AddSingleton<CrashAnalysisCoordinator>();
             services.AddSingleton<TokenProtector>();
             services.AddSingleton(serviceProvider => new JsonCurseForgeCredentialStore(

@@ -90,6 +90,12 @@ public sealed class DownloadServiceTests
             remove { }
         }
 
+        public event EventHandler<DownloadTaskFileActivity>? FileCompleted
+        {
+            add { }
+            remove { }
+        }
+
         public string? ActiveTaskId => null;
 
         public Task<IReadOnlyList<DownloadTaskRecord>> GetTasksAsync(

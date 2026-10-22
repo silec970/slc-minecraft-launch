@@ -16,6 +16,7 @@
   <sys:String x:Key="Home.CrashHintDetail">Read ProjBobcat logs and crash reports with actionable suggestions.</sys:String>
   <sys:String x:Key="Home.LaunchTitle">Start game</sys:String>
   <sys:String x:Key="Home.Launch">Launch game</sys:String>
+  <sys:String x:Key="Home.LaunchProgress">Game launch progress</sys:String>
   <sys:String x:Key="Home.CurrentPlayer">Current player:</sys:String>
   <sys:String x:Key="Home.OpenSettings">Open settings</sys:String>
   <sys:String x:Key="Navigation.Home">Home</sys:String>
@@ -29,6 +30,9 @@
   <sys:String x:Key="Status.Working">Working</sys:String>
   <sys:String x:Key="Status.Cancelled">Cancelled</sys:String>
   <sys:String x:Key="Status.Failed">Failed</sys:String>
+  <sys:String x:Key="Notification.SuccessTitle">Operation succeeded</sys:String>
+  <sys:String x:Key="Notification.FailureTitle">Operation failed</sys:String>
+  <sys:String x:Key="Common.DismissNotification">Dismiss notification</sys:String>
   <sys:String x:Key="Versions.Title">Versions</sys:String>
   <sys:String x:Key="Versions.Description">Manage locator instances, isolation, launch settings, copying, import/export, and backups.</sys:String>
   <sys:String x:Key="Versions.Favorite">Toggle instance favorite</sys:String>
@@ -132,6 +136,12 @@
   <sys:String x:Key="Download.RetryFailed">Retry failed files</sys:String>
   <sys:String x:Key="Download.DeleteTask">Delete task record</sys:String>
   <sys:String x:Key="Download.CancelCurrentOperation">Cancel current operation</sys:String>
+  <sys:String x:Key="Download.LiveLog">Live download details</sys:String>
+  <sys:String x:Key="Download.LiveLog.Description">Shown only for this application session and never written to disk. Starting another download clears it.</sys:String>
+  <sys:String x:Key="Download.LiveLog.Progress">Download progress</sys:String>
+  <sys:String x:Key="Download.LiveLog.Stage">Stage</sys:String>
+  <sys:String x:Key="Download.LiveLog.FileDownloaded">Downloaded</sys:String>
+  <sys:String x:Key="Download.LiveLog.FileFailed">Failed</sys:String>
   <sys:String x:Key="Download.FailedFiles">Failed files</sys:String>
   <sys:String x:Key="Download.Sources">Sources used</sys:String>
   <sys:String x:Key="Download.Task.Queued">Waiting to download</sys:String>

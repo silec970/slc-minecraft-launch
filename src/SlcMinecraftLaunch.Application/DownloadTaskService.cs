@@ -16,6 +16,7 @@ public sealed class DownloadTaskService(
     private long _lastProgressNotificationTicks;
 
     public event EventHandler<DownloadTaskRecord>? TaskChanged;
+    public event EventHandler<DownloadTaskFileActivity>? FileCompleted;
 
     public string? ActiveTaskId => Volatile.Read(ref _activeTaskId);
 
@@ -262,7 +263,13 @@ public sealed class DownloadTaskService(
         _activeCancellation = linkedCancellation;
         _activeRecord = initial;
         Interlocked.Exchange(ref _lastProgressNotificationTicks, 0);
-        var observer = new DownloadObserver();
+        var observer = new DownloadObserver(result =>
+            FileCompleted?.Invoke(
+                this,
+                new DownloadTaskFileActivity(
+                    initial.TaskId,
+                    DateTimeOffset.UtcNow,
+                    result)));
         var progressBridge = new ForwardingProgress(value =>
         {
             progress?.Report(value);
@@ -465,7 +472,8 @@ public sealed class DownloadTaskService(
         public void Report(OperationProgress value) => action(value);
     }
 
-    private sealed class DownloadObserver : IResourceDownloadObserver
+    private sealed class DownloadObserver(Action<ResourceDownloadFileResult> onFileCompleted)
+        : IResourceDownloadObserver
     {
         private readonly ConcurrentDictionary<string, DownloadTaskFileRecord> _failedFiles =
             new(StringComparer.OrdinalIgnoreCase);
@@ -486,6 +494,8 @@ public sealed class DownloadTaskService(
                     Interlocked.Increment(ref counter.Failures);
                 }
             }
+
+            onFileCompleted(result);
 
             if (result.Succeeded)
             {

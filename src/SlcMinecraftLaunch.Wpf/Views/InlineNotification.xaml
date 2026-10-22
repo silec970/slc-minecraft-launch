@@ -1,0 +1,52 @@
+<UserControl x:Class="SlcMinecraftLaunch.Wpf.Views.InlineNotification"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:conv="clr-namespace:SlcMinecraftLaunch.Wpf.Converters">
+  <UserControl.Resources>
+    <conv:ResourceKeyConverter x:Key="Key" />
+  </UserControl.Resources>
+  <Border Margin="0,4,0,12"
+          Padding="14,12"
+          CornerRadius="10"
+          BorderThickness="2"
+          Visibility="{Binding IsNotificationVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+    <Border.Style>
+      <Style TargetType="Border">
+        <Setter Property="Background" Value="{DynamicResource Brush.Card}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Accent}" />
+        <Style.Triggers>
+          <DataTrigger Binding="{Binding IsNotificationError}" Value="True">
+            <Setter Property="BorderBrush" Value="{DynamicResource Brush.Danger}" />
+          </DataTrigger>
+        </Style.Triggers>
+      </Style>
+    </Border.Style>
+    <Grid>
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="Auto" />
+      </Grid.ColumnDefinitions>
+      <StackPanel>
+        <TextBlock Text="{Binding NotificationTitleKey, Converter={StaticResource Key}}"
+                   FontWeight="SemiBold"
+                   AutomationProperties.Name="{Binding NotificationTitleKey, Converter={StaticResource Key}}" />
+        <TextBlock Margin="0,4,0,0"
+                   Text="{Binding NotificationMessageKey, Converter={StaticResource Key}}"
+                   TextWrapping="Wrap" />
+        <TextBlock Margin="0,4,0,0"
+                   Text="{Binding NotificationDetail}"
+                   Foreground="{DynamicResource Brush.Muted}"
+                   TextWrapping="Wrap" />
+      </StackPanel>
+      <Button Grid.Column="1"
+              Margin="12,0,0,0"
+              Padding="8,4"
+              VerticalAlignment="Top"
+              Content="{Binding DismissGlyph}"
+              AutomationProperties.Name="{DynamicResource Common.DismissNotification}"
+              ToolTip="{DynamicResource Common.DismissNotification}"
+              Style="{StaticResource SecondaryButtonStyle}"
+              Command="{Binding DismissNotificationCommand}" />
+    </Grid>
+  </Border>
+</UserControl>

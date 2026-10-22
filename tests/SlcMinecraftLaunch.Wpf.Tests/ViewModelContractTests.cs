@@ -173,6 +173,87 @@ public sealed class ViewModelContractTests
         Assert.False(viewModel.CancelCurrentOperationCommand.CanExecute(null));
     }
 
+    [Fact]
+    public async Task PageNotifications_ShowSuccessFailureAndAutoDismiss()
+    {
+        var viewModel = new CancellablePageViewModel();
+
+        viewModel.ShowSuccessForTest("Download.Completed", "1.21.4");
+
+        Assert.True(viewModel.IsNotificationVisible);
+        Assert.False(viewModel.IsNotificationError);
+        Assert.Equal("Notification.SuccessTitle", viewModel.NotificationTitleKey);
+        Assert.Equal("Download.Completed", viewModel.NotificationMessageKey);
+        Assert.Equal("1.21.4", viewModel.NotificationDetail);
+
+        viewModel.DismissNotificationCommand.Execute(null);
+        Assert.False(viewModel.IsNotificationVisible);
+
+        viewModel.ShowFailureForTest("Launch.StartFailed", "test-detail");
+
+        Assert.True(viewModel.IsNotificationVisible);
+        Assert.True(viewModel.IsNotificationError);
+        Assert.Equal("Notification.FailureTitle", viewModel.NotificationTitleKey);
+
+        await Task.Delay(150);
+        Assert.False(viewModel.IsNotificationVisible);
+    }
+
+    [Fact]
+    public async Task DownloadActivity_RecordsStagesAndFilesThenClearsForNextDownload()
+    {
+        var downloads = new FakeDownloadTaskService();
+        var vanilla = new FakeVanillaInstallationService();
+        var viewModel = new DownloadLoaderViewModel(
+            null!,
+            null!,
+            null!,
+            null!,
+            vanilla,
+            downloads,
+            null!)
+        {
+            SelectedCatalogVersion = new MinecraftReleaseDescriptor(
+                "1.21.4",
+                "release",
+                DateTimeOffset.UtcNow,
+                true,
+                false)
+        };
+
+        await viewModel.InstallVanillaCommand.ExecuteAsync(null);
+        await Task.Delay(100);
+
+        Assert.True(viewModel.HasDownloadActivity);
+        Assert.Equal(2, viewModel.DownloadActivity.Count);
+        Assert.All(viewModel.DownloadActivity, row => Assert.True(row.IsStage));
+        Assert.True(viewModel.IsNotificationVisible);
+        Assert.False(viewModel.IsNotificationError);
+
+        downloads.RaiseFileCompleted(new ResourceDownloadFileResult(
+            "client.jar",
+            @"C:\Minecraft\versions\1.21.4\1.21.4.jar",
+            "https://piston-data.mojang.com/",
+            "https://piston-data.mojang.com/client.jar",
+            1024,
+            "ABC",
+            true));
+
+        var fileRow = Assert.Single(viewModel.DownloadActivity, row => !row.IsStage);
+        Assert.Equal("client.jar", fileRow.FileName);
+        Assert.Equal("1 KB", fileRow.FileSize);
+        Assert.Equal("Download.LiveLog.FileDownloaded", fileRow.StatusKey);
+
+        await viewModel.InstallVanillaCommand.ExecuteAsync(null);
+        await Task.Delay(100);
+
+        Assert.Equal(2, viewModel.DownloadActivity.Count);
+        Assert.DoesNotContain(viewModel.DownloadActivity, row => !row.IsStage);
+        Assert.True(viewModel.IsNotificationVisible);
+        Assert.True(viewModel.IsNotificationError);
+        Assert.Equal("Download.TestFailed", viewModel.NotificationMessageKey);
+    }
+
     private sealed class FakeSettingsService : ISettingsService
     {
         public UiSettings? Saved { get; private set; }
@@ -261,11 +342,8 @@ public sealed class ViewModelContractTests
 
     private sealed class FakeDownloadTaskService : IDownloadTaskService
     {
-        public event EventHandler<DownloadTaskRecord>? TaskChanged
-        {
-            add { }
-            remove { }
-        }
+        public event EventHandler<DownloadTaskRecord>? TaskChanged;
+        public event EventHandler<DownloadTaskFileActivity>? FileCompleted;
 
         public string? ActiveTaskId => null;
 
@@ -300,6 +378,49 @@ public sealed class ViewModelContractTests
             string taskId,
             CancellationToken cancellationToken = default)
             => throw new NotSupportedException();
+
+        public void RaiseTaskChanged(DownloadTaskRecord task)
+            => TaskChanged?.Invoke(this, task);
+
+        public void RaiseFileCompleted(ResourceDownloadFileResult file)
+            => FileCompleted?.Invoke(
+                this,
+                new DownloadTaskFileActivity("task-1", DateTimeOffset.UtcNow, file));
+    }
+
+    private sealed class FakeVanillaInstallationService : IVanillaInstallationService
+    {
+        private int _calls;
+
+        public Task<VanillaInstallationOutcome> InstallAsync(
+            string versionId,
+            IProgress<OperationProgress>? progress = null,
+            CancellationToken cancellationToken = default)
+        {
+            progress?.Report(new OperationProgress(
+                SmokeTestStage.MaterializingVersion,
+                "Progress.DownloadingVersionJson",
+                0.1));
+            progress?.Report(new OperationProgress(
+                SmokeTestStage.MaterializingVersion,
+                "Progress.DownloadingVersionJson",
+                0.2));
+            progress?.Report(new OperationProgress(
+                SmokeTestStage.MaterializingVersion,
+                "Progress.DownloadingClientJar",
+                0.3));
+
+            return Task.FromResult(Interlocked.Increment(ref _calls) == 1
+                ? new VanillaInstallationOutcome(
+                    true,
+                    "Download.VanillaInstalled",
+                    versionId)
+                : new VanillaInstallationOutcome(
+                    false,
+                    "Download.TestFailed",
+                    versionId,
+                    "test failure"));
+        }
     }
 
     private sealed class FakeVersionService : IVersionService
@@ -370,6 +491,8 @@ public sealed class ViewModelContractTests
 
     private sealed class CancellablePageViewModel : PageViewModel
     {
+        protected override TimeSpan NotificationDisplayDuration => TimeSpan.FromMilliseconds(75);
+
         public TaskCompletionSource Started { get; } =
             new(TaskCreationOptions.RunContinuationsAsynchronously);
 
@@ -384,6 +507,12 @@ public sealed class ViewModelContractTests
                 await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken);
             }, CancellationToken.None);
         }
+
+        public void ShowSuccessForTest(string messageKey, string? detail)
+            => ShowSuccessNotification(messageKey, detail);
+
+        public void ShowFailureForTest(string messageKey, string? detail)
+            => ShowFailureNotification(messageKey, detail);
 
         public override Task RefreshAsync(CancellationToken cancellationToken = default)
             => Task.CompletedTask;

@@ -94,6 +94,14 @@ public sealed partial class HomeViewModel(
                 token);
             StatusKey = result.MessageKey;
             ErrorDetail = result.ErrorDetail;
+            if (result.Succeeded)
+            {
+                ShowSuccessNotification(result.MessageKey, SelectedVersion);
+            }
+            else
+            {
+                ShowFailureNotification(result.MessageKey, result.ErrorDetail);
+            }
         }, cancellationToken);
     }
 

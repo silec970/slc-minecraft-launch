@@ -5,6 +5,7 @@ namespace SlcMinecraftLaunch.Domain.Abstractions;
 public interface IDownloadTaskService
 {
     event EventHandler<DownloadTaskRecord>? TaskChanged;
+    event EventHandler<DownloadTaskFileActivity>? FileCompleted;
 
     string? ActiveTaskId { get; }
 

@@ -1,7 +1,8 @@
 <UserControl x:Class="SlcMinecraftLaunch.Wpf.Views.HomeView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:conv="clr-namespace:SlcMinecraftLaunch.Wpf.Converters">
+             xmlns:conv="clr-namespace:SlcMinecraftLaunch.Wpf.Converters"
+             xmlns:views="clr-namespace:SlcMinecraftLaunch.Wpf.Views">
   <UserControl.Resources>
     <conv:ResourceKeyConverter x:Key="Key" />
   </UserControl.Resources>
@@ -11,6 +12,7 @@
                  Style="{StaticResource PageTitleStyle}" />
       <TextBlock Text="{Binding DescriptionKey, Converter={StaticResource Key}}"
                  Style="{StaticResource PageDescriptionStyle}" />
+      <views:InlineNotification />
 
       <Border Style="{StaticResource CardStyle}">
         <Grid>
@@ -115,7 +117,19 @@
         </Border>
       </Grid>
 
-      <ProgressBar Value="{Binding Progress}" Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" />
+      <Grid Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+        <ProgressBar Value="{Binding Progress}"
+                     AutomationProperties.Name="{DynamicResource Home.LaunchProgress}" />
+        <TextBlock Grid.Column="1"
+                   Margin="12,10,0,8"
+                   VerticalAlignment="Center"
+                   FontWeight="SemiBold"
+                   Text="{Binding Progress, StringFormat={}{0:P0}}" />
+      </Grid>
       <TextBlock Text="{Binding StatusKey, Converter={StaticResource Key}}"
                  Foreground="{DynamicResource Brush.Muted}" />
       <TextBlock Text="{Binding ErrorDetail}"

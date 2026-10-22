@@ -40,6 +40,8 @@ public sealed class DownloadTaskServiceTests
             new FakeRuntimeProvider(runtime),
             store,
             health);
+        var activities = new List<DownloadTaskFileActivity>();
+        service.FileCompleted += (_, activity) => activities.Add(activity);
 
         var record = await service.StartAsync(
             new ResourceCompletionRequest("1.21.4", @"C:\Java\21\java.exe"));
@@ -50,6 +52,12 @@ public sealed class DownloadTaskServiceTests
         Assert.Equal("timeout", failed.ErrorDetail);
         Assert.Contains("https://bad.example/", record.Sources);
         Assert.Equal(2, health.Observations.Count);
+        Assert.Equal(2, activities.Count);
+        Assert.Contains(activities, activity =>
+            activity.File.FileName == "library.jar" && activity.File.Succeeded);
+        Assert.Contains(activities, activity =>
+            activity.File.FileName == "asset.bin" && !activity.File.Succeeded);
+        Assert.All(activities, activity => Assert.Equal(record.TaskId, activity.TaskId));
         var persisted = Assert.Single(await store.LoadAsync());
         Assert.Equal(DownloadTaskStatus.Failed, persisted.Status);
     }

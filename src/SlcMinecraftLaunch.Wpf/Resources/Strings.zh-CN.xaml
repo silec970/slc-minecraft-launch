@@ -16,6 +16,7 @@
   <sys:String x:Key="Home.CrashHintDetail">自动读取 ProjBobcat 日志与 crash-report，并给出中文处理建议。</sys:String>
   <sys:String x:Key="Home.LaunchTitle">开始游戏</sys:String>
   <sys:String x:Key="Home.Launch">启动游戏</sys:String>
+  <sys:String x:Key="Home.LaunchProgress">游戏启动进度</sys:String>
   <sys:String x:Key="Home.CurrentPlayer">当前玩家名：</sys:String>
   <sys:String x:Key="Home.OpenSettings">前往设置</sys:String>
   <sys:String x:Key="Navigation.Home">主页</sys:String>
@@ -29,6 +30,9 @@
   <sys:String x:Key="Status.Working">正在处理</sys:String>
   <sys:String x:Key="Status.Cancelled">操作已取消</sys:String>
   <sys:String x:Key="Status.Failed">操作失败</sys:String>
+  <sys:String x:Key="Notification.SuccessTitle">操作成功</sys:String>
+  <sys:String x:Key="Notification.FailureTitle">操作失败</sys:String>
+  <sys:String x:Key="Common.DismissNotification">关闭提示</sys:String>
   <sys:String x:Key="Versions.Title">版本管理</sys:String>
   <sys:String x:Key="Versions.Description">从 ProjBobcat 定位器读取实例，管理隔离、启动参数、复制、导入导出与备份。</sys:String>
   <sys:String x:Key="Versions.Favorite">切换实例收藏</sys:String>
@@ -132,6 +136,12 @@
   <sys:String x:Key="Download.RetryFailed">重试失败项</sys:String>
   <sys:String x:Key="Download.DeleteTask">删除任务记录</sys:String>
   <sys:String x:Key="Download.CancelCurrentOperation">取消当前操作</sys:String>
+  <sys:String x:Key="Download.LiveLog">实时下载明细</sys:String>
+  <sys:String x:Key="Download.LiveLog.Description">仅在本次应用会话中显示，不写入磁盘；开始新的下载时会清空。</sys:String>
+  <sys:String x:Key="Download.LiveLog.Progress">下载进度</sys:String>
+  <sys:String x:Key="Download.LiveLog.Stage">阶段</sys:String>
+  <sys:String x:Key="Download.LiveLog.FileDownloaded">已下载</sys:String>
+  <sys:String x:Key="Download.LiveLog.FileFailed">失败</sys:String>
   <sys:String x:Key="Download.FailedFiles">失败文件</sys:String>
   <sys:String x:Key="Download.Sources">实际下载源</sys:String>
   <sys:String x:Key="Download.Task.Queued">等待下载</sys:String>

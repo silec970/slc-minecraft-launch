@@ -1,0 +1,45 @@
+<Window x:Class="SlcMinecraftLaunch.Wpf.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="{DynamicResource App.Title}"
+        Height="560"
+        Width="980"
+        MinHeight="420"
+        MinWidth="720"
+        WindowStartupLocation="CenterScreen">
+  <Grid>
+    <Border Margin="28"
+            Padding="32"
+            CornerRadius="18"
+            Background="#F4F7FB">
+      <StackPanel VerticalAlignment="Center"
+                  HorizontalAlignment="Left"
+                  MaxWidth="680">
+        <TextBlock Text="{DynamicResource Home.Title}"
+                   FontSize="30"
+                   FontWeight="SemiBold"
+                   Foreground="#17324D" />
+        <TextBlock Margin="0,14,0,0"
+                   Text="{DynamicResource Home.Description}"
+                   FontSize="15"
+                   Foreground="#50677C"
+                   TextWrapping="Wrap" />
+        <StackPanel Margin="0,28,0,0"
+                    Orientation="Horizontal">
+          <TextBlock Text="{DynamicResource Home.InstalledVersions}"
+                     FontSize="15"
+                     Foreground="#50677C" />
+          <TextBlock Margin="10,0,0,0"
+                     Text="{Binding InstalledVersionCount}"
+                     FontSize="15"
+                     FontWeight="Bold"
+                     Foreground="#0B7A75" />
+        </StackPanel>
+      </StackPanel>
+    </Border>
+  </Grid>
+</Window>
+

@@ -1,0 +1,45 @@
+# Build output
+bin/
+obj/
+TestResults/
+*.binlog
+
+# IDE and user state
+.vs/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Local configuration and secrets
+appsettings.Local.json
+secrets.json
+*.pfx
+*.snk
+.env
+
+# Minecraft user data and downloaded runtimes
+.minecraft/
+launcher_profiles.json
+launcher_accounts.json
+runtimes/
+crash-reports/
+logs/
+saves/
+mods/
+resourcepacks/
+shaderpacks/
+
+# Local media and generated diagnostics
+backgrounds/
+music/
+*.log
+*.dmp
+hs_err_pid*
+
+# OS metadata
+.DS_Store
+Thumbs.db
+desktop.ini
+

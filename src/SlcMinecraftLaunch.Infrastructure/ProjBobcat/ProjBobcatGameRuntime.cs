@@ -313,7 +313,7 @@ public sealed class ProjBobcatGameRuntime : IGameRuntime
             0.77));
 
         // This authenticator is restricted to the explicit smoke-test path.
-        // Production authentication must use the ProjBobcat Microsoft model.
+        // The desktop application remains offline-only by product decision.
         var offlineAuth = new OfflineAuthenticator
         {
             // PROJBOBCAT: OfflineAuthenticator and ILauncherAccountParser own

@@ -43,6 +43,8 @@
   <sys:String x:Key="Loader.Forge">Forge</sys:String>
   <sys:String x:Key="Loader.NeoForge">NeoForge</sys:String>
   <sys:String x:Key="Loader.OptiFine">OptiFine</sys:String>
+  <sys:String x:Key="Loader.LiteLoader">LiteLoader</sys:String>
+  <sys:String x:Key="Loader.LiteLoaderUnsupported">LiteLoader automatic installation is temporarily unsupported; existing LiteLoader instances remain discoverable and launchable.</sys:String>
   <sys:String x:Key="Loader.ArtifactHashUnavailable">The installer has no verifiable official hash. Automatic installation was stopped; use the official manual installer.</sys:String>
   <sys:String x:Key="Download.Title">Downloads and loaders</sys:String>
   <sys:String x:Key="Download.Description">Choose a game version and loader for native ProjBobcat installation and resource completion.</sys:String>
@@ -63,6 +65,7 @@
   <sys:String x:Key="Download.CompleteResources">Complete resources</sys:String>
   <sys:String x:Key="Download.SelectVersionRequired">Select a game version first</sys:String>
   <sys:String x:Key="Download.InstallLoaderRequired">Install a loader first</sys:String>
+  <sys:String x:Key="Download.LiteLoaderUnsupported">LiteLoader automatic installation is temporarily unsupported; existing instances remain discoverable and launchable through the locator.</sys:String>
   <sys:String x:Key="Java.Title">Java management</sys:String>
   <sys:String x:Key="Java.Description">Detect local JVMs and install Mojang runtimes with Adoptium fallback.</sys:String>
   <sys:String x:Key="Java.Download">Download Java runtime</sys:String>
@@ -104,6 +107,17 @@
   <sys:String x:Key="Settings.PlayerNameTooLong">Player name cannot exceed 16 characters</sys:String>
   <sys:String x:Key="Settings.PlayerNameInvalid">Player name cannot contain control characters</sys:String>
   <sys:String x:Key="Settings.PlayerNameSaved">Player name saved</sys:String>
+  <sys:String x:Key="Settings.CurseForgeKey">CurseForge API key</sys:String>
+  <sys:String x:Key="Settings.CurseForgeKeyHint">Used only for CurseForge search and downloads. The key is encrypted with DPAPI for the current Windows user under launcher-data and is never logged.</sys:String>
+  <sys:String x:Key="Settings.CurseForgeKeySave">Save CurseForge key</sys:String>
+  <sys:String x:Key="Settings.CurseForgeKeyClear">Clear CurseForge key</sys:String>
+  <sys:String x:Key="Settings.CurseForgeKeyConfigured">CurseForge API key is configured securely</sys:String>
+  <sys:String x:Key="Settings.CurseForgeKeyMissing">No CurseForge API key is configured; only Modrinth is active</sys:String>
+  <sys:String x:Key="Settings.CurseForgeKeyRequired">CurseForge API key cannot be empty</sys:String>
+  <sys:String x:Key="Settings.CurseForgeKeyInvalid">The CurseForge API key format is invalid</sys:String>
+  <sys:String x:Key="Settings.CurseForgeKeySaved">CurseForge API key encrypted and saved</sys:String>
+  <sys:String x:Key="Settings.CurseForgeKeyCleared">CurseForge API key cleared</sys:String>
+  <sys:String x:Key="Settings.CurseForgeKeyUnreadable">The CurseForge API key could not be decrypted; enter it again</sys:String>
   <sys:String x:Key="Settings.Save">Save settings</sys:String>
   <sys:String x:Key="Settings.Saved">Settings saved</sys:String>
   <sys:String x:Key="Launch.AlreadyRunning">The game is already starting or running</sys:String>

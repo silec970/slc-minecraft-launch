@@ -44,6 +44,9 @@ public sealed class ProjBobcatLoaderInstallBackend(
                     .ConfigureAwait(false),
                 LoaderKind.NeoForge => await InstallNeoForgeAsync(plan, versionLocator, progress, cancellationToken)
                     .ConfigureAwait(false),
+                LoaderKind.LiteLoader => new LoaderInstallOutcome(
+                    false,
+                    "Loader.LiteLoaderUnsupported"),
                 _ => new LoaderInstallOutcome(false, "Loader.NativeInstallerUnavailable")
             };
         }

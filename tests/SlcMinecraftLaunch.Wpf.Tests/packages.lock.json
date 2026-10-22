@@ -306,8 +306,8 @@
       },
       "System.Security.Cryptography.ProtectedData": {
         "type": "Transitive",
-        "resolved": "10.0.5",
-        "contentHash": "kxR4O/8o32eNN3m4qbLe3UifYqeyEpallCyVAsLvL5ZFJVyT3JCb+9du/WHfC09VyJh1Q+p/Gd4+AwM7Rz4acg=="
+        "resolved": "10.0.13",
+        "contentHash": "aUSmC6cPjFLSE0rDTsmkR3wvUOnscqewebOaaELEToh12sNmoltZqT3f0C81mJ1zhxKjWco25soHTvYwsXCsUw=="
       },
       "xunit.abstractions": {
         "type": "Transitive",
@@ -364,7 +364,8 @@
         "dependencies": {
           "Microsoft.Extensions.Http": "[10.0.13, )",
           "ProjBobcat": "[2.1.2, )",
-          "SlcMinecraftLaunch.Domain": "[1.0.0, )"
+          "SlcMinecraftLaunch.Domain": "[1.0.0, )",
+          "System.Security.Cryptography.ProtectedData": "[10.0.13, )"
         }
       },
       "slcminecraftlaunch.wpf": {

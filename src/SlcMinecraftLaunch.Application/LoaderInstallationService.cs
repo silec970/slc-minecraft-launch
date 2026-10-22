@@ -21,6 +21,13 @@ public sealed class LoaderInstallationService(
                 "Loader.UnsupportedKind");
         }
 
+        if (request.LoaderKind == LoaderKind.LiteLoader)
+        {
+            return new LoaderInstallOutcome(
+                false,
+                "Loader.LiteLoaderUnsupported");
+        }
+
         progress?.Report(new OperationProgress(
             SmokeTestStage.InstallingLoader,
             "Progress.ResolvingLoaderVersion",

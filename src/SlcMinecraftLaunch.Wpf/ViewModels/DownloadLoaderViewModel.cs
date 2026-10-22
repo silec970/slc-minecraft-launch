@@ -23,7 +23,7 @@ public sealed partial class DownloadLoaderViewModel(
     public ObservableCollection<MinecraftReleaseDescriptor> CatalogVersions { get; } = [];
     public ObservableCollection<LoaderVersionOption> LoaderVersions { get; } = [];
     public IReadOnlyList<LoaderKind> LoaderKinds { get; } =
-        [LoaderKind.Fabric, LoaderKind.Forge, LoaderKind.NeoForge, LoaderKind.OptiFine];
+        [LoaderKind.Fabric, LoaderKind.Forge, LoaderKind.NeoForge, LoaderKind.OptiFine, LoaderKind.LiteLoader];
 
     [ObservableProperty]
     private string? _selectedMinecraftVersion;
@@ -99,6 +99,14 @@ public sealed partial class DownloadLoaderViewModel(
             if (string.IsNullOrWhiteSpace(SelectedMinecraftVersion))
             {
                 throw new UiOperationException("Download.SelectVersionRequired");
+            }
+
+            if (SelectedLoaderKind == LoaderKind.LiteLoader)
+            {
+                LoaderVersions.Clear();
+                SelectedLoaderVersion = null;
+                StatusKey = "Download.LiteLoaderUnsupported";
+                return;
             }
 
             var versions = await loaderCatalog.GetVersionsAsync(

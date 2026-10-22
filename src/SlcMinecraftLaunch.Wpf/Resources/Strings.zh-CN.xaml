@@ -43,6 +43,8 @@
   <sys:String x:Key="Loader.Forge">Forge</sys:String>
   <sys:String x:Key="Loader.NeoForge">NeoForge</sys:String>
   <sys:String x:Key="Loader.OptiFine">OptiFine</sys:String>
+  <sys:String x:Key="Loader.LiteLoader">LiteLoader</sys:String>
+  <sys:String x:Key="Loader.LiteLoaderUnsupported">LiteLoader 自动安装暂不支持；已有 LiteLoader 实例仍可识别和启动。</sys:String>
   <sys:String x:Key="Loader.ArtifactHashUnavailable">安装器缺少可验证的官方哈希，已停止自动安装。请从官方来源手动安装。</sys:String>
   <sys:String x:Key="Download.Title">下载与加载器安装</sys:String>
   <sys:String x:Key="Download.Description">选择游戏版本和加载器，由 ProjBobcat 完成原生安装与资源补全。</sys:String>
@@ -63,6 +65,7 @@
   <sys:String x:Key="Download.CompleteResources">补全资源</sys:String>
   <sys:String x:Key="Download.SelectVersionRequired">请先选择游戏版本</sys:String>
   <sys:String x:Key="Download.InstallLoaderRequired">请先安装加载器</sys:String>
+  <sys:String x:Key="Download.LiteLoaderUnsupported">LiteLoader 自动安装暂不支持；已有实例仍可由版本定位器识别和启动。</sys:String>
   <sys:String x:Key="Java.Title">Java 管理</sys:String>
   <sys:String x:Key="Java.Description">探测本机 JVM，缺失时优先下载 Mojang 运行时并使用 Temurin 回退。</sys:String>
   <sys:String x:Key="Java.Download">下载 Java 运行时</sys:String>
@@ -104,6 +107,17 @@
   <sys:String x:Key="Settings.PlayerNameTooLong">玩家名不能超过 16 个字符</sys:String>
   <sys:String x:Key="Settings.PlayerNameInvalid">玩家名不能包含控制字符</sys:String>
   <sys:String x:Key="Settings.PlayerNameSaved">玩家名已保存</sys:String>
+  <sys:String x:Key="Settings.CurseForgeKey">CurseForge API Key</sys:String>
+  <sys:String x:Key="Settings.CurseForgeKeyHint">仅用于 CurseForge 搜索与下载；使用当前 Windows 用户的 DPAPI 加密保存在 launcher-data，不会写入日志。</sys:String>
+  <sys:String x:Key="Settings.CurseForgeKeySave">保存 CurseForge Key</sys:String>
+  <sys:String x:Key="Settings.CurseForgeKeyClear">清除 CurseForge Key</sys:String>
+  <sys:String x:Key="Settings.CurseForgeKeyConfigured">已安全配置 CurseForge API Key</sys:String>
+  <sys:String x:Key="Settings.CurseForgeKeyMissing">尚未配置 CurseForge API Key，当前仅使用 Modrinth</sys:String>
+  <sys:String x:Key="Settings.CurseForgeKeyRequired">CurseForge API Key 不能为空</sys:String>
+  <sys:String x:Key="Settings.CurseForgeKeyInvalid">CurseForge API Key 格式无效</sys:String>
+  <sys:String x:Key="Settings.CurseForgeKeySaved">CurseForge API Key 已加密保存</sys:String>
+  <sys:String x:Key="Settings.CurseForgeKeyCleared">CurseForge API Key 已清除</sys:String>
+  <sys:String x:Key="Settings.CurseForgeKeyUnreadable">无法解密 CurseForge API Key；请重新输入</sys:String>
   <sys:String x:Key="Settings.Save">保存设置</sys:String>
   <sys:String x:Key="Settings.Saved">设置已保存</sys:String>
   <sys:String x:Key="Launch.AlreadyRunning">游戏已经在启动或运行中</sys:String>

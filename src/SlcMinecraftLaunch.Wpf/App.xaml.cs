@@ -19,6 +19,7 @@ using SlcMinecraftLaunch.Infrastructure.Mojang;
 using SlcMinecraftLaunch.Infrastructure.Mods;
 using SlcMinecraftLaunch.Infrastructure.Persistence;
 using SlcMinecraftLaunch.Infrastructure.ProjBobcat;
+using SlcMinecraftLaunch.Infrastructure.Security;
 using SlcMinecraftLaunch.Wpf.ViewModels;
 using SlcMinecraftLaunch.Wpf.Services;
 
@@ -75,8 +76,7 @@ public partial class App : System.Windows.Application
                 GetConfiguredList(configuration, "DownloadSources:QuiltMaven"));
             var modApiOptions = new ModApiOptions(
                 GetRequiredSetting(configuration, "ModApis:ModrinthBaseUrl"),
-                GetRequiredSetting(configuration, "ModApis:CurseForgeBaseUrl"),
-                Environment.GetEnvironmentVariable("CURSEFORGE_API_KEY"));
+                GetRequiredSetting(configuration, "ModApis:CurseForgeBaseUrl"));
 
             var services = new ServiceCollection();
             services.AddHttpClient();
@@ -130,6 +130,17 @@ public partial class App : System.Windows.Application
                 _ => new JsonCrashReportStore(paths.DataRoot));
             services.AddSingleton<ICrashAnalysisService, CrashAnalysisService>();
             services.AddSingleton<CrashAnalysisCoordinator>();
+            services.AddSingleton<TokenProtector>();
+            services.AddSingleton(serviceProvider => new JsonCurseForgeCredentialStore(
+                paths.DataRoot,
+                serviceProvider.GetRequiredService<TokenProtector>()));
+            services.AddSingleton<ModApiCredentialState>();
+            services.AddSingleton<CurseForgeCredentialService>();
+            services.AddSingleton<ICurseForgeCredentialService>(
+                serviceProvider => serviceProvider.GetRequiredService<CurseForgeCredentialService>());
+            services.AddTransient<CurseForgeAuthenticationHandler>();
+            services.AddHttpClient("CurseForgeApi")
+                .AddHttpMessageHandler<CurseForgeAuthenticationHandler>();
             services.AddSingleton<ModApiSettingsProvider>();
             services.AddSingleton<IModrinthApiService>(serviceProvider =>
             {
@@ -141,12 +152,10 @@ public partial class App : System.Windows.Application
             });
             services.AddSingleton<ICurseForgeApiService>(serviceProvider =>
             {
-                var client = serviceProvider.GetRequiredService<IHttpClientFactory>().CreateClient();
+                var client = serviceProvider
+                    .GetRequiredService<IHttpClientFactory>()
+                    .CreateClient("CurseForgeApi");
                 client.DefaultRequestHeaders.UserAgent.ParseAdd("SlcMinecraftLaunch/0.1");
-                if (!string.IsNullOrWhiteSpace(modApiOptions.CurseForgeApiKey))
-                {
-                    client.DefaultRequestHeaders.Add("x-api-key", modApiOptions.CurseForgeApiKey);
-                }
 
                 return new CurseForgeApiService(
                     client,
@@ -156,7 +165,7 @@ public partial class App : System.Windows.Application
                 new ProjBobcatModProviderCatalog(
                     serviceProvider.GetRequiredService<IModrinthApiService>(),
                     serviceProvider.GetRequiredService<ICurseForgeApiService>(),
-                    !string.IsNullOrWhiteSpace(modApiOptions.CurseForgeApiKey)));
+                    serviceProvider.GetRequiredService<ICurseForgeCredentialService>()));
             services.AddSingleton<ILocalModStore, LocalModStore>();
             services.AddSingleton<IModSourceStore>(
                 _ => new JsonModSourceStore(paths.DataRoot));
@@ -180,6 +189,10 @@ public partial class App : System.Windows.Application
             services.AddSingleton<ShellViewModel>();
 
             _services = services.BuildServiceProvider();
+            await _services
+                .GetRequiredService<ICurseForgeCredentialService>()
+                .LoadStatusAsync()
+                .ConfigureAwait(true);
 
             if (commandLine.ListVersions)
             {

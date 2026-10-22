@@ -17,7 +17,11 @@ public sealed class ViewModelContractTests
             new JavaViewModel(null!, null!),
             new ModsViewModel(null!, null!),
             new CrashViewModel(null!, null!),
-            new SettingsViewModel(new FakeSettingsService(), new FakeUiPreferences(), new FakePlayerProfileService())
+            new SettingsViewModel(
+                new FakeSettingsService(),
+                new FakeUiPreferences(),
+                new FakePlayerProfileService(),
+                new FakeCurseForgeCredentialService())
         ];
 
         Assert.All(pages, page =>
@@ -40,7 +44,8 @@ public sealed class ViewModelContractTests
         var settings = new SettingsViewModel(
             new FakeSettingsService(),
             new FakeUiPreferences(),
-            new FakePlayerProfileService());
+            new FakePlayerProfileService(),
+            new FakeCurseForgeCredentialService());
         var preferences = new FakeUiPreferences();
 
         var shell = new ShellViewModel(home, versions, download, java, mods, crash, settings, preferences);
@@ -57,7 +62,12 @@ public sealed class ViewModelContractTests
         var settingsService = new FakeSettingsService();
         var preferences = new FakeUiPreferences();
         var playerProfile = new FakePlayerProfileService();
-        var viewModel = new SettingsViewModel(settingsService, preferences, playerProfile)
+        var credentialService = new FakeCurseForgeCredentialService();
+        var viewModel = new SettingsViewModel(
+            settingsService,
+            preferences,
+            playerProfile,
+            credentialService)
         {
             IsDarkTheme = true,
             AnimationsEnabled = false,
@@ -75,6 +85,23 @@ public sealed class ViewModelContractTests
         Assert.False(preferences.Current.AnimationsEnabled);
         Assert.True(preferences.Current.MusicEnabled);
         Assert.Equal("OfflinePlayer", playerProfile.SavedPlayerName);
+    }
+
+    [Fact]
+    public async Task SettingsSave_UpdatesCurseForgeCredentialStatus()
+    {
+        var credentialService = new FakeCurseForgeCredentialService();
+        var viewModel = new SettingsViewModel(
+            new FakeSettingsService(),
+            new FakeUiPreferences(),
+            new FakePlayerProfileService(),
+            credentialService);
+
+        await viewModel.SaveCurseForgeKeyCommand.ExecuteAsync("cf-test-secret");
+
+        Assert.Equal("cf-test-secret", credentialService.SavedApiKey);
+        Assert.True(viewModel.HasCurseForgeKey);
+        Assert.Equal("Settings.CurseForgeKeySaved", viewModel.CurseForgeKeyStatusKey);
     }
 
     [Fact]
@@ -138,6 +165,43 @@ public sealed class ViewModelContractTests
                 true,
                 "Settings.PlayerNameSaved",
                 playerName));
+        }
+    }
+
+    private sealed class FakeCurseForgeCredentialService : ICurseForgeCredentialService
+    {
+        public bool IsConfigured { get; private set; }
+        public string? SavedApiKey { get; private set; }
+
+        public Task<CurseForgeCredentialStatus> LoadStatusAsync(
+            CancellationToken cancellationToken = default)
+            => Task.FromResult(new CurseForgeCredentialStatus(
+                IsConfigured,
+                IsConfigured
+                    ? "Settings.CurseForgeKeyConfigured"
+                    : "Settings.CurseForgeKeyMissing"));
+
+        public Task<CurseForgeCredentialStatus> SaveApiKeyAsync(
+            string apiKey,
+            CancellationToken cancellationToken = default)
+        {
+            SavedApiKey = apiKey;
+            IsConfigured = !string.IsNullOrWhiteSpace(apiKey);
+            return Task.FromResult(new CurseForgeCredentialStatus(
+                IsConfigured,
+                IsConfigured
+                    ? "Settings.CurseForgeKeySaved"
+                    : "Settings.CurseForgeKeyRequired"));
+        }
+
+        public Task<CurseForgeCredentialStatus> ClearApiKeyAsync(
+            CancellationToken cancellationToken = default)
+        {
+            SavedApiKey = null;
+            IsConfigured = false;
+            return Task.FromResult(new CurseForgeCredentialStatus(
+                false,
+                "Settings.CurseForgeKeyCleared"));
         }
     }
 }

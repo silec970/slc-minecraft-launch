@@ -30,7 +30,9 @@
   `CheckAndDownloadTaskAsync(..., CancellationToken)`。
 - 游戏日志来自 `GameLogEventDelegate` 和 `GameExitEventDelegate`；
   崩溃归因来自 `DefaultLogAnalyzer` 和 `IAnalysisReport`。
-- 加载器安装优先使用 Forge、Fabric、LiteLoader、OptiFine 原生安装模型。
+- 加载器安装优先使用 Forge、Fabric、OptiFine 原生安装模型。
+- ProjBobcat 2.1.2 没有可用的 LiteLoader 安装模型；LiteLoader 自动安装
+  明确标记为暂不支持，但已有 LiteLoader 实例仍必须由 locator 识别并可启动。
 - NeoForge 2.1.2 没有原生安装器，只允许通过其官方 installer CLI
   `--installClient` 适配；不得复用 Forge 安装模型。
 - 所有直接使用 ProjBobcat 契约的位置必须带
@@ -107,7 +109,11 @@
 ## Mod 管理
 
 - 搜索必须使用 ProjBobcat `IModrinthApiService` 和 `ICurseForgeApiService`。
-- CurseForge API key 只来自环境变量 `CURSEFORGE_API_KEY`，不得写入仓库。
+- CurseForge API key 由设置页输入，只以
+  `DataProtectionScope.CurrentUser` 的 DPAPI 密文保存在
+  `launcher-data/curseforge-credential.json`，不得写入仓库、日志或明文配置。
+- 保存、替换或清除 CurseForge key 后，HTTP 适配器必须即时使用最新状态，
+  不允许要求重启启动器。
 - Mod 文件下载通过自定义 `IResourceInfoResolver` 交给 ResourceCompleter。
 - 本地 JAR 必须解析 Fabric、Quilt 或 Forge/NeoForge 元数据后才能导入。
 - 版本隔离时 Mod 写入 locator 对应的 `versions/<id>/mods`，否则写入根 `mods`。
@@ -128,7 +134,8 @@
 
 ## 安全与提交
 
-- CurseForge API key 只能从环境变量或未跟踪的用户配置读取。
+- CurseForge API key 只能从当前 Windows 用户的 DPAPI 加密设置读取。
+- CurseForge key 缺失、损坏或无法解密时只能降级为 Modrinth，不得阻塞主页。
 - `bin/`、`obj/`、`.vs/`、`launcher_profiles.json`、`launcher_accounts.json`
   和 `.minecraft/` 不得提交。
 - `main` 受保护，不直接提交；每个工作流使用独立 `feat/<步骤>-<描述>` 分支。

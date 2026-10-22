@@ -8,7 +8,8 @@ namespace SlcMinecraftLaunch.Wpf.ViewModels;
 public sealed partial class SettingsViewModel(
     ISettingsService settingsService,
     IUiPreferences uiPreferences,
-    IPlayerProfileService playerProfileService) : PageViewModel
+    IPlayerProfileService playerProfileService,
+    ICurseForgeCredentialService curseForgeCredentials) : PageViewModel
 {
     public override string TitleKey => "Settings.Title";
     public override string DescriptionKey => "Settings.Description";
@@ -49,6 +50,12 @@ public sealed partial class SettingsViewModel(
     [ObservableProperty]
     private string _playerName = string.Empty;
 
+    [ObservableProperty]
+    private bool _hasCurseForgeKey;
+
+    [ObservableProperty]
+    private string _curseForgeKeyStatusKey = "Settings.CurseForgeKeyMissing";
+
     [RelayCommand(IncludeCancelCommand = true)]
     private Task SaveAsync(CancellationToken cancellationToken)
     {
@@ -76,6 +83,32 @@ public sealed partial class SettingsViewModel(
         }, cancellationToken);
     }
 
+    [RelayCommand(IncludeCancelCommand = true)]
+    private Task SaveCurseForgeKeyAsync(
+        string? apiKey,
+        CancellationToken cancellationToken)
+    {
+        return RunAsync(async token =>
+        {
+            var status = await curseForgeCredentials
+                .SaveApiKeyAsync(apiKey ?? string.Empty, token);
+            ApplyCredentialStatus(status);
+            StatusKey = status.MessageKey;
+        }, cancellationToken);
+    }
+
+    [RelayCommand(IncludeCancelCommand = true)]
+    private Task ClearCurseForgeKeyAsync(CancellationToken cancellationToken)
+    {
+        return RunAsync(async token =>
+        {
+            var status = await curseForgeCredentials
+                .ClearApiKeyAsync(token);
+            ApplyCredentialStatus(status);
+            StatusKey = status.MessageKey;
+        }, cancellationToken);
+    }
+
     public override async Task RefreshAsync(CancellationToken cancellationToken = default)
     {
         var snapshot = settingsService.GetSnapshot();
@@ -92,7 +125,15 @@ public sealed partial class SettingsViewModel(
         SelectedLanguage = Languages.FirstOrDefault(language =>
                               string.Equals(language.Code, settings.Language, StringComparison.OrdinalIgnoreCase))
                           ?? Languages[0];
+        ApplyCredentialStatus(
+            await curseForgeCredentials.LoadStatusAsync(cancellationToken));
         StatusKey = "Status.Ready";
+    }
+
+    private void ApplyCredentialStatus(CurseForgeCredentialStatus status)
+    {
+        HasCurseForgeKey = status.IsConfigured;
+        CurseForgeKeyStatusKey = status.MessageKey;
     }
 }
 

@@ -139,3 +139,17 @@
 - 导航动效为 180ms 淡入和位移动画，可由“启用轻量动效”关闭。
 - 背景音乐只播放 `launcher-data/music` 中的用户本地音频；无文件时安静降级。
 
+## 发布
+
+- 发布目标为 Windows x64 自包含单文件，不使用 Native AOT，也不启用裁剪。
+- 发布命令：
+
+  ```powershell
+  dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:DebugType=none -p:DebugSymbols=false -o ./publish
+  ```
+
+- 产物路径：`./publish/SlcMinecraftLaunch.Wpf.exe`。
+- 预期体积约为 70–100 MB；压缩后具体大小会随 SDK 和依赖变化。
+- `publish/` 为本地分发产物，不提交到 Git。
+- 当前缺少 `Assets\launcher.ico`，`ApplicationIcon` 暂时注释，属于待补充图标。
+

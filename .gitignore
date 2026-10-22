@@ -3,6 +3,7 @@ bin/
 obj/
 TestResults/
 *.binlog
+publish/
 
 # IDE and user state
 .vs/

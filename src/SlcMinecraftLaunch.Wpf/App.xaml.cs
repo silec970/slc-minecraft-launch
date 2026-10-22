@@ -10,6 +10,7 @@ using SlcMinecraftLaunch.Domain.Abstractions;
 using SlcMinecraftLaunch.Domain.Models;
 using SlcMinecraftLaunch.Infrastructure.Configuration;
 using SlcMinecraftLaunch.Infrastructure.Mojang;
+using SlcMinecraftLaunch.Infrastructure.Persistence;
 using SlcMinecraftLaunch.Infrastructure.ProjBobcat;
 using SlcMinecraftLaunch.Wpf.ViewModels;
 
@@ -50,16 +51,29 @@ public partial class App : System.Windows.Application
             services.AddSingleton(paths);
             services.AddSingleton<IJavaDiscovery, ProjBobcatJavaDiscovery>();
             services.AddSingleton<IGameRuntimeProvider, ProjBobcatRuntimeProvider>();
+            services.AddSingleton<IVersionPreferencesStore>(
+                _ => new JsonVersionPreferencesStore(paths.DataRoot));
             services.AddSingleton<IGameVersionMaterializer>(serviceProvider =>
                 new MojangVersionMaterializer(
                     serviceProvider.GetRequiredService<IHttpClientFactory>(),
                     manifestUrl));
             services.AddSingleton<JavaSelectionPolicy>();
             services.AddSingleton<ISmokeTestService, SmokeTestService>();
+            services.AddSingleton<IVersionService, VersionService>();
             services.AddSingleton<LaunchApplicationService>();
             services.AddSingleton<ShellViewModel>();
 
             _services = services.BuildServiceProvider();
+
+            if (commandLine.ListVersions)
+            {
+                ShutdownMode = ShutdownMode.OnExplicitShutdown;
+                var versionService = _services.GetRequiredService<IVersionService>();
+                var catalog = await versionService.GetCatalogAsync();
+                await WriteVersionCatalogAsync(paths.DataRoot, catalog).ConfigureAwait(true);
+                Shutdown(0);
+                return;
+            }
 
             if (commandLine.SmokeTest)
             {
@@ -136,6 +150,23 @@ public partial class App : System.Windows.Application
                     ProgressCount = result.Progress.Count,
                     LastProgress = result.Progress.LastOrDefault()
                 },
+                new JsonSerializerOptions { WriteIndented = true });
+        }
+
+        File.Move(temporaryPath, outputPath, true);
+    }
+
+    private static async Task WriteVersionCatalogAsync(string dataRoot, GameVersionCatalog catalog)
+    {
+        Directory.CreateDirectory(dataRoot);
+        var outputPath = Path.Combine(dataRoot, "version-catalog.json");
+        var temporaryPath = $"{outputPath}.{Guid.NewGuid():N}.tmp";
+
+        await using (var output = File.Create(temporaryPath))
+        {
+            await JsonSerializer.SerializeAsync(
+                output,
+                catalog,
                 new JsonSerializerOptions { WriteIndented = true });
         }
 

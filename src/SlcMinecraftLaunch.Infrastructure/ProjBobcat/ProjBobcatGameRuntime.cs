@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Net;
 using System.Runtime.InteropServices;
 using ProjBobcat.Class.Model;
+using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model.YggdrasilAuth;
 using ProjBobcat.DefaultComponent;
 using ProjBobcat.DefaultComponent.Authenticator;
@@ -108,6 +109,32 @@ public sealed class ProjBobcatGameRuntime : IGameRuntime
             .ToArray();
 
         return Task.FromResult(new GameRuntimeSnapshot(RootPath, versions, true));
+    }
+
+    public Task<IReadOnlyList<GameVersionDescriptor>> GetVersionsAsync(
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        // PROJBOBCAT: version discovery always starts from the locator's
+        // GetAllGames result; no version directory JSON is read here.
+        var versions = _versionLocator.GetAllGames()
+            .Select(version => version switch
+            {
+                VersionInfo concrete => CreateVersionDescriptor(concrete),
+                _ => new GameVersionDescriptor(
+                    version.DirName,
+                    string.IsNullOrWhiteSpace(version.Name) ? version.DirName : version.Name,
+                    version.DirName,
+                    LoaderKind.Other,
+                    null,
+                    null,
+                    true)
+            })
+            .OrderBy(version => version.Id, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        return Task.FromResult<IReadOnlyList<GameVersionDescriptor>>(versions);
     }
 
     public async Task<SmokeLaunchOutcome> LaunchSmokeAsync(
@@ -397,6 +424,79 @@ public sealed class ProjBobcatGameRuntime : IGameRuntime
 
         process.Kill(entireProcessTree: true);
         await process.WaitForExitAsync().ConfigureAwait(false);
+    }
+
+    private static GameVersionDescriptor CreateVersionDescriptor(VersionInfo version)
+    {
+        var rawVersion = version.RawVersion;
+        // PROJBOBCAT: GameVersionHelper classifies the expanded raw version
+        // metadata so loader detection follows the core's resolver logic.
+        var loaderKind = rawVersion is null
+            ? LoaderKind.Vanilla
+            : GameVersionHelper.TryGetGameModLoaderType(rawVersion) switch
+            {
+                ModLoaderType.NeoForge => LoaderKind.NeoForge,
+                ModLoaderType.Forge => LoaderKind.Forge,
+                ModLoaderType.Fabric => LoaderKind.Fabric,
+                ModLoaderType.Quilt => LoaderKind.Quilt,
+                ModLoaderType.Optifine => LoaderKind.OptiFine,
+                _ => DetectFallbackLoader(version.Id)
+            };
+
+        var loaderVersion = loaderKind switch
+        {
+            LoaderKind.Forge when rawVersion is not null
+                => GameVersionHelper.TryGetForgeVersion(rawVersion),
+            LoaderKind.NeoForge when rawVersion is not null
+                => GameVersionHelper.TryGetNeoForgeVersion(rawVersion),
+            LoaderKind.Fabric when rawVersion is not null
+                => GameVersionHelper.TryGetFabricVersion(rawVersion),
+            _ => null
+        };
+
+        return new GameVersionDescriptor(
+            version.Id,
+            string.IsNullOrWhiteSpace(version.Name) ? version.Id : version.Name,
+            version.GameBaseVersion,
+            loaderKind,
+            loaderVersion,
+            version.JavaVersion?.MajorVersion,
+            false);
+    }
+
+    private static LoaderKind DetectFallbackLoader(string versionId)
+    {
+        if (versionId.Contains("neoforge", StringComparison.OrdinalIgnoreCase))
+        {
+            return LoaderKind.NeoForge;
+        }
+
+        if (versionId.Contains("forge", StringComparison.OrdinalIgnoreCase))
+        {
+            return LoaderKind.Forge;
+        }
+
+        if (versionId.Contains("fabric", StringComparison.OrdinalIgnoreCase))
+        {
+            return LoaderKind.Fabric;
+        }
+
+        if (versionId.Contains("quilt", StringComparison.OrdinalIgnoreCase))
+        {
+            return LoaderKind.Quilt;
+        }
+
+        if (versionId.Contains("optifine", StringComparison.OrdinalIgnoreCase))
+        {
+            return LoaderKind.OptiFine;
+        }
+
+        if (versionId.Contains("liteloader", StringComparison.OrdinalIgnoreCase))
+        {
+            return LoaderKind.LiteLoader;
+        }
+
+        return LoaderKind.Vanilla;
     }
 
     private static DefaultLauncherAccountParser CreateAccountParser(string rootPath, Guid clientToken)

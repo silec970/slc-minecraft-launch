@@ -2,6 +2,7 @@ namespace SlcMinecraftLaunch.Application;
 
 public sealed record CommandLineOptions(
     bool SmokeTest,
+    bool ListVersions,
     string? GameRoot,
     string? Version,
     string? JavaPath)
@@ -9,6 +10,7 @@ public sealed record CommandLineOptions(
     public static CommandLineOptions Parse(IReadOnlyList<string> args)
     {
         var smokeTest = false;
+        var listVersions = false;
         string? gameRoot = null;
         string? version = null;
         string? javaPath = null;
@@ -20,6 +22,9 @@ public sealed record CommandLineOptions(
             {
                 case "--smoke-test":
                     smokeTest = true;
+                    break;
+                case "--list-versions":
+                    listVersions = true;
                     break;
                 case "--game-root" when index + 1 < args.Count:
                     gameRoot = args[++index];
@@ -33,7 +38,7 @@ public sealed record CommandLineOptions(
             }
         }
 
-        return new CommandLineOptions(smokeTest, gameRoot, version, javaPath);
+        return new CommandLineOptions(smokeTest, listVersions, gameRoot, version, javaPath);
     }
 }
 

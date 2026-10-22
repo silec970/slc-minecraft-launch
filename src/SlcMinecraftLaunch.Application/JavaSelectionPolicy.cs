@@ -11,9 +11,15 @@ public sealed class JavaSelectionPolicy
         LoaderKind loaderKind,
         string? explicitJavaPath = null)
     {
+        var selectableCandidates = candidates
+            .Where(candidate => !candidate.IsManaged ||
+                                candidate.IntegrityStatus is JavaIntegrityStatus.Recorded
+                                    or JavaIntegrityStatus.Verified)
+            .ToArray();
+
         if (!string.IsNullOrWhiteSpace(explicitJavaPath))
         {
-            var explicitCandidate = candidates.FirstOrDefault(
+            var explicitCandidate = selectableCandidates.FirstOrDefault(
                 candidate => string.Equals(
                     Path.GetFullPath(candidate.ExecutablePath),
                     Path.GetFullPath(explicitJavaPath),
@@ -30,7 +36,7 @@ public sealed class JavaSelectionPolicy
         }
 
         var requiredMajor = GetRequiredJavaMajor(minecraftVersion);
-        var exact = candidates
+        var exact = selectableCandidates
             .Where(candidate => candidate.MajorVersion == requiredMajor)
             .OrderBy(candidate => candidate.ExecutablePath, StringComparer.OrdinalIgnoreCase)
             .FirstOrDefault();
@@ -40,7 +46,7 @@ public sealed class JavaSelectionPolicy
             return new JavaSelectionResult(exact, Array.Empty<JavaSelectionWarning>());
         }
 
-        var newer = candidates
+        var newer = selectableCandidates
             .Where(candidate => candidate.MajorVersion > requiredMajor)
             .OrderBy(candidate => candidate.MajorVersion)
             .ThenBy(candidate => candidate.ExecutablePath, StringComparer.OrdinalIgnoreCase)
@@ -97,6 +103,19 @@ public sealed class JavaSelectionPolicy
         }
 
         return 21;
+    }
+
+    public static string GetCompatibilityKey(int majorVersion)
+    {
+        return majorVersion switch
+        {
+            8 => "Java.Compatibility.Java8",
+            16 => "Java.Compatibility.Java16",
+            17 => "Java.Compatibility.Java17",
+            21 => "Java.Compatibility.Java21",
+            >= 25 => "Java.Compatibility.Java25Plus",
+            _ => "Java.Compatibility.Other"
+        };
     }
 
     private static IReadOnlyList<JavaSelectionWarning> GetWarnings(

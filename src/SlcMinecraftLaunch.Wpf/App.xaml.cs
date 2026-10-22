@@ -85,7 +85,6 @@ public partial class App : System.Windows.Application
             services.AddSingleton(loaderSourceOptions);
             services.AddSingleton(downloadSourceOptions);
             services.AddSingleton(modApiOptions);
-            services.AddSingleton<IJavaDiscovery, ProjBobcatJavaDiscovery>();
             services.AddSingleton<ProjBobcatRuntimeProvider>();
             services.AddSingleton<IGameRuntimeProvider>(
                 serviceProvider => serviceProvider.GetRequiredService<ProjBobcatRuntimeProvider>());
@@ -95,6 +94,15 @@ public partial class App : System.Windows.Application
                 _ => new JsonUiSettingsStore(paths.DataRoot));
             services.AddSingleton<IPlayerProfileStore>(
                 _ => new JsonPlayerProfileStore(paths.DataRoot));
+            services.AddSingleton<IJavaSettingsStore>(
+                _ => new JsonJavaSettingsStore(paths.DataRoot));
+            services.AddSingleton<JavaRuntimeIntegrityVerifier>();
+            services.AddSingleton<ManagedJavaRuntimeStore>();
+            services.AddSingleton<IJavaRuntimeStore>(serviceProvider =>
+                serviceProvider.GetRequiredService<ManagedJavaRuntimeStore>());
+            services.AddSingleton<ProjBobcatJavaDiscovery>();
+            services.AddSingleton<IJavaDiscovery>(serviceProvider =>
+                serviceProvider.GetRequiredService<ProjBobcatJavaDiscovery>());
             services.AddSingleton<IGameVersionMaterializer>(serviceProvider =>
                 new MojangVersionMaterializer(
                     serviceProvider.GetRequiredService<IHttpClientFactory>(),
@@ -110,7 +118,11 @@ public partial class App : System.Windows.Application
                     javaSourceOptions.MojangRuntimeManifestUrl,
                     javaSourceOptions.AdoptiumAssetsUrlTemplate));
             services.AddSingleton<JavaSelectionPolicy>();
-            services.AddSingleton<IJavaRuntimeService, JavaRuntimeService>();
+            services.AddSingleton<JavaRuntimeService>();
+            services.AddSingleton<IJavaRuntimeService>(serviceProvider =>
+                serviceProvider.GetRequiredService<JavaRuntimeService>());
+            services.AddSingleton<IJavaRuntimeManagementService>(serviceProvider =>
+                serviceProvider.GetRequiredService<JavaRuntimeService>());
             services.AddSingleton<ILoaderCatalogService, ProjBobcatLoaderCatalogService>();
             services.AddSingleton<RemoteArtifactHashVerifier>();
             services.AddSingleton<ILoaderInstallBackend>(serviceProvider =>

@@ -5,9 +5,11 @@ namespace SlcMinecraftLaunch.Application;
 
 public sealed class JavaRuntimeService(
     IJavaDiscovery javaDiscovery,
+    IJavaRuntimeStore javaRuntimeStore,
     IJavaRuntimeProvisioner javaRuntimeProvisioner,
     IGameRuntimeProvider runtimeProvider,
-    JavaSelectionPolicy javaSelectionPolicy) : IJavaRuntimeService
+    JavaSelectionPolicy javaSelectionPolicy,
+    IJavaSettingsStore javaSettingsStore) : IJavaRuntimeManagementService
 {
     public async Task<JavaRuntimeProvisionOutcome> ProvisionMajorAsync(
         int majorVersion,
@@ -56,10 +58,16 @@ public sealed class JavaRuntimeService(
             0.1));
 
         var candidates = await javaDiscovery.DiscoverAsync(cancellationToken).ConfigureAwait(false);
-        if (!string.IsNullOrWhiteSpace(explicitJavaPath))
+        var manualJavaPath = await javaSettingsStore
+            .LoadAsync(cancellationToken)
+            .ConfigureAwait(false);
+        var effectiveJavaPath = !string.IsNullOrWhiteSpace(explicitJavaPath)
+            ? explicitJavaPath
+            : manualJavaPath.ManualExecutablePath;
+        if (!string.IsNullOrWhiteSpace(effectiveJavaPath))
         {
             var explicitCandidate = await javaDiscovery
-                .InspectAsync(explicitJavaPath, cancellationToken)
+                .InspectAsync(effectiveJavaPath, cancellationToken)
                 .ConfigureAwait(false);
 
             if (explicitCandidate is null)
@@ -68,8 +76,10 @@ public sealed class JavaRuntimeService(
                     null,
                     Array.Empty<JavaSelectionWarning>(),
                     false,
-                    "Java.ExplicitUnavailable",
-                    explicitJavaPath);
+                    string.IsNullOrWhiteSpace(explicitJavaPath)
+                        ? "Java.ManualPathUnavailable"
+                        : "Java.ExplicitUnavailable",
+                    effectiveJavaPath);
             }
 
             candidates = candidates
@@ -82,9 +92,9 @@ public sealed class JavaRuntimeService(
             candidates,
             version.BaseVersion,
             loaderKind,
-            explicitJavaPath);
+            effectiveJavaPath);
 
-        if (selected.Selected is not null || !string.IsNullOrWhiteSpace(explicitJavaPath))
+        if (selected.Selected is not null || !string.IsNullOrWhiteSpace(effectiveJavaPath))
         {
             progress?.Report(new OperationProgress(
                 SmokeTestStage.SelectingJava,
@@ -148,5 +158,145 @@ public sealed class JavaRuntimeService(
             provisionedSelection.Warnings,
             true,
             provisionedSelection.Selected is null ? "Java.NoCompatibleRuntime" : "Java.Ready");
+    }
+
+    public async Task<IReadOnlyList<JavaRuntimeDescriptor>> GetRuntimesAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var candidates = await javaDiscovery.DiscoverAsync(cancellationToken).ConfigureAwait(false);
+        var manualPath = await javaSettingsStore
+            .LoadAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        return candidates
+            .Select(candidate => new JavaRuntimeDescriptor(
+                candidate,
+                JavaSelectionPolicy.GetCompatibilityKey(candidate.MajorVersion),
+                GetSourceKey(candidate.Source),
+                GetIntegrityKey(candidate.IntegrityStatus),
+                !string.IsNullOrWhiteSpace(manualPath.ManualExecutablePath) &&
+                PathsEqual(candidate.ExecutablePath, manualPath.ManualExecutablePath)))
+            .OrderByDescending(runtime => runtime.IsManualOverride)
+            .ThenBy(runtime => runtime.MajorVersion)
+            .ThenBy(runtime => runtime.ExecutablePath, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+    }
+
+    public async Task<JavaRuntimeManagementOutcome> ReverifyAsync(
+        string executablePath,
+        CancellationToken cancellationToken = default)
+    {
+        var candidate = await javaRuntimeStore
+            .ReverifyAsync(executablePath, cancellationToken)
+            .ConfigureAwait(false);
+        if (candidate is null)
+        {
+            return new JavaRuntimeManagementOutcome(
+                false,
+                "Java.ReverifyNotAllowed",
+                executablePath);
+        }
+
+        return candidate.IntegrityStatus == JavaIntegrityStatus.Verified
+            ? new JavaRuntimeManagementOutcome(true, "Java.RuntimeVerified")
+            : new JavaRuntimeManagementOutcome(
+                false,
+                "Java.RuntimeInvalid",
+                candidate.IntegrityDetail);
+    }
+
+    public async Task<JavaRuntimeManagementOutcome> DeleteManagedAsync(
+        string executablePath,
+        CancellationToken cancellationToken = default)
+    {
+        var deleted = await javaRuntimeStore
+            .DeleteManagedAsync(executablePath, cancellationToken)
+            .ConfigureAwait(false);
+        return deleted
+            ? new JavaRuntimeManagementOutcome(true, "Java.ManagedRuntimeDeleted")
+            : new JavaRuntimeManagementOutcome(
+                false,
+                "Java.DeleteNotAllowed",
+                executablePath);
+    }
+
+    public async Task<string?> GetManualExecutablePathAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var settings = await javaSettingsStore
+            .LoadAsync(cancellationToken)
+            .ConfigureAwait(false);
+        return string.IsNullOrWhiteSpace(settings.ManualExecutablePath)
+            ? null
+            : settings.ManualExecutablePath;
+    }
+
+    public async Task<JavaRuntimeManagementOutcome> SaveManualExecutablePathAsync(
+        string? executablePath,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(executablePath))
+        {
+            await javaSettingsStore
+                .SaveAsync(new JavaSettings(), cancellationToken)
+                .ConfigureAwait(false);
+            return new JavaRuntimeManagementOutcome(true, "Java.ManualPathCleared");
+        }
+
+        var candidate = await javaDiscovery
+            .InspectAsync(executablePath, cancellationToken)
+            .ConfigureAwait(false);
+        if (candidate is null)
+        {
+            return new JavaRuntimeManagementOutcome(
+                false,
+                "Java.ManualPathInvalid",
+                executablePath);
+        }
+
+        var fullPath = Path.GetFullPath(candidate.ExecutablePath);
+        await javaSettingsStore
+            .SaveAsync(new JavaSettings(fullPath), cancellationToken)
+            .ConfigureAwait(false);
+        return new JavaRuntimeManagementOutcome(true, "Java.ManualPathSaved");
+    }
+
+    private static string GetSourceKey(JavaRuntimeSource source)
+    {
+        return source switch
+        {
+            JavaRuntimeSource.Mojang => "Java.Source.Mojang",
+            JavaRuntimeSource.Adoptium => "Java.Source.Adoptium",
+            _ => "Java.Source.System"
+        };
+    }
+
+    private static string GetIntegrityKey(JavaIntegrityStatus status)
+    {
+        return status switch
+        {
+            JavaIntegrityStatus.Recorded => "Java.Integrity.Recorded",
+            JavaIntegrityStatus.Verified => "Java.Integrity.Verified",
+            JavaIntegrityStatus.Invalid => "Java.Integrity.Invalid",
+            JavaIntegrityStatus.Unknown => "Java.Integrity.Unknown",
+            _ => "Java.Integrity.NotManaged"
+        };
+    }
+
+    private static bool PathsEqual(string left, string right)
+    {
+        try
+        {
+            return string.Equals(
+                Path.GetFullPath(left),
+                Path.GetFullPath(right),
+                StringComparison.OrdinalIgnoreCase);
+        }
+        catch (Exception exception) when (exception is ArgumentException
+                                               or NotSupportedException
+                                               or PathTooLongException)
+        {
+            return false;
+        }
     }
 }

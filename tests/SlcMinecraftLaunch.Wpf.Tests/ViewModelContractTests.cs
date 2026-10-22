@@ -14,7 +14,7 @@ public sealed class ViewModelContractTests
             new HomeViewModel(null!, null!, null!, null!),
             new VersionsViewModel(null!),
             new DownloadLoaderViewModel(null!, null!, null!, null!, null!, null!),
-            new JavaViewModel(null!, null!),
+            new JavaViewModel(null!),
             new ModsViewModel(null!, null!),
             new CrashViewModel(null!, null!),
             new SettingsViewModel(
@@ -38,7 +38,7 @@ public sealed class ViewModelContractTests
         var home = new HomeViewModel(null!, null!, null!, null!);
         var versions = new VersionsViewModel(null!);
         var download = new DownloadLoaderViewModel(null!, null!, null!, null!, null!, null!);
-        var java = new JavaViewModel(null!, null!);
+        var java = new JavaViewModel(null!);
         var mods = new ModsViewModel(null!, null!);
         var crash = new CrashViewModel(null!, null!);
         var settings = new SettingsViewModel(

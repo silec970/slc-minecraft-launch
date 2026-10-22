@@ -16,9 +16,11 @@ public sealed class JavaRuntimeServiceTests
         var provisioner = new FakeJavaProvisioner();
         var service = new JavaRuntimeService(
             discovery,
+            new FakeJavaRuntimeStore(),
             provisioner,
             new FakeRuntimeProvider(runtime),
-            new JavaSelectionPolicy());
+            new JavaSelectionPolicy(),
+            new FakeJavaSettingsStore());
 
         var result = await service.EnsureAsync(
             runtime.Versions[0].Id,
@@ -40,9 +42,11 @@ public sealed class JavaRuntimeServiceTests
         var provisioner = new FakeJavaProvisioner();
         var service = new JavaRuntimeService(
             discovery,
+            new FakeJavaRuntimeStore(),
             provisioner,
             new FakeRuntimeProvider(runtime),
-            new JavaSelectionPolicy());
+            new JavaSelectionPolicy(),
+            new FakeJavaSettingsStore());
 
         var result = await service.EnsureAsync(
             runtime.Versions[0].Id,
@@ -51,6 +55,83 @@ public sealed class JavaRuntimeServiceTests
         Assert.Equal(21, result.Selected?.MajorVersion);
         Assert.False(result.WasProvisioned);
         Assert.Null(provisioner.RequestedMajor);
+    }
+
+    [Fact]
+    public async Task Ensure_UsesPersistedManualJavaPath()
+    {
+        var runtime = CreateRuntime("1.21.4-fabric-0.16.9", "1.21.4", LoaderKind.Fabric);
+        var manualPath = @"C:\Manual\Java\21\bin\java.exe";
+        var discovery = new FakeJavaDiscovery(
+            [new JavaCandidate(@"C:\Java\25\bin\java.exe", 25)],
+            [new JavaCandidate(manualPath, 21)]);
+        var settings = new FakeJavaSettingsStore
+        {
+            Current = new JavaSettings(manualPath)
+        };
+        var service = new JavaRuntimeService(
+            discovery,
+            new FakeJavaRuntimeStore(),
+            new FakeJavaProvisioner(),
+            new FakeRuntimeProvider(runtime),
+            new JavaSelectionPolicy(),
+            settings);
+
+        var result = await service.EnsureAsync(
+            runtime.Versions[0].Id,
+            LoaderKind.Fabric);
+
+        Assert.Equal(manualPath, result.Selected?.ExecutablePath);
+        Assert.Contains(JavaSelectionWarning.UserOverride, result.Warnings);
+    }
+
+    [Fact]
+    public async Task SaveManualExecutablePath_RejectsUnreadablePath()
+    {
+        var settings = new FakeJavaSettingsStore();
+        var service = new JavaRuntimeService(
+            new FakeJavaDiscovery([], []),
+            new FakeJavaRuntimeStore(),
+            new FakeJavaProvisioner(),
+            new FakeRuntimeProvider(CreateRuntime("1.21.4", "1.21.4", LoaderKind.Vanilla)),
+            new JavaSelectionPolicy(),
+            settings);
+
+        var result = await service.SaveManualExecutablePathAsync(@"C:\missing\java.exe");
+
+        Assert.False(result.Succeeded);
+        Assert.Equal("Java.ManualPathInvalid", result.MessageKey);
+        Assert.Null(settings.Current.ManualExecutablePath);
+    }
+
+    [Fact]
+    public async Task GetRuntimes_MarksManualAndCompatibilityRanges()
+    {
+        var managedPath = @"C:\Minecraft\runtimes\mojang\java-runtime-delta\21\bin\java.exe";
+        var discovery = new FakeJavaDiscovery(
+            [
+                new JavaCandidate(
+                    managedPath,
+                    21,
+                    JavaRuntimeSource.Mojang,
+                    JavaIntegrityStatus.Recorded,
+                    "mojang/java-runtime-delta/21")
+            ],
+            []);
+        var service = new JavaRuntimeService(
+            discovery,
+            new FakeJavaRuntimeStore(),
+            new FakeJavaProvisioner(),
+            new FakeRuntimeProvider(CreateRuntime("1.21.4", "1.21.4", LoaderKind.Vanilla)),
+            new JavaSelectionPolicy(),
+            new FakeJavaSettingsStore { Current = new JavaSettings(managedPath) });
+
+        var runtime = Assert.Single(await service.GetRuntimesAsync());
+
+        Assert.True(runtime.IsManualOverride);
+        Assert.Equal("Java.Compatibility.Java21", runtime.CompatibilityKey);
+        Assert.Equal("Java.Source.Mojang", runtime.SourceKey);
+        Assert.Equal("Java.Integrity.Recorded", runtime.IntegrityKey);
     }
 
     private static FakeRuntime CreateRuntime(
@@ -152,6 +233,39 @@ public sealed class JavaRuntimeServiceTests
                 $@"C:\Java\{requiredMajorVersion}\java.exe",
                 "Java.MojangRuntimeReady"));
         }
+    }
+
+    private sealed class FakeJavaSettingsStore : IJavaSettingsStore
+    {
+        public JavaSettings Current { get; set; } = new();
+
+        public Task<JavaSettings> LoadAsync(CancellationToken cancellationToken = default)
+            => Task.FromResult(Current);
+
+        public Task SaveAsync(
+            JavaSettings settings,
+            CancellationToken cancellationToken = default)
+        {
+            Current = settings;
+            return Task.CompletedTask;
+        }
+    }
+
+    private sealed class FakeJavaRuntimeStore : IJavaRuntimeStore
+    {
+        public Task<IReadOnlyList<JavaCandidate>> DiscoverAsync(
+            CancellationToken cancellationToken = default)
+            => Task.FromResult<IReadOnlyList<JavaCandidate>>([]);
+
+        public Task<JavaCandidate?> ReverifyAsync(
+            string executablePath,
+            CancellationToken cancellationToken = default)
+            => Task.FromResult<JavaCandidate?>(null);
+
+        public Task<bool> DeleteManagedAsync(
+            string executablePath,
+            CancellationToken cancellationToken = default)
+            => Task.FromResult(false);
     }
 }
 

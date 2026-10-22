@@ -56,10 +56,16 @@
 | 26.1+ | 25 |
 
 - 先调用 `SystemInfoHelper.FindJava()`，精确主版本优先。
+- `FindJava()` 结果之后必须合并扫描 `RootPath/runtimes`，同一
+  `java.exe` 以受管运行时分类覆盖系统探测结果。
 - 1.21.x 及以下的 Vanilla/Fabric 可在只有 Java 25 时回退，并返回非阻断警告。
 - 旧版 Forge/NeoForge 不允许用 Java 25 回退。
 - 26.1+ 不允许使用低于 25 的 Java。
 - 用户显式指定 Java 时仍执行兼容性检查，确认后可继续。
+- 手动 Java 路径在保存前必须实际执行 `java.exe -version` 验证，并持久化到
+  `launcher-data/java-settings.json`；后续安装和启动优先使用该路径。
+- Java 页面必须按主版本展示 Minecraft 兼容区间；完整性失败的受管运行时不得
+  参与自动选择。
 
 ## Java 自动下载来源
 
@@ -70,6 +76,12 @@
 - 所有来源失败时报告完整错误并调用手动安装。
 - Mojang 运行时按其清单 SHA1 校验，并为缓存生成 SHA256 完整性清单；
   Adoptium 下载必须匹配公开 SHA256。
+- Mojang 完整性元数据必须分别标记发布方官方 SHA1 与本地文件 SHA256；
+  不得把本地 SHA256 宣称为 Mojang 远端 SHA256。Adoptium 记录发布方归档
+  SHA256 与本地文件 SHA256。
+- 重新校验只能读取受管运行时的完整性清单并异步计算本地哈希。
+- 安全删除前必须确认可执行文件位于 `RootPath/runtimes` 内、运行时目录带有
+  `.slc-ready` 与 `.integrity.json`；禁止删除系统 Java 或 runtimes 之外的文件。
 
 ## 下载源与进度
 

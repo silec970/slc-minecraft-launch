@@ -13,7 +13,13 @@ public sealed class ViewModelContractTests
         [
             new HomeViewModel(null!, null!, null!, null!),
             new VersionsViewModel(null!),
-            new DownloadLoaderViewModel(null!, null!, null!, null!, null!, null!),
+            new DownloadLoaderViewModel(
+                null!,
+                null!,
+                null!,
+                null!,
+                null!,
+                new FakeDownloadTaskService()),
             new JavaViewModel(null!),
             new ModsViewModel(null!, null!),
             new CrashViewModel(null!, null!),
@@ -37,7 +43,13 @@ public sealed class ViewModelContractTests
     {
         var home = new HomeViewModel(null!, null!, null!, null!);
         var versions = new VersionsViewModel(null!);
-        var download = new DownloadLoaderViewModel(null!, null!, null!, null!, null!, null!);
+        var download = new DownloadLoaderViewModel(
+            null!,
+            null!,
+            null!,
+            null!,
+            null!,
+            new FakeDownloadTaskService());
         var java = new JavaViewModel(null!);
         var mods = new ModsViewModel(null!, null!);
         var crash = new CrashViewModel(null!, null!);
@@ -203,5 +215,48 @@ public sealed class ViewModelContractTests
                 false,
                 "Settings.CurseForgeKeyCleared"));
         }
+    }
+
+    private sealed class FakeDownloadTaskService : IDownloadTaskService
+    {
+        public event EventHandler<DownloadTaskRecord>? TaskChanged
+        {
+            add { }
+            remove { }
+        }
+
+        public string? ActiveTaskId => null;
+
+        public Task<IReadOnlyList<DownloadTaskRecord>> GetTasksAsync(
+            CancellationToken cancellationToken = default)
+            => Task.FromResult<IReadOnlyList<DownloadTaskRecord>>([]);
+
+        public Task<DownloadTaskRecord> StartAsync(
+            ResourceCompletionRequest request,
+            IProgress<OperationProgress>? progress = null,
+            CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
+
+        public Task<DownloadTaskRecord?> PauseAsync(
+            string taskId,
+            CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
+
+        public Task<DownloadTaskRecord> ResumeAsync(
+            string taskId,
+            IProgress<OperationProgress>? progress = null,
+            CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
+
+        public Task<DownloadTaskRecord> RetryFailedAsync(
+            string taskId,
+            IProgress<OperationProgress>? progress = null,
+            CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
+
+        public Task<bool> DeleteAsync(
+            string taskId,
+            CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
     }
 }

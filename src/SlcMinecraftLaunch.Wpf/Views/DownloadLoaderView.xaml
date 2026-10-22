@@ -71,13 +71,93 @@
                     Command="{Binding InstallLoaderCommand}" />
             <Button Content="{DynamicResource Download.CompleteResources}"
                     Style="{StaticResource SecondaryButtonStyle}"
-                    IsEnabled="{Binding CanCompleteResources}"
+                    IsEnabled="{Binding CanCompleteDownload}"
                     Command="{Binding CompleteResourcesCommand}" />
           </WrapPanel>
           <TextBlock Margin="0,14,0,0"
                      Text="{Binding InstalledVersionId}"
                      FontWeight="SemiBold"
                      Foreground="{StaticResource Brush.Accent}" />
+        </StackPanel>
+      </Border>
+
+      <Border Style="{StaticResource CardStyle}">
+        <StackPanel>
+          <TextBlock Text="{DynamicResource Download.Tasks}"
+                     FontSize="18"
+                     FontWeight="SemiBold" />
+          <ListBox Margin="0,10,0,0"
+                   MaxHeight="230"
+                   ItemsSource="{Binding DownloadTasks}"
+                   SelectedItem="{Binding SelectedDownloadTask}">
+            <ListBox.ItemTemplate>
+              <DataTemplate>
+                <Grid MinWidth="620">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="220" />
+                    <ColumnDefinition Width="150" />
+                    <ColumnDefinition Width="*" />
+                  </Grid.ColumnDefinitions>
+                  <TextBlock Text="{Binding VersionId}" FontWeight="SemiBold" />
+                  <TextBlock Grid.Column="1"
+                             Text="{Binding MessageKey, Converter={StaticResource Key}}"
+                             Foreground="{StaticResource Brush.Muted}" />
+                  <ProgressBar Grid.Column="2"
+                               Minimum="0"
+                               Maximum="1"
+                               Value="{Binding Progress}" />
+                </Grid>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+          <WrapPanel Margin="0,10,0,0">
+            <Button Content="{DynamicResource Download.PauseTask}"
+                    Style="{StaticResource SecondaryButtonStyle}"
+                    IsEnabled="{Binding CanPauseDownload}"
+                    Command="{Binding PauseDownloadCommand}" />
+            <Button Content="{DynamicResource Download.ResumeTask}"
+                    Style="{StaticResource SecondaryButtonStyle}"
+                    IsEnabled="{Binding CanRetryDownload}"
+                    Command="{Binding ResumeDownloadCommand}"
+                    CommandParameter="{Binding SelectedDownloadTask.TaskId}" />
+            <Button Content="{DynamicResource Download.RetryFailed}"
+                    Style="{StaticResource SecondaryButtonStyle}"
+                    IsEnabled="{Binding CanRetryDownload}"
+                    Command="{Binding RetryFailedCommand}"
+                    CommandParameter="{Binding SelectedDownloadTask.TaskId}" />
+            <Button Content="{DynamicResource Download.DeleteTask}"
+                    Style="{StaticResource SecondaryButtonStyle}"
+                    IsEnabled="{Binding CanDeleteDownload}"
+                    Command="{Binding DeleteDownloadTaskCommand}"
+                    CommandParameter="{Binding SelectedDownloadTask.TaskId}" />
+          </WrapPanel>
+          <TextBlock Margin="0,12,0,0"
+                     Text="{DynamicResource Download.FailedFiles}"
+                     FontWeight="SemiBold" />
+          <ItemsControl ItemsSource="{Binding SelectedDownloadTask.FailedFiles}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <TextBlock Margin="0,4,0,0"
+                           Text="{Binding TargetPath}"
+                           ToolTip="{Binding ErrorDetail}"
+                           TextTrimming="CharacterEllipsis"
+                           Foreground="{StaticResource Brush.Muted}" />
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <TextBlock Margin="0,12,0,0"
+                     Text="{DynamicResource Download.Sources}"
+                     FontWeight="SemiBold" />
+          <ItemsControl ItemsSource="{Binding SelectedDownloadTask.Sources}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <TextBlock Margin="0,3,0,0"
+                           Text="{Binding}"
+                           TextTrimming="CharacterEllipsis"
+                           Foreground="{StaticResource Brush.Muted}" />
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
         </StackPanel>
       </Border>
 

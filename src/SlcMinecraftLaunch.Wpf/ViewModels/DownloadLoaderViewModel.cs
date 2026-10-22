@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SlcMinecraftLaunch.Domain.Abstractions;
@@ -6,22 +7,41 @@ using SlcMinecraftLaunch.Domain.Models;
 
 namespace SlcMinecraftLaunch.Wpf.ViewModels;
 
-public sealed partial class DownloadLoaderViewModel(
-    ILoaderCatalogService loaderCatalog,
-    ILoaderInstallationService loaderInstallation,
-    IDownloadService downloadService,
-    IJavaRuntimeService javaRuntimeService,
-    IVanillaVersionCatalogService vanillaVersionCatalog,
-    IVanillaInstallationService vanillaInstallation) : PageViewModel
+public sealed partial class DownloadLoaderViewModel : PageViewModel
 {
-    public override string TitleKey => "Download.Title";
-    public override string DescriptionKey => "Download.Description";
-
+    private readonly ILoaderCatalogService _loaderCatalog;
+    private readonly ILoaderInstallationService _loaderInstallation;
+    private readonly IJavaRuntimeService _javaRuntimeService;
+    private readonly IVanillaVersionCatalogService _vanillaVersionCatalog;
+    private readonly IVanillaInstallationService _vanillaInstallation;
+    private readonly IDownloadTaskService _downloadTaskService;
     private IReadOnlyList<MinecraftReleaseDescriptor> _allCatalogVersions =
         Array.Empty<MinecraftReleaseDescriptor>();
 
+    public DownloadLoaderViewModel(
+        ILoaderCatalogService loaderCatalog,
+        ILoaderInstallationService loaderInstallation,
+        IJavaRuntimeService javaRuntimeService,
+        IVanillaVersionCatalogService vanillaVersionCatalog,
+        IVanillaInstallationService vanillaInstallation,
+        IDownloadTaskService downloadTaskService)
+    {
+        ArgumentNullException.ThrowIfNull(downloadTaskService);
+        _loaderCatalog = loaderCatalog;
+        _loaderInstallation = loaderInstallation;
+        _javaRuntimeService = javaRuntimeService;
+        _vanillaVersionCatalog = vanillaVersionCatalog;
+        _vanillaInstallation = vanillaInstallation;
+        _downloadTaskService = downloadTaskService;
+        _downloadTaskService.TaskChanged += OnTaskChanged;
+    }
+
+    public override string TitleKey => "Download.Title";
+    public override string DescriptionKey => "Download.Description";
+
     public ObservableCollection<MinecraftReleaseDescriptor> CatalogVersions { get; } = [];
     public ObservableCollection<LoaderVersionOption> LoaderVersions { get; } = [];
+    public ObservableCollection<DownloadTaskRecord> DownloadTasks { get; } = [];
     public IReadOnlyList<LoaderKind> LoaderKinds { get; } =
         [LoaderKind.Fabric, LoaderKind.Forge, LoaderKind.NeoForge, LoaderKind.OptiFine, LoaderKind.LiteLoader];
 
@@ -49,6 +69,18 @@ public sealed partial class DownloadLoaderViewModel(
     [ObservableProperty]
     private bool _canCompleteResources;
 
+    [ObservableProperty]
+    private DownloadTaskRecord? _selectedDownloadTask;
+
+    [ObservableProperty]
+    private string? _activeDownloadTaskId;
+
+    public bool CanPauseDownload => !string.IsNullOrWhiteSpace(ActiveDownloadTaskId);
+    public bool CanRetryDownload => SelectedDownloadTask?.CanRetry == true;
+    public bool CanDeleteDownload => SelectedDownloadTask?.CanDelete == true;
+    public bool CanCompleteDownload =>
+        CanCompleteResources && string.IsNullOrWhiteSpace(ActiveDownloadTaskId);
+
     partial void OnShowSnapshotsChanged(bool value)
     {
         ApplyCatalogFilter();
@@ -59,15 +91,33 @@ public sealed partial class DownloadLoaderViewModel(
         SelectedMinecraftVersion = value?.Id;
     }
 
+    partial void OnSelectedDownloadTaskChanged(DownloadTaskRecord? value)
+    {
+        OnPropertyChanged(nameof(CanRetryDownload));
+        OnPropertyChanged(nameof(CanDeleteDownload));
+    }
+
+    partial void OnActiveDownloadTaskIdChanged(string? value)
+    {
+        OnPropertyChanged(nameof(CanPauseDownload));
+        OnPropertyChanged(nameof(CanCompleteDownload));
+    }
+
+    partial void OnCanCompleteResourcesChanged(bool value)
+    {
+        OnPropertyChanged(nameof(CanCompleteDownload));
+    }
+
     [RelayCommand(IncludeCancelCommand = true)]
     private Task LoadAsync(CancellationToken cancellationToken)
     {
         return RunAsync(async token =>
         {
-            _allCatalogVersions = await vanillaVersionCatalog
+            _allCatalogVersions = await _vanillaVersionCatalog
                 .GetVersionsAsync(token)
                 .ConfigureAwait(true);
             ApplyCatalogFilter();
+            await ReloadTasksAsync(token);
         }, cancellationToken);
     }
 
@@ -81,7 +131,7 @@ public sealed partial class DownloadLoaderViewModel(
                 throw new UiOperationException("Download.SelectVersionRequired");
             }
 
-            var result = await vanillaInstallation.InstallAsync(
+            var result = await _vanillaInstallation.InstallAsync(
                 SelectedCatalogVersion.Id,
                 CreateProgress(),
                 token);
@@ -109,7 +159,7 @@ public sealed partial class DownloadLoaderViewModel(
                 return;
             }
 
-            var versions = await loaderCatalog.GetVersionsAsync(
+            var versions = await _loaderCatalog.GetVersionsAsync(
                 SelectedMinecraftVersion,
                 SelectedLoaderKind,
                 token);
@@ -134,7 +184,7 @@ public sealed partial class DownloadLoaderViewModel(
                 throw new UiOperationException("Download.SelectVersionRequired");
             }
 
-            var result = await loaderInstallation.InstallAsync(
+            var result = await _loaderInstallation.InstallAsync(
                 new LoaderInstallRequest(
                     SelectedMinecraftVersion,
                     SelectedLoaderKind,
@@ -159,7 +209,7 @@ public sealed partial class DownloadLoaderViewModel(
                 throw new UiOperationException("Download.InstallLoaderRequired");
             }
 
-            var java = await javaRuntimeService.EnsureAsync(
+            var java = await _javaRuntimeService.EnsureAsync(
                 InstalledVersionId,
                 SelectedLoaderKind,
                 JavaPath,
@@ -170,18 +220,143 @@ public sealed partial class DownloadLoaderViewModel(
                 throw new InvalidOperationException(java.MessageKey);
             }
 
-            var result = await downloadService.CompleteResourcesAsync(
+            var task = await _downloadTaskService.StartAsync(
                 new ResourceCompletionRequest(InstalledVersionId, java.Selected.ExecutablePath),
                 CreateProgress(),
                 token);
-            StatusKey = result.MessageKey;
-            ErrorDetail = result.ErrorDetail;
+            ApplyTask(task);
+            StatusKey = task.MessageKey;
+            ErrorDetail = task.ErrorDetail;
+        }, cancellationToken);
+    }
+
+    [RelayCommand]
+    private Task PauseDownloadAsync(CancellationToken cancellationToken)
+    {
+        return RunAsync(async token =>
+        {
+            if (string.IsNullOrWhiteSpace(ActiveDownloadTaskId))
+            {
+                throw new UiOperationException("Download.Task.NotRunning");
+            }
+
+            var task = await _downloadTaskService.PauseAsync(
+                ActiveDownloadTaskId,
+                token);
+            if (task is null)
+            {
+                throw new UiOperationException("Download.Task.NotRunning");
+            }
+
+            ApplyTask(task);
+            StatusKey = task.MessageKey;
+        }, cancellationToken);
+    }
+
+    [RelayCommand(IncludeCancelCommand = true)]
+    private Task ResumeDownloadAsync(string? taskId, CancellationToken cancellationToken)
+    {
+        return RunTaskOperationAsync(
+            taskId,
+            _downloadTaskService.ResumeAsync,
+            cancellationToken);
+    }
+
+    [RelayCommand(IncludeCancelCommand = true)]
+    private Task RetryFailedAsync(string? taskId, CancellationToken cancellationToken)
+    {
+        return RunTaskOperationAsync(
+            taskId,
+            _downloadTaskService.RetryFailedAsync,
+            cancellationToken);
+    }
+
+    [RelayCommand(IncludeCancelCommand = true)]
+    private Task DeleteDownloadTaskAsync(string? taskId, CancellationToken cancellationToken)
+    {
+        return RunAsync(async token =>
+        {
+            if (string.IsNullOrWhiteSpace(taskId) ||
+                !await _downloadTaskService.DeleteAsync(taskId, token))
+            {
+                throw new UiOperationException("Download.Task.NotFound");
+            }
+
+            var existing = DownloadTasks.FirstOrDefault(task =>
+                string.Equals(task.TaskId, taskId, StringComparison.OrdinalIgnoreCase));
+            if (existing is not null)
+            {
+                DownloadTasks.Remove(existing);
+            }
+
+            SelectedDownloadTask = DownloadTasks.FirstOrDefault();
+            StatusKey = "Download.Task.Deleted";
         }, cancellationToken);
     }
 
     public override Task RefreshAsync(CancellationToken cancellationToken = default)
     {
         return LoadAsync(cancellationToken);
+    }
+
+    private Task RunTaskOperationAsync(
+        string? taskId,
+        Func<string, IProgress<OperationProgress>?, CancellationToken, Task<DownloadTaskRecord>> operation,
+        CancellationToken cancellationToken)
+    {
+        return RunAsync(async token =>
+        {
+            if (string.IsNullOrWhiteSpace(taskId))
+            {
+                throw new UiOperationException("Download.Task.NotFound");
+            }
+
+            var task = await operation(taskId, CreateProgress(), token);
+            ApplyTask(task);
+            StatusKey = task.MessageKey;
+            ErrorDetail = task.ErrorDetail;
+        }, cancellationToken);
+    }
+
+    private async Task ReloadTasksAsync(CancellationToken cancellationToken)
+    {
+        var tasks = await _downloadTaskService.GetTasksAsync(cancellationToken);
+        DownloadTasks.Clear();
+        foreach (var task in tasks)
+        {
+            DownloadTasks.Add(task);
+        }
+
+        ActiveDownloadTaskId = _downloadTaskService.ActiveTaskId;
+        SelectedDownloadTask = DownloadTasks.FirstOrDefault();
+    }
+
+    private void OnTaskChanged(object? sender, DownloadTaskRecord task)
+    {
+        var dispatcher = System.Windows.Application.Current?.Dispatcher;
+        if (dispatcher is not null && !dispatcher.CheckAccess())
+        {
+            dispatcher.BeginInvoke(() => ApplyTask(task));
+            return;
+        }
+
+        ApplyTask(task);
+    }
+
+    private void ApplyTask(DownloadTaskRecord task)
+    {
+        var existing = DownloadTasks.FirstOrDefault(item =>
+            string.Equals(item.TaskId, task.TaskId, StringComparison.OrdinalIgnoreCase));
+        if (existing is not null)
+        {
+            DownloadTasks.Remove(existing);
+        }
+
+        DownloadTasks.Insert(0, task);
+        SelectedDownloadTask = task;
+        ActiveDownloadTaskId = task.Status == DownloadTaskStatus.Running
+            ? task.TaskId
+            : null;
     }
 
     private void ApplyCatalogFilter()
@@ -200,4 +375,3 @@ public sealed partial class DownloadLoaderViewModel(
                                 ?? CatalogVersions.FirstOrDefault();
     }
 }
-

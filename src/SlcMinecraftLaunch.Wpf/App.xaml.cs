@@ -85,6 +85,11 @@ public partial class App : System.Windows.Application
             services.AddSingleton(loaderSourceOptions);
             services.AddSingleton(downloadSourceOptions);
             services.AddSingleton(modApiOptions);
+            services.AddSingleton<JsonSourceHealthStore>(
+                _ => new JsonSourceHealthStore(paths.DataRoot));
+            services.AddSingleton<ISourceHealthService, DownloadSourceHealthService>();
+            services.AddSingleton<IDownloadTaskStore>(
+                _ => new JsonDownloadTaskStore(paths.DataRoot));
             services.AddSingleton<ProjBobcatRuntimeProvider>();
             services.AddSingleton<IGameRuntimeProvider>(
                 serviceProvider => serviceProvider.GetRequiredService<ProjBobcatRuntimeProvider>());
@@ -133,6 +138,7 @@ public partial class App : System.Windows.Application
                     loaderSourceOptions,
                     serviceProvider.GetRequiredService<RemoteArtifactHashVerifier>()));
             services.AddSingleton<ILoaderInstallationService, LoaderInstallationService>();
+            services.AddSingleton<IDownloadTaskService, DownloadTaskService>();
             services.AddSingleton<IDownloadService, DownloadService>();
             services.AddSingleton<IVanillaInstallationService, VanillaInstallationService>();
             services.AddSingleton<ISmokeTestService, SmokeTestService>();

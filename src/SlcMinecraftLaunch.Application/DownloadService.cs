@@ -3,15 +3,30 @@ using SlcMinecraftLaunch.Domain.Models;
 
 namespace SlcMinecraftLaunch.Application;
 
-public sealed class DownloadService(IGameRuntimeProvider runtimeProvider) : IDownloadService
+public sealed class DownloadService(IDownloadTaskService downloadTaskService) : IDownloadService
 {
     public async Task<ResourceCompletionOutcome> CompleteResourcesAsync(
         ResourceCompletionRequest request,
         IProgress<OperationProgress>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        var runtime = await runtimeProvider.GetAsync(cancellationToken).ConfigureAwait(false);
-        return await runtime.CompleteResourcesAsync(request, progress, cancellationToken)
-            .ConfigureAwait(false);
+        DownloadTaskRecord task;
+        try
+        {
+            task = await downloadTaskService
+                .StartAsync(request, progress, cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (InvalidOperationException exception) when (
+            exception.Message == "Download.Task.AlreadyRunning")
+        {
+            return new ResourceCompletionOutcome(false, "Download.Task.AlreadyRunning");
+        }
+
+        return new ResourceCompletionOutcome(
+            task.Status == DownloadTaskStatus.Completed,
+            task.MessageKey,
+            task.ErrorDetail,
+            task.FailedFiles.Count);
     }
 }

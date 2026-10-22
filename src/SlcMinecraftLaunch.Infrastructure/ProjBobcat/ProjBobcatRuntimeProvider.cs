@@ -8,10 +8,15 @@ namespace SlcMinecraftLaunch.Infrastructure.ProjBobcat;
 public sealed class ProjBobcatRuntimeProvider(
     PortableLauncherPaths paths,
     IHttpClientFactory httpClientFactory,
-    DownloadSourceOptions downloadSourceOptions) : IGameRuntimeProvider, IAsyncDisposable
+    DownloadSourceOptions downloadSourceOptions,
+    ISourceHealthService sourceHealthService) : IGameRuntimeProvider, IAsyncDisposable
 {
     private readonly Lazy<Task<ProjBobcatGameRuntime>> _runtime =
-        new(() => ProjBobcatGameRuntime.CreateAsync(paths, httpClientFactory, downloadSourceOptions));
+        new(() => ProjBobcatGameRuntime.CreateAsync(
+            paths,
+            httpClientFactory,
+            downloadSourceOptions,
+            sourceHealthService));
 
     public async Task<IGameRuntime> GetAsync(CancellationToken cancellationToken = default)
     {

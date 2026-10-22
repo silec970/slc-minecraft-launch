@@ -89,6 +89,15 @@
 - 游戏资源集合依次传入 ProjBobcat 的 Asset、Library、Version 和 Logging resolver。
 - 多线程、续传、源回退和 SHA1 校验由 `DefaultResourceCompleter` 执行。
 - Progress 事件必须桥接为 `IProgress<OperationProgress>`，并传递 CancellationToken。
+- 下载任务记录持久化到 `launcher-data/download-tasks.json`，包含版本、Java、
+  游戏目录、目标文件、失败项、实际来源、尝试次数和状态。
+- 暂停只能通过取消当前 `DefaultResourceCompleter` 实现；继续与“重试失败项”
+  必须重新调用同一个 Completer，让 `checkLocalFiles` 复用现有部分文件并补全
+  缺失文件，不得实现并行下载循环。
+- 进程异常退出后遗留的 Running 任务必须恢复为 Paused。
+- 下载源健康评分持久化到 `launcher-data/download-source-health.json`；失败
+  降权、连续成功加权，并作为 `DownloadUriInfo.Weight` 传给 ProjBobcat。
+- 不因健康评分为零而永久删除配置源；评分只影响权重，所有来源仍可回退。
 
 ## 安装器完整性
 

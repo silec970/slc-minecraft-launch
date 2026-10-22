@@ -2,6 +2,8 @@
 
 基于 .NET 10、WPF、MVVM 与 ProjBobcat 2.1.2 的 Minecraft 启动器。
 
+外部联网验收状态和复现步骤见 [KNOWN_ISSUES.md](KNOWN_ISSUES.md)。
+
 ## 构建
 
 ```powershell

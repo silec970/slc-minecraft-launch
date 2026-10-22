@@ -35,6 +35,30 @@ public sealed class RemoteArtifactHashVerifierTests
         }
     }
 
+    [Fact]
+    public async Task Verify_RejectsNeoForgeInstallerWithMismatchedSha1()
+    {
+        var root = Path.Combine(Path.GetTempPath(), $"slc-neoforge-hash-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(root);
+        var file = Path.Combine(root, "neoforge-21.1.80-installer.jar");
+        await File.WriteAllTextAsync(file, "neoform-installer");
+        var verifier = new RemoteArtifactHashVerifier(
+            new StaticFactory(new Handler(new string('0', 40))));
+
+        try
+        {
+            var result = await verifier.VerifyAsync(
+                "https://maven.neoforged.net/releases/net/neoforged/neoforge/21.1.80/neoforge-21.1.80-installer.jar",
+                file);
+
+            Assert.Equal(ArtifactVerificationStatus.Mismatch, result.Status);
+        }
+        finally
+        {
+            Directory.Delete(root, true);
+        }
+    }
+
     private sealed class StaticFactory(HttpMessageHandler handler) : IHttpClientFactory
     {
         public HttpClient CreateClient(string name) => new(handler, disposeHandler: false);

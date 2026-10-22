@@ -102,6 +102,7 @@
   <sys:String x:Key="Loader.LiteLoader">LiteLoader</sys:String>
   <sys:String x:Key="Loader.LiteLoaderUnsupported">LiteLoader 自动安装暂不支持；已有 LiteLoader 实例仍可识别和启动。</sys:String>
   <sys:String x:Key="Loader.ArtifactHashUnavailable">安装器缺少可验证的官方哈希，已停止自动安装。请从官方来源手动安装。</sys:String>
+  <sys:String x:Key="Loader.NeoForgeInstallerFailed">NeoForge 安装失败。请查看 KNOWN_ISSUES.md 中的“NeoForge 真实联网验收”步骤，并保留安装器输出日志与最终错误。</sys:String>
   <sys:String x:Key="Download.Title">下载与加载器安装</sys:String>
   <sys:String x:Key="Download.Description">选择游戏版本和加载器，由 ProjBobcat 完成原生安装与资源补全。</sys:String>
   <sys:String x:Key="Download.SelectVersion">选择游戏版本</sys:String>

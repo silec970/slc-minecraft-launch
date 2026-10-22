@@ -77,7 +77,20 @@ public sealed partial class ModsViewModel(
 
             if (outcome.Warnings.Count > 0)
             {
-                ErrorDetail = string.Join(Environment.NewLine, outcome.Warnings);
+                var localizedWarnings = outcome.Warnings
+                    .Where(warning => !warning.Contains(':'))
+                    .ToArray();
+                if (localizedWarnings.Length > 0)
+                {
+                    StatusKey = localizedWarnings[0];
+                }
+
+                var technicalWarnings = outcome.Warnings
+                    .Where(warning => warning.Contains(':'))
+                    .ToArray();
+                ErrorDetail = technicalWarnings.Length > 0
+                    ? string.Join(Environment.NewLine, technicalWarnings)
+                    : null;
             }
         }, cancellationToken);
     }

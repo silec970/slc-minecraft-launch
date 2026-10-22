@@ -133,6 +133,22 @@ public sealed class ViewModelContractTests
         Assert.True(viewModel.CanLaunch);
     }
 
+    [Fact]
+    public async Task ModsSearch_WithoutCurseForgeKey_ShowsLocalizedGuidanceWithoutThrowing()
+    {
+        var viewModel = new ModsViewModel(new FakeVersionService(), new FakeModService())
+        {
+            SelectedVersion = "1.21.4",
+            SearchText = "sodium"
+        };
+
+        await viewModel.SearchCommand.ExecuteAsync(null);
+
+        Assert.Equal("Mods.CurseForgeKeyMissing", viewModel.StatusKey);
+        Assert.Null(viewModel.ErrorDetail);
+        Assert.Empty(viewModel.SearchResults);
+    }
+
     private sealed class FakeSettingsService : ISettingsService
     {
         public UiSettings? Saved { get; private set; }
@@ -258,6 +274,64 @@ public sealed class ViewModelContractTests
 
         public Task<bool> DeleteAsync(
             string taskId,
+            CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
+    }
+
+    private sealed class FakeVersionService : IVersionService
+    {
+        public Task<GameVersionCatalog> GetCatalogAsync(
+            CancellationToken cancellationToken = default)
+            => Task.FromResult(new GameVersionCatalog(@"C:\Minecraft", []));
+
+        public Task SetFavoriteAsync(
+            string versionId,
+            bool isFavorite,
+            CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
+
+        public Task SetIsolationAsync(
+            string versionId,
+            bool isIsolated,
+            CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
+    }
+
+    private sealed class FakeModService : IModService
+    {
+        public Task<ModSearchOutcome> SearchAsync(
+            ModSearchQuery query,
+            CancellationToken cancellationToken = default)
+            => Task.FromResult(new ModSearchOutcome(
+                [],
+                ["Mods.CurseForgeKeyMissing"]));
+
+        public Task<IReadOnlyList<ModEntry>> ScanAsync(
+            string versionId,
+            CancellationToken cancellationToken = default)
+            => Task.FromResult<IReadOnlyList<ModEntry>>([]);
+
+        public Task<IReadOnlyList<ModConflict>> DetectConflictsAsync(
+            string versionId,
+            CancellationToken cancellationToken = default)
+            => Task.FromResult<IReadOnlyList<ModConflict>>([]);
+
+        public Task<ModInstallOutcome> InstallLocalAsync(
+            LocalModInstallRequest request,
+            CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
+
+        public Task<ModInstallOutcome> InstallRemoteAsync(
+            ModInstallRequest request,
+            IProgress<OperationProgress>? progress = null,
+            CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
+
+        public Task<ModInstallOutcome> InstallRecommendedDependencyAsync(
+            string versionId,
+            LoaderKind loaderKind,
+            ModConflict conflict,
+            IProgress<OperationProgress>? progress = null,
             CancellationToken cancellationToken = default)
             => throw new NotSupportedException();
     }

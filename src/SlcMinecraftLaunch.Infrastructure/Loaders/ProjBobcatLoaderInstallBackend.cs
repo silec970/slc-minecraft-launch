@@ -65,7 +65,9 @@ public sealed class ProjBobcatLoaderInstallBackend(
         {
             return new LoaderInstallOutcome(
                 false,
-                "Loader.InstallFailed",
+                plan.LoaderKind == LoaderKind.NeoForge
+                    ? "Loader.NeoForgeInstallerFailed"
+                    : "Loader.InstallFailed",
                 ErrorDetail: exception.ToString());
         }
     }
@@ -244,6 +246,7 @@ public sealed class ProjBobcatLoaderInstallBackend(
             "neoforge",
             plan.LoaderVersion,
             $"neoforge-{plan.LoaderVersion}-installer.jar");
+        var installerOutputPath = $"{installerPath}.install.log";
         await DownloadFileAsync(
             downloadUrl,
             installerPath,
@@ -308,13 +311,17 @@ public sealed class ProjBobcatLoaderInstallBackend(
             throw;
         }
 
+        await File.WriteAllLinesAsync(
+            installerOutputPath,
+            output.ToArray(),
+            cancellationToken).ConfigureAwait(false);
         var tail = string.Join(Environment.NewLine, output.TakeLast(40));
         if (process.ExitCode != 0)
         {
             return new LoaderInstallOutcome(
                 false,
                 "Loader.NeoForgeInstallerFailed",
-                ErrorDetail: $"Exit code {process.ExitCode}{Environment.NewLine}{tail}");
+                ErrorDetail: $"Exit code {process.ExitCode}{Environment.NewLine}{installerOutputPath}{Environment.NewLine}{tail}");
         }
 
         var installed = versionLocator.GetAllGames()
@@ -328,10 +335,14 @@ public sealed class ProjBobcatLoaderInstallBackend(
             return new LoaderInstallOutcome(
                 false,
                 "Loader.VersionNotResolvable",
-                ErrorDetail: tail);
+                ErrorDetail: $"{installerOutputPath}{Environment.NewLine}{tail}");
         }
 
-        return new LoaderInstallOutcome(true, "Loader.Installed", installed.Id);
+        return new LoaderInstallOutcome(
+            true,
+            "Loader.Installed",
+            installed.Id,
+            Warnings: [$"Loader.NeoForgeInstallerLog:{installerOutputPath}"]);
     }
 
     private string GetLoaderCachePath(string loader, string version, string fileName)

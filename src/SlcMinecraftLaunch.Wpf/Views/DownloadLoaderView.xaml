@@ -180,6 +180,11 @@
 
       <ProgressBar Value="{Binding Progress}"
                    Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" />
+      <Button Content="{DynamicResource Download.CancelCurrentOperation}"
+              AutomationProperties.Name="{DynamicResource Download.CancelCurrentOperation}"
+              Style="{StaticResource SecondaryButtonStyle}"
+              Visibility="{Binding CanCancelCurrentOperation, Converter={StaticResource BooleanToVisibilityConverter}}"
+              Command="{Binding CancelCurrentOperationCommand}" />
       <TextBlock Text="{Binding StatusKey, Converter={StaticResource Key}}"
                  Foreground="{DynamicResource Brush.Muted}" />
       <TextBlock Text="{Binding ErrorDetail}" Foreground="{DynamicResource Brush.Danger}" TextWrapping="Wrap" />

@@ -83,6 +83,8 @@ internal sealed class ResourceDownloadAdapter(
             DownloadThread = 16,
             DownloadParts = 16,
             MaxDegreeOfParallelism = Math.Clamp(Environment.ProcessorCount, 1, 8),
+            TimeoutPerFile = Timeout.InfiniteTimeSpan,
+            ResolverTimeout = Timeout.InfiniteTimeSpan,
             TotalRetry = 4,
             CheckFile = true,
             ResourceInfoResolvers =

@@ -131,6 +131,7 @@
   <sys:String x:Key="Download.ResumeTask">Resume</sys:String>
   <sys:String x:Key="Download.RetryFailed">Retry failed files</sys:String>
   <sys:String x:Key="Download.DeleteTask">Delete task record</sys:String>
+  <sys:String x:Key="Download.CancelCurrentOperation">Cancel current operation</sys:String>
   <sys:String x:Key="Download.FailedFiles">Failed files</sys:String>
   <sys:String x:Key="Download.Sources">Sources used</sys:String>
   <sys:String x:Key="Download.Task.Queued">Waiting to download</sys:String>

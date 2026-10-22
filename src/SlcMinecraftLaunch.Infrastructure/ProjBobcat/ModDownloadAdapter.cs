@@ -50,6 +50,8 @@ internal sealed class ModDownloadAdapter(
             DownloadThread = 8,
             DownloadParts = 8,
             MaxDegreeOfParallelism = 2,
+            TimeoutPerFile = Timeout.InfiniteTimeSpan,
+            ResolverTimeout = Timeout.InfiniteTimeSpan,
             TotalRetry = 4,
             CheckFile = !string.IsNullOrWhiteSpace(request.Sha1),
             ResourceInfoResolvers = [new ModDownloadResourceResolver(request)]

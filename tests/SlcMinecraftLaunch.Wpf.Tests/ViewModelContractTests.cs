@@ -153,6 +153,26 @@ public sealed class ViewModelContractTests
         Assert.Empty(viewModel.SearchResults);
     }
 
+    [Fact]
+    public async Task CancelCurrentOperation_StopsRunningPageWork()
+    {
+        var viewModel = new CancellablePageViewModel();
+
+        var running = viewModel.StartAsync();
+        await viewModel.Started.Task.WaitAsync(TimeSpan.FromSeconds(2));
+
+        Assert.True(viewModel.CanCancelCurrentOperation);
+        Assert.True(viewModel.CancelCurrentOperationCommand.CanExecute(null));
+
+        viewModel.CancelCurrentOperationCommand.Execute(null);
+        await running.WaitAsync(TimeSpan.FromSeconds(2));
+
+        Assert.Equal("Status.Cancelled", viewModel.StatusKey);
+        Assert.False(viewModel.IsBusy);
+        Assert.False(viewModel.CanCancelCurrentOperation);
+        Assert.False(viewModel.CancelCurrentOperationCommand.CanExecute(null));
+    }
+
     private sealed class FakeSettingsService : ISettingsService
     {
         public UiSettings? Saved { get; private set; }
@@ -346,5 +366,26 @@ public sealed class ViewModelContractTests
             string destinationPath,
             CancellationToken cancellationToken = default)
             => Task.FromResult(destinationPath);
+    }
+
+    private sealed class CancellablePageViewModel : PageViewModel
+    {
+        public TaskCompletionSource Started { get; } =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public override string TitleKey => "Test.Title";
+        public override string DescriptionKey => "Test.Description";
+
+        public Task StartAsync()
+        {
+            return RunAsync(async cancellationToken =>
+            {
+                Started.TrySetResult();
+                await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken);
+            }, CancellationToken.None);
+        }
+
+        public override Task RefreshAsync(CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
     }
 }

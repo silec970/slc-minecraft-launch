@@ -1,10 +1,14 @@
+using System.Collections.Concurrent;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using SlcMinecraftLaunch.Domain.Models;
 
 namespace SlcMinecraftLaunch.Wpf.ViewModels;
 
 public abstract partial class PageViewModel : ObservableObject
 {
+    private readonly ConcurrentDictionary<CancellationTokenSource, byte> _activeOperations = [];
+
     [ObservableProperty]
     private bool _isBusy;
 
@@ -20,24 +24,47 @@ public abstract partial class PageViewModel : ObservableObject
     public abstract string TitleKey { get; }
     public abstract string DescriptionKey { get; }
 
+    public bool CanCancelCurrentOperation => !_activeOperations.IsEmpty;
+
     public abstract Task RefreshAsync(CancellationToken cancellationToken = default);
+
+    [RelayCommand(CanExecute = nameof(CanCancelCurrentOperation))]
+    private void CancelCurrentOperation()
+    {
+        foreach (var operation in _activeOperations.Keys)
+        {
+            try
+            {
+                operation.Cancel();
+            }
+            catch (ObjectDisposedException)
+            {
+                // The operation completed before the user's click reached it.
+            }
+        }
+    }
 
     protected async Task RunAsync(
         Func<CancellationToken, Task> action,
         CancellationToken cancellationToken)
     {
+        using var linkedCancellation =
+            CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        _activeOperations.TryAdd(linkedCancellation, 0);
+        NotifyCancellationStateChanged();
+
         IsBusy = true;
         ErrorDetail = null;
         StatusKey = "Status.Working";
         try
         {
-            await action(cancellationToken).ConfigureAwait(true);
+            await action(linkedCancellation.Token).ConfigureAwait(true);
             if (StatusKey == "Status.Working")
             {
                 StatusKey = "Status.Ready";
             }
         }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        catch (OperationCanceledException) when (linkedCancellation.IsCancellationRequested)
         {
             StatusKey = "Status.Cancelled";
         }
@@ -52,7 +79,9 @@ public abstract partial class PageViewModel : ObservableObject
         }
         finally
         {
-            IsBusy = false;
+            _activeOperations.TryRemove(linkedCancellation, out _);
+            IsBusy = !_activeOperations.IsEmpty;
+            NotifyCancellationStateChanged();
         }
     }
 
@@ -65,6 +94,12 @@ public abstract partial class PageViewModel : ObservableObject
     protected IProgress<OperationProgress> CreateProgress()
     {
         return new Progress<OperationProgress>(ApplyProgress);
+    }
+
+    private void NotifyCancellationStateChanged()
+    {
+        OnPropertyChanged(nameof(CanCancelCurrentOperation));
+        CancelCurrentOperationCommand.NotifyCanExecuteChanged();
     }
 }
 

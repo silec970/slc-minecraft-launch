@@ -52,6 +52,28 @@ public sealed class ThemeAccessibilityTests
         Assert.DoesNotContain("RecreateMainWindow", preferences);
     }
 
+    [Fact]
+    public void StringDictionaries_ExposeMatchingKeysAndCancelLabel()
+    {
+        var resources = Path.Combine(
+            GetRepositoryRoot(),
+            "src",
+            "SlcMinecraftLaunch.Wpf",
+            "Resources");
+        var localizedKeys = new[] { "Strings.zh-CN.xaml", "Strings.en-US.xaml" }
+            .Select(fileName => XDocument
+                .Load(Path.Combine(resources, fileName))
+                .Root!
+                .Elements()
+                .Select(element => (string)element.Attribute(Xaml + "Key")!)
+                .Order()
+                .ToArray())
+            .ToArray();
+
+        Assert.Equal(localizedKeys[0], localizedKeys[1]);
+        Assert.Contains("Download.CancelCurrentOperation", localizedKeys[0]);
+    }
+
     private static ThemePalette LoadTheme(string fileName)
     {
         var path = Path.Combine(

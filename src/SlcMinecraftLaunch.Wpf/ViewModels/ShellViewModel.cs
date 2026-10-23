@@ -41,34 +41,49 @@ public sealed partial class ShellViewModel : ObservableObject
     public ObservableCollection<NavigationItem> NavigationItems { get; }
     public IUiPreferences Preferences { get; }
 
-    [RelayCommand(IncludeCancelCommand = true)]
-    private async Task NavigateAsync(NavigationItem? item, CancellationToken cancellationToken)
+    [RelayCommand]
+    private void Navigate(NavigationItem? item)
     {
         if (item is null)
         {
             return;
         }
 
-        await NavigateToAsync(item, cancellationToken).ConfigureAwait(true);
+        NavigateTo(item);
     }
 
-    [RelayCommand(IncludeCancelCommand = true)]
-    private Task OpenSettingsAsync(CancellationToken cancellationToken)
+    [RelayCommand]
+    private void OpenSettings()
     {
         var settingsItem = NavigationItems.FirstOrDefault(item =>
             item.LabelKey == "Navigation.Settings");
-        return settingsItem is null
-            ? Task.CompletedTask
-            : NavigateToAsync(settingsItem, cancellationToken);
+        if (settingsItem is not null)
+        {
+            NavigateTo(settingsItem);
+        }
     }
 
-    private async Task NavigateToAsync(
-        NavigationItem item,
-        CancellationToken cancellationToken)
+    private void NavigateTo(NavigationItem item)
     {
         SelectedNavigation = item;
         CurrentPage = item.Page;
-        await CurrentPage.RefreshAsync(cancellationToken);
+        _ = ActivatePageAsync(item.Page);
+    }
+
+    private static async Task ActivatePageAsync(PageViewModel page)
+    {
+        try
+        {
+            await page.RefreshAsync().ConfigureAwait(true);
+        }
+        catch (OperationCanceledException)
+        {
+            // Navigation does not own page-operation cancellation.
+        }
+        catch (Exception exception)
+        {
+            page.ReportActivationFailure(exception);
+        }
     }
 
     public async Task InitializeAsync(CancellationToken cancellationToken = default)

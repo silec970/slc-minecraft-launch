@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -16,6 +17,7 @@ public sealed partial class DownloadLoaderViewModel : PageViewModel
     private readonly IVanillaInstallationService _vanillaInstallation;
     private readonly IDownloadTaskService _downloadTaskService;
     private readonly IInstanceService _instanceService;
+    private readonly SemaphoreSlim _catalogLoadGate = new(1, 1);
     private IReadOnlyList<MinecraftReleaseDescriptor> _allCatalogVersions =
         Array.Empty<MinecraftReleaseDescriptor>();
 
@@ -81,9 +83,14 @@ public sealed partial class DownloadLoaderViewModel : PageViewModel
     [ObservableProperty]
     private string? _activeDownloadTaskId;
 
+    [ObservableProperty]
+    private bool _isCatalogLoaded;
+
     public bool CanPauseDownload => !string.IsNullOrWhiteSpace(ActiveDownloadTaskId);
     public bool CanRetryDownload => SelectedDownloadTask?.CanRetry == true;
     public bool CanDeleteDownload => SelectedDownloadTask?.CanDelete == true;
+    public bool CanInstallVanilla =>
+        IsCatalogLoaded && SelectedCatalogVersion is not null && !IsBusy;
     public bool CanCompleteDownload =>
         CanCompleteResources && string.IsNullOrWhiteSpace(ActiveDownloadTaskId);
 
@@ -95,6 +102,12 @@ public sealed partial class DownloadLoaderViewModel : PageViewModel
     partial void OnSelectedCatalogVersionChanged(MinecraftReleaseDescriptor? value)
     {
         SelectedMinecraftVersion = value?.Id;
+        NotifyDownloadCommandState();
+    }
+
+    partial void OnIsCatalogLoadedChanged(bool value)
+    {
+        NotifyDownloadCommandState();
     }
 
     partial void OnSelectedDownloadTaskChanged(DownloadTaskRecord? value)
@@ -114,20 +127,22 @@ public sealed partial class DownloadLoaderViewModel : PageViewModel
         OnPropertyChanged(nameof(CanCompleteDownload));
     }
 
-    [RelayCommand(IncludeCancelCommand = true)]
-    private Task LoadAsync(CancellationToken cancellationToken)
+    protected override void OnPropertyChanged(PropertyChangedEventArgs e)
     {
-        return RunAsync(async token =>
+        base.OnPropertyChanged(e);
+        if (e.PropertyName == nameof(IsBusy))
         {
-            _allCatalogVersions = await _vanillaVersionCatalog
-                .GetVersionsAsync(token)
-                .ConfigureAwait(true);
-            ApplyCatalogFilter();
-            await ReloadTasksAsync(token);
-        }, cancellationToken);
+            NotifyDownloadCommandState();
+        }
     }
 
     [RelayCommand(IncludeCancelCommand = true)]
+    private Task LoadAsync(CancellationToken cancellationToken)
+    {
+        return EnsureCatalogLoadedAsync(cancellationToken);
+    }
+
+    [RelayCommand(CanExecute = nameof(CanInstallVanilla), IncludeCancelCommand = true)]
     private Task InstallVanillaAsync(CancellationToken cancellationToken)
     {
         return RunAsync(async token =>
@@ -307,7 +322,48 @@ public sealed partial class DownloadLoaderViewModel : PageViewModel
 
     public override Task RefreshAsync(CancellationToken cancellationToken = default)
     {
-        return LoadAsync(cancellationToken);
+        return EnsureCatalogLoadedAsync(cancellationToken);
+    }
+
+    private async Task EnsureCatalogLoadedAsync(CancellationToken cancellationToken)
+    {
+        if (IsCatalogLoaded)
+        {
+            return;
+        }
+
+        await _catalogLoadGate.WaitAsync(cancellationToken).ConfigureAwait(true);
+        try
+        {
+            if (IsCatalogLoaded)
+            {
+                return;
+            }
+
+            await RunAsync(async token =>
+            {
+                ApplyProgress(new OperationProgress(
+                    SmokeTestStage.ResolvingVersion,
+                    "Download.LoadingCatalog",
+                    0.1));
+                _allCatalogVersions = await _vanillaVersionCatalog
+                    .GetVersionsAsync(token)
+                    .ConfigureAwait(true);
+                ApplyCatalogFilter();
+                ApplyProgress(new OperationProgress(
+                    SmokeTestStage.ResolvingVersion,
+                    "Download.LoadingTasks",
+                    0.6));
+                await ReloadTasksAsync(token);
+                IsCatalogLoaded = true;
+                Progress = 1;
+                StatusKey = "Status.Ready";
+            }, cancellationToken).ConfigureAwait(true);
+        }
+        finally
+        {
+            _catalogLoadGate.Release();
+        }
     }
 
     private Task RunTaskOperationAsync(
@@ -414,5 +470,11 @@ public sealed partial class DownloadLoaderViewModel : PageViewModel
                 IsPlaceholder = false
             },
             cancellationToken);
+    }
+
+    private void NotifyDownloadCommandState()
+    {
+        OnPropertyChanged(nameof(CanInstallVanilla));
+        InstallVanillaCommand.NotifyCanExecuteChanged();
     }
 }

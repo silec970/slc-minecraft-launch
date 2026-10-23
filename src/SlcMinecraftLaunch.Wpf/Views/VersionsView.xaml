@@ -55,16 +55,30 @@
                                      VerticalAlignment="Center"
                                      Foreground="{DynamicResource Brush.Muted}" />
                           <StackPanel Grid.Column="3" Orientation="Horizontal">
-                            <Button Content="{Binding FavoriteGlyph}"
-                                    AutomationProperties.Name="{DynamicResource Versions.Favorite}"
-                                    Style="{StaticResource IconButtonStyle}"
+                            <Button AutomationProperties.Name="{DynamicResource Versions.Favorite}"
+                                    Style="{StaticResource CompactIconTextButtonStyle}"
                                     Command="{Binding DataContext.ToggleFavoriteCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                    CommandParameter="{Binding}" />
-                            <Button Content="{Binding IsolationGlyph}"
-                                    AutomationProperties.Name="{DynamicResource Versions.Isolation}"
-                                    Style="{StaticResource IconButtonStyle}"
+                                    CommandParameter="{Binding}">
+                              <StackPanel Orientation="Horizontal">
+                                <TextBlock Margin="0,0,6,0"
+                                           Text="{Binding FavoriteGlyph}"
+                                           FontFamily="Segoe Fluent Icons"
+                                           FontSize="14" />
+                                <TextBlock Text="{DynamicResource Versions.Favorite}" />
+                              </StackPanel>
+                            </Button>
+                            <Button AutomationProperties.Name="{DynamicResource Versions.Isolation}"
+                                    Style="{StaticResource CompactIconTextButtonStyle}"
                                     Command="{Binding DataContext.ToggleIsolationCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                    CommandParameter="{Binding}" />
+                                    CommandParameter="{Binding}">
+                              <StackPanel Orientation="Horizontal">
+                                <TextBlock Margin="0,0,6,0"
+                                           Text="{Binding IsolationGlyph}"
+                                           FontFamily="Segoe Fluent Icons"
+                                           FontSize="14" />
+                                <TextBlock Text="{DynamicResource Versions.Isolation}" />
+                              </StackPanel>
+                            </Button>
                           </StackPanel>
                         </Grid>
                       </Border>

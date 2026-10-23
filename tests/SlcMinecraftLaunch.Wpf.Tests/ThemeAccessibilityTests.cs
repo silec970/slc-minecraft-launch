@@ -52,6 +52,46 @@ public sealed class ThemeAccessibilityTests
         Assert.DoesNotContain("RecreateMainWindow", preferences);
     }
 
+    [Fact]
+    public void Views_ShowProgressPercentagesAndLabeledVersionActions()
+    {
+        var wpfRoot = Path.Combine(GetRepositoryRoot(), "src", "SlcMinecraftLaunch.Wpf");
+        var home = File.ReadAllText(Path.Combine(wpfRoot, "Views", "HomeView.xaml"));
+        var download = File.ReadAllText(Path.Combine(wpfRoot, "Views", "DownloadLoaderView.xaml"));
+        var versions = File.ReadAllText(Path.Combine(wpfRoot, "Views", "VersionsView.xaml"));
+
+        Assert.Contains("{}{0:P0}", home);
+        Assert.Contains("{}{0:P0}", download);
+        Assert.Contains("Download.OperationProgress", download);
+        Assert.Contains("CompactIconTextButtonStyle", versions);
+        Assert.Contains("Versions.Favorite", versions);
+        Assert.Contains("Versions.Isolation", versions);
+    }
+
+    [Fact]
+    public void StringDictionaries_ExposeMatchingKeysForNewStates()
+    {
+        var resources = Path.Combine(
+            GetRepositoryRoot(),
+            "src",
+            "SlcMinecraftLaunch.Wpf",
+            "Resources");
+        var keys = new[] { "Strings.zh-CN.xaml", "Strings.en-US.xaml" }
+            .Select(fileName => XDocument
+                .Load(Path.Combine(resources, fileName))
+                .Root!
+                .Elements()
+                .Select(element => (string)element.Attribute(Xaml + "Key")!)
+                .Order()
+                .ToArray())
+            .ToArray();
+
+        Assert.Equal(keys[0], keys[1]);
+        Assert.Contains("Download.LoadingCatalog", keys[0]);
+        Assert.Contains("Launch.CheckingFileIntegrity", keys[0]);
+        Assert.Contains("Launch.IntegrityRepaired", keys[0]);
+    }
+
     private static ThemePalette LoadTheme(string fileName)
     {
         var path = Path.Combine(

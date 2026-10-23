@@ -153,6 +153,145 @@ public sealed class ViewModelContractTests
         Assert.Empty(viewModel.SearchResults);
     }
 
+    [Fact]
+    public async Task PageBusy_RemainsTrueUntilAllConcurrentOperationsFinish()
+    {
+        var viewModel = new ConcurrentPageViewModel();
+
+        var first = viewModel.StartControlledAsync();
+        var second = viewModel.StartControlledAsync();
+        await viewModel.WaitForStartsAsync(2);
+
+        viewModel.ReleaseNext();
+        await viewModel.WaitForCompletionsAsync(1);
+
+        Assert.True(viewModel.IsBusy);
+
+        viewModel.ReleaseNext();
+        await Task.WhenAll(first, second);
+
+        Assert.False(viewModel.IsBusy);
+    }
+
+    [Fact]
+    public async Task HomeLaunch_ContinuesWhileRefreshesAreSkipped()
+    {
+        var launcher = new BlockingGameLaunchService();
+        var viewModel = new HomeViewModel(null!, null!, null!, launcher)
+        {
+            SelectedVersion = "1.21.4",
+            PlayerName = "OfflinePlayer"
+        };
+
+        var launch = viewModel.LaunchCommand.ExecuteAsync(null);
+        await launcher.Started.Task.WaitAsync(TimeSpan.FromSeconds(2));
+
+        await viewModel.RefreshAsync().WaitAsync(TimeSpan.FromSeconds(1));
+
+        Assert.True(viewModel.IsLaunching);
+        Assert.True(viewModel.IsBusy);
+        Assert.False(viewModel.CanLaunch);
+        Assert.False(launch.IsCompleted);
+
+        launcher.Release();
+        await launch.WaitAsync(TimeSpan.FromSeconds(2));
+
+        Assert.False(viewModel.IsLaunching);
+        Assert.True(viewModel.CanLaunch);
+    }
+
+    [Fact]
+    public async Task DownloadCatalog_LoadsOnceAndCanInstallVanilla()
+    {
+        var catalog = new CountingVanillaVersionCatalogService();
+        var downloads = new FakeDownloadTaskService();
+        var viewModel = new DownloadLoaderViewModel(
+            null!,
+            null!,
+            null!,
+            catalog,
+            null!,
+            downloads,
+            null!);
+
+        await viewModel.RefreshAsync();
+        await viewModel.RefreshAsync();
+
+        Assert.Equal(1, catalog.CallCount);
+        Assert.True(viewModel.IsCatalogLoaded);
+        Assert.Equal("1.21.4", viewModel.SelectedCatalogVersion?.Id);
+        Assert.True(viewModel.CanInstallVanilla);
+        Assert.True(viewModel.InstallVanillaCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public async Task DownloadCatalog_RetriesAfterFirstFailure()
+    {
+        var catalog = new CountingVanillaVersionCatalogService(failuresBeforeSuccess: 1);
+        var downloads = new FakeDownloadTaskService();
+        var viewModel = new DownloadLoaderViewModel(
+            null!,
+            null!,
+            null!,
+            catalog,
+            null!,
+            downloads,
+            null!);
+
+        await viewModel.RefreshAsync();
+        Assert.False(viewModel.IsCatalogLoaded);
+        Assert.False(viewModel.CanInstallVanilla);
+
+        await viewModel.RefreshAsync();
+
+        Assert.Equal(2, catalog.CallCount);
+        Assert.True(viewModel.IsCatalogLoaded);
+        Assert.True(viewModel.CanInstallVanilla);
+    }
+
+    [Fact]
+    public async Task Navigation_ChangesPageWithoutWaitingForActivation()
+    {
+        var catalog = new CountingVanillaVersionCatalogService(blocked: true);
+        var downloads = new FakeDownloadTaskService();
+        var download = new DownloadLoaderViewModel(
+            null!,
+            null!,
+            null!,
+            catalog,
+            null!,
+            downloads,
+            null!);
+        var home = new HomeViewModel(null!, null!, null!, null!);
+        var shell = new ShellViewModel(
+            home,
+            null!,
+            download,
+            null!,
+            null!,
+            null!,
+            null!,
+            new FakeUiPreferences());
+        var downloadItem = shell.NavigationItems.Single(item =>
+            ReferenceEquals(item.Page, download));
+
+        shell.NavigateCommand.Execute(downloadItem);
+
+        Assert.Same(download, shell.CurrentPage);
+        Assert.True(download.IsBusy);
+        Assert.False(download.CanInstallVanilla);
+        Assert.False(download.InstallVanillaCommand.CanExecute(null));
+
+        catalog.Release();
+        for (var attempt = 0; attempt < 200 && !download.IsCatalogLoaded; attempt++)
+        {
+            await Task.Delay(10);
+        }
+
+        Assert.True(download.IsCatalogLoaded);
+        Assert.True(download.CanInstallVanilla);
+    }
+
     private sealed class FakeSettingsService : ISettingsService
     {
         public UiSettings? Saved { get; private set; }
@@ -280,6 +419,118 @@ public sealed class ViewModelContractTests
             string taskId,
             CancellationToken cancellationToken = default)
             => throw new NotSupportedException();
+    }
+
+    private sealed class ConcurrentPageViewModel : PageViewModel
+    {
+        private readonly Queue<TaskCompletionSource> _operations = [];
+        private int _completed;
+
+        public override string TitleKey => "Test.Title";
+        public override string DescriptionKey => "Test.Description";
+
+        public Task StartControlledAsync()
+        {
+            var completion = new TaskCompletionSource(
+                TaskCreationOptions.RunContinuationsAsynchronously);
+            _operations.Enqueue(completion);
+            return RunAsync(
+                _ => completion.Task.ContinueWith(
+                    _ => Interlocked.Increment(ref _completed),
+                    TaskScheduler.Default),
+                CancellationToken.None);
+        }
+
+        public async Task WaitForStartsAsync(int count)
+        {
+            while (_operations.Count < count)
+            {
+                await Task.Delay(10);
+            }
+        }
+
+        public void ReleaseNext()
+        {
+            _operations.Dequeue().TrySetResult();
+        }
+
+        public async Task WaitForCompletionsAsync(int count)
+        {
+            while (Volatile.Read(ref _completed) < count)
+            {
+                await Task.Delay(10);
+            }
+        }
+
+        public override Task RefreshAsync(CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
+    }
+
+    private sealed class BlockingGameLaunchService : IGameLaunchService
+    {
+        private readonly TaskCompletionSource _release =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public TaskCompletionSource Started { get; } =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public async Task<GameLaunchOutcome> LaunchAsync(
+            string versionId,
+            IProgress<OperationProgress>? progress = null,
+            CancellationToken cancellationToken = default)
+        {
+            Started.TrySetResult();
+            await _release.Task.WaitAsync(cancellationToken);
+            return new GameLaunchOutcome(true, "Launch.Started");
+        }
+
+        public void Release() => _release.TrySetResult();
+    }
+
+    private sealed class CountingVanillaVersionCatalogService :
+        IVanillaVersionCatalogService
+    {
+        private readonly TaskCompletionSource _release =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly bool _blocked;
+        private int _remainingFailures;
+
+        public CountingVanillaVersionCatalogService(
+            int failuresBeforeSuccess = 0,
+            bool blocked = false)
+        {
+            _remainingFailures = failuresBeforeSuccess;
+            _blocked = blocked;
+        }
+
+        public int CallCount { get; private set; }
+
+        public async Task<IReadOnlyList<MinecraftReleaseDescriptor>> GetVersionsAsync(
+            CancellationToken cancellationToken = default)
+        {
+            CallCount++;
+            if (_blocked)
+            {
+                await _release.Task.WaitAsync(cancellationToken);
+            }
+
+            if (_remainingFailures-- > 0)
+            {
+                throw new InvalidOperationException("catalog unavailable");
+            }
+
+            return
+            [
+                new MinecraftReleaseDescriptor(
+                    "1.21.4",
+                    "release",
+                    DateTimeOffset.UtcNow,
+                    true,
+                    false)
+            ];
+        }
+
+        public void Release() => _release.TrySetResult();
     }
 
     private sealed class FakeVersionService : IVersionService

@@ -84,18 +84,29 @@ public sealed class GameLaunchService(
 
             progress?.Report(new OperationProgress(
                 SmokeTestStage.CompletingResources,
-                "Launch.CheckingResources",
+                "Launch.CheckingFileIntegrity",
                 0.2));
-            var resources = await runtime.CompleteResourcesAsync(
+            var integrityObserver = new IntegrityObserver();
+            var resources = await runtime.CompleteResourcesObservedAsync(
                 new ResourceCompletionRequest(version.Id, java.Selected.ExecutablePath),
+                integrityObserver,
                 progress,
                 cancellationToken).ConfigureAwait(false);
             if (!resources.Succeeded)
             {
                 return new GameLaunchOutcome(
                     false,
-                    resources.MessageKey,
-                    resources.ErrorDetail);
+                    "Launch.IntegrityCheckFailed",
+                    CombineDetails(resources.MessageKey, resources.ErrorDetail));
+            }
+
+            var repairedFiles = integrityObserver.GetRepairedFiles();
+            if (repairedFiles.Count > 0)
+            {
+                return new GameLaunchOutcome(
+                    false,
+                    "Launch.IntegrityRepaired",
+                    string.Join(Environment.NewLine, repairedFiles));
             }
 
             var preferences = await preferencesStore
@@ -121,6 +132,42 @@ public sealed class GameLaunchService(
         finally
         {
             _launchGate.Release();
+        }
+    }
+
+    private static string CombineDetails(string messageKey, string? errorDetail)
+    {
+        return string.IsNullOrWhiteSpace(errorDetail)
+            ? messageKey
+            : $"{messageKey}{Environment.NewLine}{errorDetail}";
+    }
+
+    private sealed class IntegrityObserver : IResourceDownloadObserver
+    {
+        private readonly HashSet<string> _repairedFiles =
+            new(StringComparer.OrdinalIgnoreCase);
+
+        public void OnFileCompleted(ResourceDownloadFileResult result)
+        {
+            if (!result.Succeeded)
+            {
+                return;
+            }
+
+            lock (_repairedFiles)
+            {
+                _repairedFiles.Add(result.TargetPath);
+            }
+        }
+
+        public IReadOnlyList<string> GetRepairedFiles()
+        {
+            lock (_repairedFiles)
+            {
+                return _repairedFiles
+                    .OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
+                    .ToArray();
+            }
         }
     }
 }

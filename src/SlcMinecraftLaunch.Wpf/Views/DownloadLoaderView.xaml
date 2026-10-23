@@ -40,6 +40,7 @@
             <Button Content="{DynamicResource Download.InstallVanilla}"
                     AutomationProperties.Name="{DynamicResource Download.InstallVanilla}"
                     Style="{StaticResource PrimaryButtonStyle}"
+                    IsEnabled="{Binding CanInstallVanilla}"
                     Command="{Binding InstallVanillaCommand}" />
           </WrapPanel>
           <TextBlock Text="{DynamicResource Download.LoaderSection}"
@@ -90,6 +91,27 @@
                      Text="{Binding InstalledVersionId}"
                      FontWeight="SemiBold"
                      Foreground="{DynamicResource Brush.Accent}" />
+          <Grid Margin="0,12,0,0"
+                Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="60" />
+            </Grid.ColumnDefinitions>
+            <ProgressBar Value="{Binding Progress}"
+                         AutomationProperties.Name="{DynamicResource Download.OperationProgress}" />
+            <TextBlock Grid.Column="1"
+                       Margin="10,10,0,8"
+                       HorizontalAlignment="Right"
+                       VerticalAlignment="Center"
+                       FontWeight="SemiBold"
+                       Text="{Binding Progress, StringFormat={}{0:P0}}" />
+          </Grid>
+          <TextBlock Margin="0,6,0,0"
+                     Text="{Binding StatusKey, Converter={StaticResource Key}}"
+                     Foreground="{DynamicResource Brush.Muted}" />
+          <TextBlock Text="{Binding ErrorDetail}"
+                     Foreground="{DynamicResource Brush.Danger}"
+                     TextWrapping="Wrap" />
         </StackPanel>
       </Border>
 
@@ -105,11 +127,12 @@
                    SelectedItem="{Binding SelectedDownloadTask}">
             <ListBox.ItemTemplate>
               <DataTemplate>
-                <Grid MinWidth="620">
+                <Grid MinWidth="680">
                   <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="220" />
                     <ColumnDefinition Width="150" />
                     <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="60" />
                   </Grid.ColumnDefinitions>
                   <TextBlock Text="{Binding VersionId}" FontWeight="SemiBold" />
                   <TextBlock Grid.Column="1"
@@ -119,6 +142,11 @@
                                Minimum="0"
                                Maximum="1"
                                Value="{Binding Progress}" />
+                  <TextBlock Grid.Column="3"
+                             Margin="10,0,0,0"
+                             HorizontalAlignment="Right"
+                             VerticalAlignment="Center"
+                             Text="{Binding Progress, StringFormat={}{0:P0}}" />
                 </Grid>
               </DataTemplate>
             </ListBox.ItemTemplate>
@@ -178,11 +206,6 @@
         </StackPanel>
       </Border>
 
-      <ProgressBar Value="{Binding Progress}"
-                   Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" />
-      <TextBlock Text="{Binding StatusKey, Converter={StaticResource Key}}"
-                 Foreground="{DynamicResource Brush.Muted}" />
-      <TextBlock Text="{Binding ErrorDetail}" Foreground="{DynamicResource Brush.Danger}" TextWrapping="Wrap" />
     </StackPanel>
   </ScrollViewer>
 </UserControl>

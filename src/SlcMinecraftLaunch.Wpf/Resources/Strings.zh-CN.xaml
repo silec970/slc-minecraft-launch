@@ -16,6 +16,7 @@
   <sys:String x:Key="Home.CrashHintDetail">自动读取 ProjBobcat 日志与 crash-report，并给出中文处理建议。</sys:String>
   <sys:String x:Key="Home.LaunchTitle">开始游戏</sys:String>
   <sys:String x:Key="Home.Launch">启动游戏</sys:String>
+  <sys:String x:Key="Home.LaunchProgress">游戏启动进度</sys:String>
   <sys:String x:Key="Home.CurrentPlayer">当前玩家名：</sys:String>
   <sys:String x:Key="Home.OpenSettings">前往设置</sys:String>
   <sys:String x:Key="Navigation.Home">主页</sys:String>
@@ -109,6 +110,9 @@
   <sys:String x:Key="Download.Description">选择游戏版本和加载器，由 ProjBobcat 完成原生安装与资源补全。</sys:String>
   <sys:String x:Key="Download.SelectVersion">选择游戏版本</sys:String>
   <sys:String x:Key="Download.VanillaCatalog">Mojang 原版版本清单</sys:String>
+  <sys:String x:Key="Download.LoadingCatalog">正在加载 Mojang 版本清单</sys:String>
+  <sys:String x:Key="Download.LoadingTasks">正在加载下载任务</sys:String>
+  <sys:String x:Key="Download.OperationProgress">当前下载或安装进度</sys:String>
   <sys:String x:Key="Download.ShowSnapshots">显示快照版本</sys:String>
   <sys:String x:Key="Download.InstallVanilla">安装原版</sys:String>
   <sys:String x:Key="Download.LoaderSection">加载器安装</sys:String>
@@ -267,6 +271,9 @@
   <sys:String x:Key="Launch.InstanceMismatch">实例声明的 Minecraft 版本或加载器与定位器不一致</sys:String>
   <sys:String x:Key="Launch.PreparingJava">正在准备 Java</sys:String>
   <sys:String x:Key="Launch.CheckingResources">正在检查游戏资源</sys:String>
+  <sys:String x:Key="Launch.CheckingFileIntegrity">正在校验游戏文件完整性</sys:String>
+  <sys:String x:Key="Launch.IntegrityCheckFailed">游戏文件完整性校验或自动修复失败</sys:String>
+  <sys:String x:Key="Launch.IntegrityRepaired">检测到缺失或损坏的文件并已自动修复；本次不会启动，请再次点击启动</sys:String>
   <sys:String x:Key="Launch.Starting">正在启动游戏</sys:String>
   <sys:String x:Key="Launch.AuthenticationFailed">离线身份创建失败</sys:String>
   <sys:String x:Key="Launch.StartFailed">游戏启动失败</sys:String>

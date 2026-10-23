@@ -16,6 +16,7 @@
   <sys:String x:Key="Home.CrashHintDetail">Read ProjBobcat logs and crash reports with actionable suggestions.</sys:String>
   <sys:String x:Key="Home.LaunchTitle">Start game</sys:String>
   <sys:String x:Key="Home.Launch">Launch game</sys:String>
+  <sys:String x:Key="Home.LaunchProgress">Game launch progress</sys:String>
   <sys:String x:Key="Home.CurrentPlayer">Current player:</sys:String>
   <sys:String x:Key="Home.OpenSettings">Open settings</sys:String>
   <sys:String x:Key="Navigation.Home">Home</sys:String>
@@ -109,6 +110,9 @@
   <sys:String x:Key="Download.Description">Choose a game version and loader for native ProjBobcat installation and resource completion.</sys:String>
   <sys:String x:Key="Download.SelectVersion">Select game version</sys:String>
   <sys:String x:Key="Download.VanillaCatalog">Mojang vanilla versions</sys:String>
+  <sys:String x:Key="Download.LoadingCatalog">Loading the Mojang version catalog</sys:String>
+  <sys:String x:Key="Download.LoadingTasks">Loading download tasks</sys:String>
+  <sys:String x:Key="Download.OperationProgress">Current download or installation progress</sys:String>
   <sys:String x:Key="Download.ShowSnapshots">Show snapshots</sys:String>
   <sys:String x:Key="Download.InstallVanilla">Install vanilla</sys:String>
   <sys:String x:Key="Download.LoaderSection">Loader installation</sys:String>
@@ -267,6 +271,9 @@
   <sys:String x:Key="Launch.InstanceMismatch">The instance declaration doesn't match the locator's Minecraft version or loader</sys:String>
   <sys:String x:Key="Launch.PreparingJava">Preparing Java</sys:String>
   <sys:String x:Key="Launch.CheckingResources">Checking game resources</sys:String>
+  <sys:String x:Key="Launch.CheckingFileIntegrity">Verifying game file integrity</sys:String>
+  <sys:String x:Key="Launch.IntegrityCheckFailed">Game file verification or automatic repair failed</sys:String>
+  <sys:String x:Key="Launch.IntegrityRepaired">Missing or damaged files were repaired automatically. The game was not launched; click Launch again to continue</sys:String>
   <sys:String x:Key="Launch.Starting">Starting the game</sys:String>
   <sys:String x:Key="Launch.AuthenticationFailed">Failed to create the offline identity</sys:String>
   <sys:String x:Key="Launch.StartFailed">Game launch failed</sys:String>

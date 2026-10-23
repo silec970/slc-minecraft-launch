@@ -5,8 +5,7 @@ namespace SlcMinecraftLaunch.Wpf.ViewModels;
 
 public abstract partial class PageViewModel : ObservableObject
 {
-    [ObservableProperty]
-    private bool _isBusy;
+    private int _activeOperationCount;
 
     [ObservableProperty]
     private double _progress;
@@ -19,6 +18,7 @@ public abstract partial class PageViewModel : ObservableObject
 
     public abstract string TitleKey { get; }
     public abstract string DescriptionKey { get; }
+    public bool IsBusy => Volatile.Read(ref _activeOperationCount) > 0;
 
     public abstract Task RefreshAsync(CancellationToken cancellationToken = default);
 
@@ -26,7 +26,8 @@ public abstract partial class PageViewModel : ObservableObject
         Func<CancellationToken, Task> action,
         CancellationToken cancellationToken)
     {
-        IsBusy = true;
+        Interlocked.Increment(ref _activeOperationCount);
+        OnPropertyChanged(nameof(IsBusy));
         ErrorDetail = null;
         StatusKey = "Status.Working";
         try
@@ -52,8 +53,17 @@ public abstract partial class PageViewModel : ObservableObject
         }
         finally
         {
-            IsBusy = false;
+            if (Interlocked.Decrement(ref _activeOperationCount) == 0)
+            {
+                OnPropertyChanged(nameof(IsBusy));
+            }
         }
+    }
+
+    internal void ReportActivationFailure(Exception exception)
+    {
+        StatusKey = "Status.Failed";
+        ErrorDetail = exception.Message;
     }
 
     protected void ApplyProgress(OperationProgress operationProgress)

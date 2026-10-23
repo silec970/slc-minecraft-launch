@@ -30,8 +30,12 @@ public sealed partial class HomeViewModel(
     [ObservableProperty]
     private string _playerName = string.Empty;
 
+    [ObservableProperty]
+    private bool _isLaunching;
+
     public bool CanLaunch => !string.IsNullOrWhiteSpace(SelectedVersion) &&
                              !string.IsNullOrWhiteSpace(PlayerName) &&
+                             !IsLaunching &&
                              !IsBusy;
 
     partial void OnSelectedVersionChanged(string? value)
@@ -40,6 +44,11 @@ public sealed partial class HomeViewModel(
     }
 
     partial void OnPlayerNameChanged(string value)
+    {
+        OnPropertyChanged(nameof(CanLaunch));
+    }
+
+    partial void OnIsLaunchingChanged(bool value)
     {
         OnPropertyChanged(nameof(CanLaunch));
     }
@@ -74,31 +83,41 @@ public sealed partial class HomeViewModel(
     }
 
     [RelayCommand(IncludeCancelCommand = true)]
-    private Task LaunchAsync(CancellationToken cancellationToken)
+    private async Task LaunchAsync(CancellationToken cancellationToken)
     {
-        return RunAsync(async token =>
+        IsLaunching = true;
+        try
         {
-            if (string.IsNullOrWhiteSpace(SelectedVersion))
+            await RunAsync(async token =>
             {
-                throw new UiOperationException("Launch.VersionRequired");
-            }
+                if (string.IsNullOrWhiteSpace(SelectedVersion))
+                {
+                    throw new UiOperationException("Launch.VersionRequired");
+                }
 
-            if (string.IsNullOrWhiteSpace(PlayerName))
-            {
-                throw new UiOperationException("Launch.PlayerNameRequired");
-            }
+                if (string.IsNullOrWhiteSpace(PlayerName))
+                {
+                    throw new UiOperationException("Launch.PlayerNameRequired");
+                }
 
-            var result = await gameLaunchService.LaunchAsync(
-                SelectedVersion,
-                CreateProgress(),
-                token);
-            StatusKey = result.MessageKey;
-            ErrorDetail = result.ErrorDetail;
-        }, cancellationToken);
+                var result = await gameLaunchService.LaunchAsync(
+                    SelectedVersion,
+                    CreateProgress(),
+                    token);
+                StatusKey = result.MessageKey;
+                ErrorDetail = result.ErrorDetail;
+            }, cancellationToken).ConfigureAwait(true);
+        }
+        finally
+        {
+            IsLaunching = false;
+        }
     }
 
     public override Task RefreshAsync(CancellationToken cancellationToken = default)
     {
-        return LoadAsync(cancellationToken);
+        return IsLaunching || IsBusy
+            ? Task.CompletedTask
+            : LoadAsync(cancellationToken);
     }
 }

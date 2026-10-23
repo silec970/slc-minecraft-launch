@@ -27,7 +27,80 @@ public sealed class GameLaunchServiceTests
         Assert.Equal(6144, runtime.LastLaunch?.InstanceSettings?.MaxMemoryMb);
     }
 
-    private sealed class FakeRuntime : IGameRuntime
+    [Fact]
+    public async Task Launch_StopsAfterRepairAndStartsOnNextCleanCheck()
+    {
+        var completionCalls = 0;
+        var runtime = new FakeRuntime((_, observer, _) =>
+        {
+            if (Interlocked.Increment(ref completionCalls) == 1)
+            {
+                observer?.OnFileCompleted(new ResourceDownloadFileResult(
+                    "client.jar",
+                    @"C:\Minecraft\versions\1.21.4\1.21.4.jar",
+                    "https://piston-data.mojang.com/",
+                    "https://piston-data.mojang.com/client.jar",
+                    1024,
+                    "ABC",
+                    true));
+            }
+
+            return Task.FromResult(new ResourceCompletionOutcome(
+                true,
+                "Download.Completed"));
+        });
+        var service = CreateService(runtime);
+        var progress = new List<OperationProgress>();
+
+        var repaired = await service.LaunchAsync(
+            "1.21.4-fabric-0.16.9",
+            new InlineProgress<OperationProgress>(progress.Add));
+
+        Assert.False(repaired.Succeeded);
+        Assert.Equal("Launch.IntegrityRepaired", repaired.MessageKey);
+        Assert.Contains("client.jar", repaired.ErrorDetail);
+        Assert.Null(runtime.LastLaunch);
+        Assert.Contains(progress, item => item.MessageKey == "Launch.CheckingFileIntegrity");
+
+        var launched = await service.LaunchAsync("1.21.4-fabric-0.16.9");
+
+        Assert.True(launched.Succeeded);
+        Assert.NotNull(runtime.LastLaunch);
+        Assert.Equal(2, completionCalls);
+    }
+
+    [Fact]
+    public async Task Launch_WhenIntegrityCheckFails_DoesNotLaunch()
+    {
+        var runtime = new FakeRuntime((_, _, _) => Task.FromResult(
+            new ResourceCompletionOutcome(
+                false,
+                "Download.ResourceCompletionFailed",
+                "hash mismatch",
+                1)));
+        var service = CreateService(runtime);
+
+        var result = await service.LaunchAsync("1.21.4-fabric-0.16.9");
+
+        Assert.False(result.Succeeded);
+        Assert.Equal("Launch.IntegrityCheckFailed", result.MessageKey);
+        Assert.Contains("hash mismatch", result.ErrorDetail);
+        Assert.Null(runtime.LastLaunch);
+    }
+
+    private static GameLaunchService CreateService(FakeRuntime runtime)
+    {
+        return new GameLaunchService(
+            new FakeRuntimeProvider(runtime),
+            new FakeJavaService(),
+            new FakePlayerProfileService(),
+            new FakePreferencesStore(),
+            new FakeInstanceService());
+    }
+
+    private sealed class FakeRuntime(
+        Func<ResourceCompletionRequest, IResourceDownloadObserver?, CancellationToken, Task<ResourceCompletionOutcome>>?
+            resourceBehavior = null) : IGameRuntime
     {
         public event EventHandler<GameExitNotification>? GameExited
         {
@@ -60,7 +133,23 @@ public sealed class GameLaunchServiceTests
             ResourceCompletionRequest request,
             IProgress<OperationProgress>? progress = null,
             CancellationToken cancellationToken = default)
-            => Task.FromResult(new ResourceCompletionOutcome(true, "Download.Completed"));
+            => CompleteResourcesObservedAsync(
+                request,
+                null,
+                progress,
+                cancellationToken);
+
+        public Task<ResourceCompletionOutcome> CompleteResourcesObservedAsync(
+            ResourceCompletionRequest request,
+            IResourceDownloadObserver? observer,
+            IProgress<OperationProgress>? progress = null,
+            CancellationToken cancellationToken = default)
+        {
+            return resourceBehavior?.Invoke(request, observer, cancellationToken)
+                   ?? Task.FromResult(new ResourceCompletionOutcome(
+                       true,
+                       "Download.Completed"));
+        }
 
         public Task<ResourceCompletionOutcome> DownloadModAsync(
             ModDownloadRequest request,
@@ -84,6 +173,14 @@ public sealed class GameLaunchServiceTests
             => throw new NotSupportedException();
 
         public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+    }
+
+    private sealed class InlineProgress<T>(Action<T> report) : IProgress<T>
+    {
+        public void Report(T value)
+        {
+            report(value);
+        }
     }
 
     private sealed class FakeRuntimeProvider(IGameRuntime runtime) : IGameRuntimeProvider

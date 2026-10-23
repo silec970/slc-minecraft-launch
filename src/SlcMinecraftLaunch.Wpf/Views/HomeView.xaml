@@ -115,7 +115,20 @@
         </Border>
       </Grid>
 
-      <ProgressBar Value="{Binding Progress}" Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" />
+      <Grid Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="60" />
+        </Grid.ColumnDefinitions>
+        <ProgressBar Value="{Binding Progress}"
+                     AutomationProperties.Name="{DynamicResource Home.LaunchProgress}" />
+        <TextBlock Grid.Column="1"
+                   Margin="10,10,0,8"
+                   HorizontalAlignment="Right"
+                   VerticalAlignment="Center"
+                   FontWeight="SemiBold"
+                   Text="{Binding Progress, StringFormat={}{0:P0}}" />
+      </Grid>
       <TextBlock Text="{Binding StatusKey, Converter={StaticResource Key}}"
                  Foreground="{DynamicResource Brush.Muted}" />
       <TextBlock Text="{Binding ErrorDetail}"

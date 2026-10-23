@@ -281,6 +281,18 @@
 - 导航动效为 180ms 淡入和位移动画，可由“启用轻量动效”关闭。
 - 背景音乐只播放 `launcher-data/music` 中的用户本地音频；无文件时安静降级。
 
+## 打包
+
+- 每次修改彻底完成，并已通过构建和相关测试后，必须在提交前将项目打包为 EXE。
+- 打包命令必须显式指定桌面项目，不得以普通构建产物代替：
+
+  ```powershell
+  dotnet publish src/SlcMinecraftLaunch.Wpf/SlcMinecraftLaunch.Wpf.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:DebugType=none -p:DebugSymbols=false -o ./publish
+  ```
+
+- 必须确认 `./publish/SlcMinecraftLaunch.Wpf.exe` 成功生成；打包失败视为修改尚未完成。
+- `publish/` 仍是本地打包目录，不得提交到 Git。
+
 ## 发布
 
 - 发布目标为 Windows x64 自包含单文件，不使用 Native AOT，也不启用裁剪。
